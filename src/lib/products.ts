@@ -1,12 +1,14 @@
-import cheeses from "@/assets/cheeses.jpg";
-import quesoDetalle from "@/assets/queso-detalle.jpg";
-import conservas from "@/assets/conservas.jpg";
-import platos from "@/assets/platos.jpg";
-import foieVegano from "@/assets/foie-vegano.jpg";
-import croquetas from "@/assets/croquetas.jpg";
-import despensa from "@/assets/despensa.jpg";
-import sinAlergenos from "@/assets/sin-alergenos.jpg";
-import heroFoie from "@/assets/hero-foie.jpg";
+// Las imágenes viven ahora en /public/images/* y se referencian como rutas absolutas.
+// Funciona tanto en bundlers (Next.js) como en scripts Node (seed).
+const cheeses = "/images/cheeses.jpg";
+const quesoDetalle = "/images/queso-detalle.jpg";
+const conservas = "/images/conservas.jpg";
+const platos = "/images/platos.jpg";
+const foieVegano = "/images/foie-vegano.jpg";
+const croquetas = "/images/croquetas.jpg";
+const despensa = "/images/despensa.jpg";
+const sinAlergenos = "/images/sin-alergenos.jpg";
+const heroFoie = "/images/hero-foie.jpg";
 
 export type NutritionFacts = {
   serving?: string;

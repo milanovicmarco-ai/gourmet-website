@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/integrations/supabase/server";
 import { computeOptimizationScore } from "@/lib/pim/score";
 import { ProductEditForm } from "./edit-form";
+import { ImagesEditor } from "./images-editor";
 
 export const dynamic = "force-dynamic";
 
@@ -67,7 +68,14 @@ export default async function AdminProductDetailPage({
       </header>
 
       <div className="grid lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-8">
+        <div className="lg:col-span-8 space-y-10">
+          <section className="rounded-2xl border border-border p-6 bg-background">
+            <ImagesEditor
+              productId={product.id}
+              initialPrimary={product.primary_image ?? null}
+              initialGallery={Array.isArray(product.gallery) ? (product.gallery as string[]) : []}
+            />
+          </section>
           <ProductEditForm product={product} />
         </div>
         <aside className="lg:col-span-4">
