@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useRef, useState } from "react";
 import { MessageCircle, Sparkles, X, Send, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -49,12 +51,12 @@ export const FloatingActions = () => {
     abortRef.current = controller;
 
     try {
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gourmet-chat`;
+      const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/gourmet-chat`;
       const resp = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({ messages: next, lang }),
         signal: controller.signal,

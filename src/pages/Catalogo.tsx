@@ -1,5 +1,8 @@
+"use client";
+
 import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import Link from "next/link";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { MessageCircle, Search, X, SlidersHorizontal } from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { ProductCard } from "@/components/ProductCard";
@@ -68,7 +71,9 @@ const FilterGroup = <T extends string>({
 );
 
 const Catalogo = () => {
-  const [params, setParams] = useSearchParams();
+  const params = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const [query, setQuery] = useState("");
   const [clients, setClients] = useState<ClientType[]>([]);
@@ -122,14 +127,18 @@ const Catalogo = () => {
     setSpecialties([]);
     setAllergens([]);
     setPriceMax(PRICE_MAX);
-    setParams({}, { replace: true });
+    router.replace(pathname);
   };
 
   const totalActive =
     clients.length + dishes.length + foods.length + specialties.length + allergens.length + (priceMax < PRICE_MAX ? 1 : 0);
 
   return (
-    <Layout navTheme="light">
+    <Layout
+      navTheme="light"
+      seoTitle="Catálogo gourmet | Aurellano Productos Gastronómicos"
+      seoDescription="Filtra +10.000 referencias gourmet por tipo de cliente, categoría, alérgeno o precio. Quesos, foie, conservas, despensa y línea Especial Sin."
+    >
       {/* HERO */}
       <section className="container-edit pt-12 md:pt-20 pb-10 md:pb-14">
         <div className="max-w-4xl space-y-6">
@@ -294,7 +303,7 @@ const Catalogo = () => {
         )}
       </section>
 
-      <Link to="/contacto" className="sr-only">Contacto</Link>
+      <Link href="/contacto" className="sr-only">Contacto</Link>
     </Layout>
   );
 };

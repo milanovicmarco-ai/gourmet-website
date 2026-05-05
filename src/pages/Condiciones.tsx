@@ -1,3 +1,5 @@
+"use client";
+
 import { Layout } from "@/components/Layout";
 import { Circle } from "@/components/Circle";
 import { SectionHeader } from "@/components/SectionHeader";
@@ -6,7 +8,10 @@ import { PHONE_FIXED, EMAIL, WHATSAPP_DISPLAY, WHATSAPP_LINK } from "@/lib/conta
 import { MessageCircle } from "lucide-react";
 
 const Condiciones = () => (
-  <Layout>
+  <Layout
+    seoTitle="Condiciones de venta | Aurellano P. Gastronómicos"
+    seoDescription="Pedido mínimo 200€. Entrega 24-48h en Cataluña, 48-72h en resto de España y Andorra. Formas de pago, devoluciones y zonas de servicio."
+  >
     <section className="relative overflow-hidden">
       <Circle variant="accent" className="w-72 h-72 -top-10 -right-20" />
       <div className="container-edit pt-12 md:pt-20 pb-12 max-w-4xl space-y-6 relative">

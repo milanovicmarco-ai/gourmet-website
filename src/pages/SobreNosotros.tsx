@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useRef, useState } from "react";
 import { Layout } from "@/components/Layout";
 import { Circle } from "@/components/Circle";
@@ -32,7 +34,10 @@ const SobreNosotros = () => {
   }, []);
 
   return (
-  <Layout>
+  <Layout
+    seoTitle="Sobre nosotros | Aurellano Productos Gastronómicos"
+    seoDescription="Empresa familiar gastronómica. Tres generaciones distribuyendo gourmet con criterio. +200 proveedores en toda España y Andorra."
+  >
     <section className="relative overflow-hidden">
       <Circle variant="accent" className="w-72 h-72 -top-10 -right-20" />
       <div className="container-edit pt-12 md:pt-20 pb-12 md:pb-16 max-w-4xl space-y-6 relative">

@@ -1,4 +1,6 @@
-import { Link } from "react-router-dom";
+"use client";
+
+import Link from "next/link";
 import { Layout } from "@/components/Layout";
 import { Circle } from "@/components/Circle";
 import { BookOpen, ChefHat, Wine } from "lucide-react";
@@ -26,7 +28,10 @@ const articles = [
 
 const Consejos = () => {
   return (
-    <Layout>
+    <Layout
+      seoTitle="Inspiración gourmet | Aurellano P. Gastronómicos"
+      seoDescription="Maridajes, técnicas y conservación para profesionales. Saber gourmet aplicado a restauración y comercio especializado."
+    >
       <section className="container-edit pt-32 md:pt-40 pb-16 relative">
         <Circle variant="accent" className="w-72 h-72 -top-10 -right-10 hidden lg:block" />
         <div className="max-w-3xl space-y-6 relative">
@@ -62,7 +67,7 @@ const Consejos = () => {
           <h2 className="font-display font-light text-3xl md:text-4xl tracking-tight">¿Tienes una duda concreta?</h2>
           <p className="text-muted-foreground">Nuestro equipo lleva +50 años entre quesos, foies y despensas premium. Pregúntanos.</p>
           <Link
-            to="/contacto"
+            href="/contacto"
             className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-full px-7 py-4 font-medium hover:bg-accent transition-colors"
           >
             Contactar

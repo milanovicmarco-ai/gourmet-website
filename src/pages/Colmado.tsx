@@ -1,10 +1,12 @@
+"use client";
+
 import { Layout } from "@/components/Layout";
 import { Circle } from "@/components/Circle";
 import { SectionHeader } from "@/components/SectionHeader";
 import { ProductCard } from "@/components/ProductCard";
 import { products } from "@/lib/products";
 import { ArrowRight, MessageCircle, Store } from "lucide-react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { waLink } from "@/lib/contact";
 import colmadoImg from "@/assets/colmado.jpg";
 
@@ -14,7 +16,12 @@ const Colmado = () => {
   );
 
   return (
-    <Layout navTheme="dark" heroFlush>
+    <Layout
+      navTheme="dark"
+      heroFlush
+      seoTitle="Colmado | Aurellano Productos Gastronómicos"
+      seoDescription="Producto gourmet pensado para tiendas, mercados y supermercados especializados. Alta rotación, márgenes saneados y reposición ágil."
+    >
       {/* HERO */}
       <section className="relative overflow-hidden bg-primary text-primary-foreground">
         <Circle variant="outline" className="w-[600px] h-[600px] -top-40 -left-40 border-primary-foreground/10" />
@@ -32,7 +39,7 @@ const Colmado = () => {
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
-                to="/catalogo?cliente=retail"
+                href="/catalogo?cliente=retail"
                 className="inline-flex items-center gap-2 bg-accent text-accent-foreground rounded-full pl-6 pr-7 py-4 font-medium hover:opacity-90 transition-opacity"
               >
                 <Store className="h-5 w-5" /> Ver catálogo para tu tienda
@@ -98,7 +105,7 @@ const Colmado = () => {
               Catálogo pensado<br /><em className="font-light">para tu tienda.</em>
             </h2>
             <Link
-              to="/catalogo?cliente=retail"
+              href="/catalogo?cliente=retail"
               className="inline-flex items-center gap-2 bg-accent-foreground text-accent rounded-full pl-6 pr-7 py-4 font-medium hover:opacity-90 transition-opacity"
             >
               Ver catálogo para tiendas <ArrowRight className="h-4 w-4" />

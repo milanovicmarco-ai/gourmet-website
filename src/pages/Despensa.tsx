@@ -1,3 +1,5 @@
+"use client";
+
 import { Layout } from "@/components/Layout";
 import { Circle } from "@/components/Circle";
 import { SectionHeader } from "@/components/SectionHeader";
@@ -10,7 +12,10 @@ import despensa from "@/assets/despensa.jpg";
 const Despensa = () => {
   const items = products.filter((p) => p.category === "Conservas" || p.category === "Despensa");
   return (
-    <Layout>
+    <Layout
+      seoTitle="Despensa gourmet | Aurellano Productos Gastronómicos"
+      seoDescription="Conservas premium, AOVE, vinagres, panes artesanos, pasta y dulces gourmet. La base de cualquier cocina con criterio."
+    >
       <section className="relative overflow-hidden">
         <Circle variant="accent" className="w-72 h-72 top-20 -right-20 hidden md:block" />
         <div className="container-edit pt-16 md:pt-24 pb-16 md:pb-20 grid lg:grid-cols-12 gap-12 items-center">

@@ -1,4 +1,6 @@
-import { Link } from "react-router-dom";
+"use client";
+
+import Link from "next/link";
 import { Instagram, Linkedin, MessageCircle } from "lucide-react";
 import { WHATSAPP_LINK, INSTAGRAM } from "@/lib/contact";
 import { useI18n } from "@/lib/i18n";
@@ -16,17 +18,17 @@ export const Footer = () => {
       title: t("Productos"),
       links: [
         { to: "/catalogo", label: t("Todos los productos") },
-        { to: "/secrets-del-xef", label: t("Secrets du Xef") },
-        { to: "/catalogo", label: t("Colmado") },
-        { to: "/catalogo", label: t("Catálogos") },
+        { to: "/secrets-du-xef", label: t("Secrets du Xef") },
+        { to: "/colmado", label: t("Colmado") },
+        { to: "/catalogo", label: t("Catálogo") },
       ],
     },
     {
       title: t("Gourmet"),
       links: [
-        { to: "/catalogo", label: t("Delicatessen") },
+        { to: "/catalogo?especialidad=delicatessen", label: t("Delicatessen") },
         { to: "/especial-sin", label: t("Healthy Food") },
-        { to: "/catalogo", label: t("Limited Edition") },
+        { to: "/catalogo?especialidad=limited", label: t("Limited Edition") },
       ],
     },
     {
@@ -225,7 +227,7 @@ export const Footer = () => {
                   {col.links.map((l) => (
                     <li key={l.label}>
                       <Link
-                        to={l.to}
+                        href={l.to}
                         style={{
                           fontSize: "13px",
                           color: "rgba(255,255,255,0.42)",
@@ -268,7 +270,7 @@ export const Footer = () => {
             {[t("Privacidad"), t("Condiciones"), t("Cookies")].map((label) => (
               <Link
                 key={label}
-                to="/condiciones"
+                href="/condiciones"
                 style={{
                   fontSize: "11px",
                   color: "rgba(255,255,255,0.3)",

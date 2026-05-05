@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+"use client";
+
 import { ArrowRight, MessageCircle } from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { Circle } from "@/components/Circle";
@@ -24,7 +25,10 @@ const Quesos = () => {
   const quesos = products.filter((p) => p.category === "Quesos");
 
   return (
-    <Layout>
+    <Layout
+      seoTitle="Quesos afinados | Aurellano Productos Gastronómicos"
+      seoDescription="Selección de quesos afinados por origen, intensidad y familia. DOP, artesanos y veganos. Maridajes y montaje de tabla a medida."
+    >
       {/* HERO */}
       <section className="relative overflow-hidden">
         <Circle variant="blur" className="w-[500px] h-[500px] top-0 -left-40" />

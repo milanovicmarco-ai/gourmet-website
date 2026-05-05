@@ -1,17 +1,24 @@
+"use client";
+
 import { Layout } from "@/components/Layout";
 import { Circle } from "@/components/Circle";
 import { SectionHeader } from "@/components/SectionHeader";
 import { ProductCard } from "@/components/ProductCard";
 import { products } from "@/lib/products";
 import { ArrowRight, MessageCircle, ChefHat } from "lucide-react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { waLink } from "@/lib/contact";
 import xef from "@/assets/xef.jpg";
 
 const SecretsDelXef = () => {
   const items = products.filter((p) => p.specialties.includes("secrets") || p.category === "Foie");
   return (
-    <Layout navTheme="dark" heroFlush>
+    <Layout
+      navTheme="dark"
+      heroFlush
+      seoTitle="Secrets du Xef | Aurellano Productos Gastronómicos"
+      seoDescription="4ª y 5ª gama para hostelería: platos preparados de autor e ingredientes diferenciales que ahorran tiempo sin renunciar al criterio."
+    >
       <section className="relative overflow-hidden bg-primary text-primary-foreground">
         <Circle variant="outline" className="w-[600px] h-[600px] -top-40 -left-40 border-primary-foreground/10" />
         <Circle variant="blur" className="w-96 h-96 -bottom-20 right-0" />
@@ -21,7 +28,7 @@ const SecretsDelXef = () => {
             <h1 className="display text-balance">Secrets<br /><span className="italic font-light text-accent">del Xef.</span></h1>
             <p className="text-lg text-primary-foreground/75 max-w-xl">Producto pensado para servicio. 4ª y 5ª gama, platos preparados de autor, ingredientes diferenciales que ahorran tiempo sin renunciar al criterio.</p>
             <div className="flex flex-wrap gap-3">
-              <Link to="/catalogo?cliente=horeca" className="inline-flex items-center gap-2 bg-accent text-accent-foreground rounded-full pl-6 pr-7 py-4 font-medium hover:opacity-90 transition-opacity">
+              <Link href="/catalogo?cliente=horeca" className="inline-flex items-center gap-2 bg-accent text-accent-foreground rounded-full pl-6 pr-7 py-4 font-medium hover:opacity-90 transition-opacity">
                 <ChefHat className="h-5 w-5" /> Catálogo para tu negocio
               </Link>
               <a href={waLink("Hola, me interesa la gama Secrets del Xef.")} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 border border-primary-foreground/40 text-primary-foreground rounded-full pl-6 pr-7 py-4 font-medium hover:bg-primary-foreground hover:text-primary transition-colors">

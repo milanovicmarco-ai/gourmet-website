@@ -1,0 +1,9 @@
+import { redirect } from "next/navigation";
+import { createClient } from "@/integrations/supabase/server";
+
+export default async function AdminIndexPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/admin/login");
+  redirect("/admin/products");
+}

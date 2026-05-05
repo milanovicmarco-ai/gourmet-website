@@ -1,3 +1,5 @@
+"use client";
+
 import { Layout } from "@/components/Layout";
 import { Circle } from "@/components/Circle";
 import { SectionHeader } from "@/components/SectionHeader";
@@ -10,14 +12,17 @@ import sin from "@/assets/sin-alergenos.jpg";
 const EspecialSin = () => {
   const items = products.filter((p) => p.category === "Especial Sin" || p.allergens.length === 0);
   return (
-    <Layout>
+    <Layout
+      seoTitle="Especial Sin | Aurellano Productos Gastronómicos"
+      seoDescription="Selección gourmet sin gluten, sin lactosa, sin huevo y vegana. Para que tu carta no excluya a nadie y mantenga el sabor."
+    >
       <section className="relative overflow-hidden bg-secondary/40">
         <Circle variant="outline" className="w-[500px] h-[500px] -top-32 -left-32 hidden md:block" />
         <div className="container-edit pt-16 md:pt-24 pb-16 md:pb-20 grid lg:grid-cols-12 gap-12 items-center relative">
           <div className="lg:col-span-6 space-y-6">
             <p className="eyebrow">Inclusivo y delicioso</p>
             <h1 className="display text-balance">Especial<br /><span className="italic font-light text-accent">"Sin".</span></h1>
-            <p className="text-lg text-muted-foreground max-w-xl">Sin gluten, sin lactosa, sin huevo, vegano. Para que tu carta no excluya a nadie y tu mesa healty no renuncie al sabor.</p>
+            <p className="text-lg text-muted-foreground max-w-xl">Sin gluten, sin lactosa, sin huevo, vegano. Para que tu carta no excluya a nadie y tu mesa healthy no renuncie al sabor.</p>
             <div className="flex flex-wrap gap-2 pt-2">
               {["Sin gluten", "Sin lactosa", "Sin huevo", "Vegano", "Sin frutos secos"].map((t) => (
                 <span key={t} className="text-xs px-3 py-1.5 rounded-full bg-accent/10 text-accent border border-accent/20">{t}</span>

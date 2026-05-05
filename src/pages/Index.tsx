@@ -1,4 +1,6 @@
-import { Link } from "react-router-dom";
+"use client";
+
+import Link from "next/link";
 import { ArrowRight, MessageCircle, ChefHat, Store, Truck, Sparkles, Lightbulb, Quote } from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { Circle } from "@/components/Circle";
@@ -24,7 +26,12 @@ const Index = () => {
     .filter(Boolean);
 
   return (
-    <Layout navTheme="dark" heroFlush>
+    <Layout
+      navTheme="dark"
+      heroFlush
+      seoTitle="Aurellano Productos Gastronómicos · Distribución gourmet"
+      seoDescription="Distribuidor gourmet con +200 proveedores y +10.000 referencias para HORECA y tiendas. Servicio en toda Cataluña y Andorra. Pedidos por WhatsApp."
+    >
       {/* ========== HERO FULL-SCREEN ========== */}
       <section className="relative h-screen min-h-[640px] w-full overflow-hidden">
         <img
@@ -59,7 +66,7 @@ const Index = () => {
                 <ArrowRight className="h-4 w-4 -ml-1 transition-transform group-hover:translate-x-1" />
               </a>
               <Link
-                to="/catalogo"
+                href="/catalogo"
                 className="inline-flex items-center gap-2 border border-primary-foreground/40 text-primary-foreground rounded-full pl-6 pr-7 py-4 font-medium hover:bg-primary-foreground hover:text-primary transition-colors"
               >
                 {t("Ver catálogo")}
@@ -102,7 +109,7 @@ const Index = () => {
         />
 
         <div className="mt-14 grid md:grid-cols-2 gap-6 lg:gap-10">
-          <Link to="/secrets-du-xef" className="group relative overflow-hidden rounded-3xl bg-primary text-primary-foreground p-8 md:p-12 min-h-[420px] flex flex-col justify-between hover-lift">
+          <Link href="/secrets-du-xef" className="group relative overflow-hidden rounded-3xl bg-primary text-primary-foreground p-8 md:p-12 min-h-[420px] flex flex-col justify-between hover-lift">
             <img src={xef} alt="Chef emplatando" className="absolute inset-0 h-full w-full object-cover opacity-40 group-hover:opacity-50 group-hover:scale-105 transition-all duration-[1200ms]" loading="lazy" />
             <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/70 to-primary/20" />
             <Circle variant="outline" className="w-72 h-72 -top-20 -right-20 border-primary-foreground/10" />
@@ -117,7 +124,7 @@ const Index = () => {
             </div>
           </Link>
 
-          <Link to="/catalogo" className="group relative overflow-hidden rounded-3xl bg-secondary p-8 md:p-12 min-h-[420px] flex flex-col justify-between hover-lift">
+          <Link href="/catalogo" className="group relative overflow-hidden rounded-3xl bg-secondary p-8 md:p-12 min-h-[420px] flex flex-col justify-between hover-lift">
             <img src={colmado} alt="Mostrador de tienda gourmet" className="absolute inset-0 h-full w-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-[1200ms]" loading="lazy" />
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-background/10" />
             <Circle variant="accent" className="w-56 h-56 -bottom-20 -right-20" />
@@ -164,6 +171,33 @@ const Index = () => {
         </div>
       </section>
 
+      {/* ========== ZONAS DE SERVICIO ========== */}
+      <section className="container-edit py-20 md:py-28">
+        <SectionHeader
+          align="center"
+          eyebrow={t("Donde servimos")}
+          title={<>{t("Cataluña")} <span className="pink-underline">{t("y Andorra")}</span>.</>}
+          subtitle={t("Logística propia con entrega 24-48h en Cataluña y 48-72h en Andorra. Cobertura completa para HORECA y comercio especializado.")}
+        />
+        <div className="mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-5">
+          {[
+            { city: "Barcelona", note: "Restauración y comercio gourmet" },
+            { city: "Girona", note: "Costa Brava y Empordà" },
+            { city: "Lleida", note: "Sede central y logística" },
+            { city: "Tarragona", note: "HORECA y comercio" },
+            { city: "Andorra", note: "Servicio al Principat" },
+          ].map((z) => (
+            <div
+              key={z.city}
+              className="group rounded-2xl border border-border bg-secondary/30 p-5 md:p-6 transition-colors hover:border-accent hover:bg-secondary/60"
+            >
+              <p className="font-display font-light text-2xl md:text-3xl tracking-tight">{t(z.city)}</p>
+              <p className="text-xs md:text-sm text-muted-foreground mt-1.5 leading-relaxed">{t(z.note)}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* ========== BLOQUES PRODUCTO ========== */}
       <section className="container-edit py-20 md:py-32">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-14">
@@ -171,7 +205,7 @@ const Index = () => {
             eyebrow={t("Selección curada")}
             title={<>{t("Lo que hoy nos tiene")} <span className="pink-underline">{t("obsesionados")}</span>.</>}
           />
-          <Link to="/catalogo" className="text-sm font-medium inline-flex items-center gap-2 hover:text-accent transition-colors">
+          <Link href="/catalogo" className="text-sm font-medium inline-flex items-center gap-2 hover:text-accent transition-colors">
             {t("Ver todo el catálogo")} <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
@@ -218,7 +252,7 @@ const Index = () => {
               ))}
             </ul>
             <Link
-              to="/quesos"
+              href="/quesos"
               className="inline-flex items-center gap-2 bg-accent text-accent-foreground rounded-full pl-6 pr-7 py-4 font-medium hover:bg-primary-foreground hover:text-primary transition-colors"
             >
               {t("Explorar quesos")} <ArrowRight className="h-4 w-4" />
@@ -262,7 +296,7 @@ const Index = () => {
           ].map((i) => (
             <Link
               key={i.title}
-              to={i.to}
+              href={i.to}
               className="group relative overflow-hidden rounded-3xl bg-secondary aspect-[4/5] hover-lift block"
             >
               <img

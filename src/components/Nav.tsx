@@ -1,5 +1,8 @@
+"use client";
+
 import { useState } from "react";
-import { NavLink as RNavLink, Link } from "react-router-dom";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Menu, X, MessageCircle, ChevronDown, Globe } from "lucide-react";
 import { Logo } from "./Logo";
 import { cn } from "@/lib/utils";
@@ -74,8 +77,15 @@ export const Nav = () => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const theme = useNavTheme();
   const isDark = theme === "dark";
+  const pathname = usePathname();
   const { t } = useI18n();
   const links = buildLinks(t);
+
+  const isActive = (to: string) => {
+    const target = to.split("?")[0];
+    if (target === "/") return pathname === target;
+    return pathname.startsWith(target);
+  };
 
   return (
     <header
@@ -111,7 +121,7 @@ export const Nav = () => {
                         {l.children.map((c) => (
                           <Link
                             key={c.to}
-                            to={c.to}
+                            href={c.to}
                             className="block px-4 py-2 text-sm text-foreground hover:bg-secondary hover:text-accent transition-colors"
                           >
                             {c.label}
@@ -123,28 +133,26 @@ export const Nav = () => {
                 </div>
               );
             }
+            const active = isActive(l.to);
             return (
-              <RNavLink
+              <Link
                 key={l.to}
-                to={l.to}
-                end={l.to === "/"}
-                className={({ isActive }) =>
-                  cn(
-                    "text-[15px] font-bold tracking-tight transition-colors relative py-1 hover:text-accent",
-                    isActive && "text-accent",
-                    !isActive && (isDark ? "text-white" : "text-foreground"),
-                  )
-                }
+                href={l.to}
+                className={cn(
+                  "text-[15px] font-bold tracking-tight transition-colors relative py-1 hover:text-accent",
+                  active && "text-accent",
+                  !active && (isDark ? "text-white" : "text-foreground"),
+                )}
               >
                 {l.label}
-              </RNavLink>
+              </Link>
             );
           })}
         </nav>
         <div className="flex items-center gap-3">
           <LangSwitcher isDark={isDark} />
           <Link
-            to="/contacto"
+            href="/contacto"
             className="hidden md:inline-flex items-center gap-2 text-sm font-semibold bg-accent text-accent-foreground rounded-full px-5 py-2.5 hover:bg-accent/90 transition-colors duration-300"
           >
             {t("Contacto")}
@@ -171,7 +179,7 @@ export const Nav = () => {
           {links.map((l) => (
             <div key={l.label}>
               <Link
-                to={l.to}
+                href={l.to}
                 onClick={() => setOpen(false)}
                 className="block text-2xl font-display font-light tracking-tight py-3 border-b border-border/60"
               >
@@ -182,7 +190,7 @@ export const Nav = () => {
                   {l.children.map((c) => (
                     <Link
                       key={c.to}
-                      to={c.to}
+                      href={c.to}
                       onClick={() => setOpen(false)}
                       className="block text-base text-muted-foreground py-2"
                     >

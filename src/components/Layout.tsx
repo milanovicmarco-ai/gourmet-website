@@ -1,5 +1,7 @@
+"use client";
+
 import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { usePathname } from "next/navigation";
 import { Nav } from "./Nav";
 import { Footer } from "./Footer";
 import { FloatingActions } from "./FloatingActions";
@@ -11,12 +13,23 @@ interface LayoutProps {
   navTheme?: NavTheme;
   /** Si true, el contenido empieza pegado arriba (hero full-bleed). Si false, deja padding superior. */
   heroFlush?: boolean;
+  /** Compatibilidad legacy. En Next.js los metadatos los gestiona `export const metadata` en `page.tsx`. */
+  seoTitle?: string;
+  seoDescription?: string;
 }
 
-export const Layout = ({ children, navTheme = "light", heroFlush = false }: LayoutProps) => {
-  const { pathname } = useLocation();
+export const Layout = ({
+  children,
+  navTheme = "light",
+  heroFlush = false,
+  // seoTitle y seoDescription se aceptan por compatibilidad pero no hacen nada:
+  // los metadatos se gestionan vía Next.js Metadata API en cada page.tsx.
+}: LayoutProps) => {
+  const pathname = usePathname();
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+    }
   }, [pathname]);
 
   return (

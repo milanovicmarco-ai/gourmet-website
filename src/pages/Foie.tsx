@@ -1,3 +1,5 @@
+"use client";
+
 import { Layout } from "@/components/Layout";
 import { Circle } from "@/components/Circle";
 import { SectionHeader } from "@/components/SectionHeader";
@@ -10,7 +12,10 @@ import foie from "@/assets/foie-vegano.jpg";
 const Foie = () => {
   const items = products.filter((p) => p.category === "Foie");
   return (
-    <Layout>
+    <Layout
+      seoTitle="Foie y terrinas | Aurellano Productos Gastronómicos"
+      seoDescription="Foie mi-cuit, bloc, escalopa y nuestra apuesta inclusiva: foie vegano de anacardo. Producto premium para restauración y tienda."
+    >
       <section className="relative overflow-hidden">
         <Circle variant="blur" className="w-96 h-96 top-10 -right-20" />
         <div className="container-edit pt-16 md:pt-24 pb-16 md:pb-20 grid lg:grid-cols-12 gap-12 items-center relative">

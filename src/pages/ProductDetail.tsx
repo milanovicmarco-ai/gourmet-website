@@ -1,5 +1,8 @@
+"use client";
+
 import { useState } from "react";
-import { Link, useParams, Navigate } from "react-router-dom";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { MessageCircle } from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { Circle } from "@/components/Circle";
@@ -8,12 +11,18 @@ import { getProduct, products, allergenIcons } from "@/lib/products";
 import { waLink } from "@/lib/contact";
 import { cn } from "@/lib/utils";
 
-const ProductDetail = () => {
-  const { slug } = useParams();
+interface ProductDetailProps {
+  slug: string;
+}
+
+const ProductDetail = ({ slug }: ProductDetailProps) => {
   const product = slug ? getProduct(slug) : undefined;
   const [activeImg, setActiveImg] = useState(0);
 
-  if (!product) return <Navigate to="/catalogo" replace />;
+  if (!product) {
+    notFound();
+    return null;
+  }
 
   const gallery = product.gallery && product.gallery.length > 0 ? product.gallery : [product.image];
 
@@ -21,14 +30,17 @@ const ProductDetail = () => {
   const filler = products.filter((p) => p.slug !== product.slug).slice(0, 3 - related.length);
   const cross = [...related, ...filler].slice(0, 3);
 
+  const productTitle = `${product.name} | Aurellano P. Gastronómicos`.slice(0, 60);
+  const productDesc = (product.description || "").slice(0, 155);
+
   return (
-    <Layout>
+    <Layout seoTitle={productTitle} seoDescription={productDesc}>
       <section className="container-edit pt-10 md:pt-16">
         <nav aria-label="breadcrumb" className="text-sm text-muted-foreground">
           <ol className="flex flex-wrap items-center gap-1.5">
-            <li><Link to="/" className="hover:text-foreground transition-colors">Inicio</Link></li>
+            <li><Link href="/" className="hover:text-foreground transition-colors">Inicio</Link></li>
             <li aria-hidden>/</li>
-            <li><Link to="/catalogo" className="hover:text-foreground transition-colors">Catálogo</Link></li>
+            <li><Link href="/catalogo" className="hover:text-foreground transition-colors">Catálogo</Link></li>
             <li aria-hidden>/</li>
             <li><span className="text-foreground/80">{product.category}</span></li>
             <li aria-hidden>/</li>
@@ -201,7 +213,7 @@ const ProductDetail = () => {
         <div className="container-edit py-20 md:py-24">
           <div className="flex items-end justify-between mb-10">
             <h2 className="font-display font-light text-3xl md:text-4xl">Combina con…</h2>
-            <Link to="/catalogo" className="text-sm font-medium hover:text-accent">Ver más →</Link>
+            <Link href="/catalogo" className="text-sm font-medium hover:text-accent">Ver más →</Link>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             {cross.map((p) => (
@@ -214,7 +226,7 @@ const ProductDetail = () => {
             <div className="relative space-y-4 max-w-xl mx-auto">
               <h3 className="font-display font-light text-3xl">Pedido mínimo 200€</h3>
               <p className="text-sm text-accent-foreground/85">Portes incluidos según zona. Entrega en 24–48h en Cataluña.</p>
-              <Link to="/condiciones" className="inline-flex items-center gap-2 underline underline-offset-4 text-sm font-medium">Ver condiciones de venta</Link>
+              <Link href="/condiciones" className="inline-flex items-center gap-2 underline underline-offset-4 text-sm font-medium">Ver condiciones de venta</Link>
             </div>
           </div>
         </div>

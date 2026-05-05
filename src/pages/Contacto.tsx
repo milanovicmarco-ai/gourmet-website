@@ -1,10 +1,15 @@
+"use client";
+
 import { Layout } from "@/components/Layout";
 import { Circle } from "@/components/Circle";
 import { MessageCircle, Phone, Mail, MapPin, Instagram } from "lucide-react";
-import { WHATSAPP_LINK, WHATSAPP_DISPLAY, PHONE_FIXED, EMAIL, INSTAGRAM, INSTAGRAM_HANDLE, ADDRESS } from "@/lib/contact";
+import { WHATSAPP_LINK, WHATSAPP_DISPLAY, PHONE_FIXED, EMAIL, INSTAGRAM, INSTAGRAM_HANDLE, ADDRESS, GOOGLE_BUSINESS_URL } from "@/lib/contact";
 
 const Contacto = () => (
-  <Layout>
+  <Layout
+    seoTitle="Contacto | Aurellano Productos Gastronómicos"
+    seoDescription="WhatsApp +34 621 181 160, teléfono 973 248 266 y email hola@aurellano.com. Lun-Vie 8:00-18:00. Carrer de les Valls d'Andorra 52, 25005 Lleida."
+  >
     <section className="relative overflow-hidden">
       <Circle variant="blur" className="w-[500px] h-[500px] -top-40 -right-40" />
       <div className="container-edit pt-12 md:pt-20 pb-16 md:pb-20 max-w-4xl space-y-6 relative">
@@ -36,7 +41,7 @@ const Contacto = () => (
           { icon: Phone, label: "Teléfono", value: PHONE_FIXED, href: `tel:${PHONE_FIXED.replace(/\s/g, "")}` },
           { icon: Mail, label: "Email", value: EMAIL, href: `mailto:${EMAIL}` },
           { icon: Instagram, label: "Instagram", value: INSTAGRAM_HANDLE, href:"https://www.instagram.com/aurellano1968/" },
-          { icon: MapPin, label: "Dirección", value: ADDRESS, href: "https://maps.app.goo.gl/Ev7hUmaCnGJJnTYc8?g_st=ic" },
+          { icon: MapPin, label: "Dirección", value: ADDRESS, href: GOOGLE_BUSINESS_URL },
         ].map((c) => (
           <a key={c.label} href={c.href} target={c.href.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer" className="flex items-center gap-5 rounded-2xl border border-border p-6 hover:border-accent transition-colors group">
             <div className="h-12 w-12 rounded-full bg-secondary grid place-items-center group-hover:bg-accent group-hover:text-accent-foreground transition-colors">

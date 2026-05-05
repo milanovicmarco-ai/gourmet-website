@@ -1,3 +1,5 @@
+"use client";
+
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 
 export type Lang = "es" | "ca";
@@ -104,6 +106,24 @@ const ca: Dict = {
   "Curados": "Curats",
   "Veganos": "Vegans",
   "Explorar quesos": "Explorar formatges",
+
+  // Zonas de servicio (home)
+  "Donde servimos": "On servim",
+  "Cataluña": "Catalunya",
+  "y Andorra": "i Andorra",
+  "Logística propia con entrega 24-48h en Cataluña y 48-72h en Andorra. Cobertura completa para HORECA y comercio especializado.":
+    "Logística pròpia amb lliurament en 24-48h a Catalunya i 48-72h a Andorra. Cobertura completa per a HORECA i comerç especialitzat.",
+  "Barcelona": "Barcelona",
+  "Girona": "Girona",
+  "Lleida": "Lleida",
+  "Tarragona": "Tarragona",
+  "Andorra": "Andorra",
+  "Restauración y comercio gourmet": "Restauració i comerç gourmet",
+  "Costa Brava y Empordà": "Costa Brava i Empordà",
+  "Sede central y logística": "Seu central i logística",
+  "HORECA y comercio": "HORECA i comerç",
+  "Servicio al Principat": "Servei al Principat",
+
   "Especialidades Gourmet": "Especialitats Gourmet",
   "Tres mundos, un mismo": "Tres mons, un mateix",
   "criterio": "criteri",

@@ -1,4 +1,6 @@
-import { Link } from "react-router-dom";
+"use client";
+
+import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -12,16 +14,25 @@ interface ProductCardProps {
   className?: string;
 }
 
-export const ProductCard = ({ image, title, category, origin, href = "#", circle = false, className }: ProductCardProps) => {
-  const Wrapper: any = href.startsWith("/") ? Link : "a";
-  const wrapperProps = href.startsWith("/") ? { to: href } : { href };
+export const ProductCard = ({
+  image,
+  title,
+  category,
+  origin,
+  href = "#",
+  circle = false,
+  className,
+}: ProductCardProps) => {
+  const isInternal = href.startsWith("/");
 
-  return (
-    <Wrapper {...wrapperProps} className={cn("group block hover-lift", className)}>
-      <div className={cn(
-        "relative overflow-hidden bg-secondary",
-        circle ? "aspect-square rounded-full" : "aspect-[4/5] rounded-2xl"
-      )}>
+  const inner = (
+    <>
+      <div
+        className={cn(
+          "relative overflow-hidden bg-secondary",
+          circle ? "aspect-square rounded-full" : "aspect-[4/5] rounded-2xl",
+        )}
+      >
         <img
           src={image}
           alt={title}
@@ -42,6 +53,20 @@ export const ProductCard = ({ image, title, category, origin, href = "#", circle
           {origin && <p className="text-sm text-muted-foreground mt-1">{origin}</p>}
         </div>
       </div>
-    </Wrapper>
+    </>
+  );
+
+  if (isInternal) {
+    return (
+      <Link href={href} className={cn("group block hover-lift", className)}>
+        {inner}
+      </Link>
+    );
+  }
+
+  return (
+    <a href={href} className={cn("group block hover-lift", className)}>
+      {inner}
+    </a>
   );
 };
