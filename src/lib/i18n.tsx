@@ -19,6 +19,7 @@ const ca: Dict = {
   "Healthy Food": "Healthy Food",
   "Limited Edition": "Limited Edition",
   "Aurellano": "Aurellano",
+  "Sobre Nosotros": "Sobre Nosaltres",
   "Consejos": "Consells",
   "Contacto": "Contacte",
   "Abrir menú": "Obrir menú",

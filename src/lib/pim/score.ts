@@ -1,4 +1,11 @@
 // Score de optimización del PIM. Devuelve un número 0-100 + el desglose por criterio.
+//
+// La función trabaja con un shape genérico (PimProduct) que soporta tanto el
+// schema antiguo de Supabase como el de la API actual (Neon). El helper
+// `adaptApiProduct` convierte un ApiProduct a esta forma para que el checklist
+// pueda evaluarse en el cliente y darle feedback visual al editor.
+
+import type { ApiProduct } from "./api";
 
 export type PimProduct = {
   name?: string | null;
@@ -33,6 +40,7 @@ export type ScoreResult = {
 };
 
 export function computeOptimizationScore(p: PimProduct): ScoreResult {
+  // Pesos suman exactamente 100. Si añades/quitas criterios, recuerda mantener el total.
   const criteria: ScoreCriterion[] = [
     {
       key: "name",
@@ -55,13 +63,13 @@ export function computeOptimizationScore(p: PimProduct): ScoreResult {
     {
       key: "primary_image",
       label: "Imagen principal",
-      weight: 10,
+      weight: 15,
       passed: !!p.primary_image,
     },
     {
       key: "gallery",
       label: "Galería con ≥ 2 imágenes",
-      weight: 10,
+      weight: 5,
       passed: Array.isArray(p.gallery) && (p.gallery?.length ?? 0) >= 2,
     },
     {
@@ -73,7 +81,7 @@ export function computeOptimizationScore(p: PimProduct): ScoreResult {
     {
       key: "nutrition",
       label: "Información nutricional",
-      weight: 10,
+      weight: 5,
       passed: !!p.nutrition && typeof p.nutrition === "object",
     },
     {
@@ -84,7 +92,7 @@ export function computeOptimizationScore(p: PimProduct): ScoreResult {
     },
     {
       key: "badges",
-      label: "Badges (DOP, Premium, etc.)",
+      label: "Badges / tags",
       weight: 5,
       passed: Array.isArray(p.badges) && (p.badges?.length ?? 0) > 0,
     },
@@ -114,18 +122,48 @@ export function computeOptimizationScore(p: PimProduct): ScoreResult {
     },
     {
       key: "category",
-      label: "Categoría asignada",
+      label: "Familia / categoría asignada",
       weight: 5,
       passed: !!p.category_id,
     },
     {
       key: "seo",
       label: "SEO: title y description",
-      weight: 10,
+      weight: 5,
       passed: !!p.seo_title && !!p.seo_description,
     },
   ];
 
-  const total = criteria.reduce((acc, c) => acc + (c.passed ? c.weight : 0), 0);
-  return { total, criteria };
+  const raw = criteria.reduce((acc, c) => acc + (c.passed ? c.weight : 0), 0);
+  // Cap defensivo a 100 (debería sumar exactamente 100 con todos los pasos).
+  return { total: Math.min(100, raw), criteria };
+}
+
+/**
+ * Adapta el shape de la API (Neon) al shape genérico que entiende
+ * `computeOptimizationScore`.
+ */
+export function adaptApiProduct(p: ApiProduct): PimProduct {
+  const allergens = typeof p.alergenos === "string"
+    ? p.alergenos.split(",").map((s) => s.trim()).filter(Boolean)
+    : Array.isArray(p.alergenos) ? p.alergenos : [];
+
+  return {
+    name: p.name,
+    short_description: p.descripcion_corta ?? null,
+    long_description: p.description_rich ?? null,
+    primary_image: p.image_url ?? null,
+    gallery: p.image_url ? [p.image_url] : [],
+    allergens,
+    badges: p.tags ?? [],
+    pairings: p.pairings ?? [],
+    nutrition: p.info_nutricional ?? null,
+    price_eur: p.base_price_eur ?? null,
+    format: p.formato_opciones?.[0]?.label ?? null,
+    origin: p.origen ?? null,
+    brand_id: p.brand ?? null,
+    category_id: p.family ?? null,
+    seo_title: p.seo_title ?? null,
+    seo_description: p.seo_description ?? null,
+  };
 }

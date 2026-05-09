@@ -42,10 +42,16 @@ export default async function AdminLayout({
             Productos
           </Link>
           <Link
-            href="/admin"
+            href="/admin/settings/catalogs"
             className="block px-3 py-2 rounded-lg text-foreground hover:bg-background hover:text-accent transition-colors"
           >
-            Resumen
+            Catálogos
+          </Link>
+          <Link
+            href="/admin/settings"
+            className="block px-3 py-2 rounded-lg text-foreground hover:bg-background hover:text-accent transition-colors"
+          >
+            Settings
           </Link>
         </nav>
         <div className="px-4 py-4 border-t border-border">

@@ -7,7 +7,7 @@ import { ArrowRight, MessageCircle } from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { Circle } from "@/components/Circle";
 import { WHATSAPP_LINK } from "@/lib/contact";
-import cheeses from "@/assets/cheeses.jpg";
+const cheeses = "/images/cheeses.jpg";
 
 const NotFound = () => {
   const pathname = usePathname();

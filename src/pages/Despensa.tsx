@@ -7,7 +7,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { products } from "@/lib/products";
 import { MessageCircle } from "lucide-react";
 import { waLink } from "@/lib/contact";
-import despensa from "@/assets/despensa.jpg";
+const despensa = "/images/despensa.jpg";
 
 const Despensa = () => {
   const items = products.filter((p) => p.category === "Conservas" || p.category === "Despensa");

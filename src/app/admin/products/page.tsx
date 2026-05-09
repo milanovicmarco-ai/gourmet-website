@@ -1,40 +1,114 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient } from "@/integrations/supabase/server";
-import { computeOptimizationScore } from "@/lib/pim/score";
+import { listProducts, listFamilies } from "@/lib/pim/api";
+import { listCatalogs, getRefsByCatalogSlug, getCatalogsForProducts } from "@/lib/pim/catalogs";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminProductsPage() {
+const PAGE_LIMIT = 200; // máximo permitido por la API actualmente
+
+type SP = {
+  q?: string;
+  family?: string;
+  catalog?: string;
+  status?: string;
+  score_min?: string;
+  score_max?: string;
+  sin_gluten?: string;
+  sin_lactosa?: string;
+  vegetariano?: string;
+};
+
+export default async function AdminProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<SP>;
+}) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/admin/login");
 
-  const { data: rows, error } = await supabase
-    .from("products")
-    .select(
-      "id, slug, name, ref, primary_image, status, optimization_score, short_description, long_description, gallery, allergens, badges, pairings, nutrition, price_eur, format, origin, brand_id, category_id, seo_title, seo_description, updated_at",
-    )
-    .order("updated_at", { ascending: false });
+  const sp = await searchParams;
+  const q = sp.q?.trim() || undefined;
+  const family = sp.family?.trim() || undefined;
+  const catalogSlug = sp.catalog?.trim() || undefined;
+  const status = sp.status?.trim() || undefined;
+  const scoreMin = sp.score_min ? Number(sp.score_min) : 0;
+  const scoreMax = sp.score_max ? Number(sp.score_max) : 100;
+  const onlySinGluten = sp.sin_gluten === "1";
+  const onlySinLactosa = sp.sin_lactosa === "1";
+  const onlyVegetariano = sp.vegetariano === "1";
+
+  let products: Awaited<ReturnType<typeof listProducts>>["results"] = [];
+  let families: Awaited<ReturnType<typeof listFamilies>> = [];
+  let catalogs: Awaited<ReturnType<typeof listCatalogs>> = [];
+  let error: string | null = null;
+
+  try {
+    const [pr, fa, ca] = await Promise.all([
+      listProducts({ limit: PAGE_LIMIT, q, family }),
+      listFamilies(),
+      listCatalogs(true),
+    ]);
+    products = pr.results;
+    families = fa;
+    catalogs = ca;
+  } catch (e) {
+    error = (e as Error).message;
+  }
+
+  // Filtro por catálogo: intersecta los refs de la API con los asignados a ese catálogo en Supabase.
+  if (catalogSlug && !error) {
+    const refsInCatalog = await getRefsByCatalogSlug(catalogSlug).catch(() => []);
+    const set = new Set(refsInCatalog);
+    products = products.filter((p) => set.has(p.ref));
+  }
+
+  // Mapa product_ref → slugs[] para mostrar pills en el listado.
+  const productCatalogsMap = !error
+    ? await getCatalogsForProducts(products.map((p) => p.ref)).catch(() => ({}))
+    : {};
 
   if (error) {
     return (
-      <div className="p-8">
-        <h1 className="font-display font-light text-2xl mb-3">Productos</h1>
-        <p className="text-destructive">Error cargando productos: {error.message}</p>
-        <p className="text-sm text-muted-foreground mt-2">
-          ¿Has corrido la migración SQL y el seed? Ver{" "}
-          <code className="bg-secondary px-2 py-0.5 rounded text-xs">supabase/migrations/</code> y{" "}
-          <code className="bg-secondary px-2 py-0.5 rounded text-xs">npm run seed</code>.
+      <div className="px-5 md:px-10 py-8">
+        <h1 className="font-display font-light text-3xl mb-3">Productos</h1>
+        <p className="text-destructive bg-destructive/10 border border-destructive/20 rounded-lg p-4 text-sm">
+          No se pudo conectar con la API del catálogo: {error}
         </p>
       </div>
     );
   }
 
-  const total = rows?.length ?? 0;
-  const avgScore = total > 0
-    ? Math.round((rows!.reduce((acc, r) => acc + (r.optimization_score ?? 0), 0) / total))
-    : 0;
+  // Filtros aplicados en memoria (la API actual no los expone como query).
+  const filtered = products.filter((p) => {
+    const score = Math.min(100, p.optimization_score ?? 0);
+    if (score < scoreMin || score > scoreMax) return false;
+    if (onlySinGluten && !p.sin_gluten) return false;
+    if (onlySinLactosa && !p.sin_lactosa) return false;
+    if (onlyVegetariano && !p.vegetariano) return false;
+    if (status) {
+      const effective = p.status ?? (p.active === false ? "archived" : "published");
+      if (effective !== status) return false;
+    }
+    return true;
+  });
+
+  const totalLoaded = products.length;
+  const totalShown = filtered.length;
+  const avgScore =
+    totalShown > 0
+      ? Math.round(
+          filtered.reduce((acc, r) => acc + Math.min(100, r.optimization_score ?? 0), 0) /
+            totalShown,
+        )
+      : 0;
+
+  const activeFilters =
+    [q, family, catalogSlug, status, onlySinGluten, onlySinLactosa, onlyVegetariano].filter(Boolean).length +
+    (scoreMin > 0 ? 1 : 0) +
+    (scoreMax < 100 ? 1 : 0);
 
   return (
     <div className="px-5 md:px-10 py-8 space-y-8">
@@ -45,82 +119,221 @@ export default async function AdminProductsPage() {
             Productos
           </h1>
           <p className="text-sm text-muted-foreground mt-2">
-            {total} producto{total !== 1 ? "s" : ""} · score medio{" "}
+            <span className="font-medium text-foreground">{totalShown}</span> de {totalLoaded}
+            {totalLoaded === PAGE_LIMIT && <> (máx. {PAGE_LIMIT} por consulta)</>}
+            {" · score medio "}
             <span className="font-medium text-foreground">{avgScore}/100</span>
           </p>
         </div>
-        <button
-          type="button"
-          disabled
-          className="rounded-full bg-secondary text-muted-foreground border border-border px-5 py-2.5 text-sm cursor-not-allowed"
-          title="Próximamente: alta de producto desde el dashboard"
+        <Link
+          href="/admin/products/new"
+          className="rounded-full bg-primary text-primary-foreground border border-primary px-5 py-2.5 text-sm font-semibold hover:bg-accent hover:border-accent transition-colors"
         >
           + Nuevo producto
-        </button>
+        </Link>
       </div>
 
-      <div className="rounded-2xl border border-border overflow-hidden bg-background">
-        <table className="w-full text-sm">
-          <thead className="bg-secondary/40 text-xs uppercase tracking-[0.14em] text-muted-foreground">
-            <tr>
-              <th className="text-left px-4 py-3 font-semibold">Producto</th>
-              <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">Ref</th>
-              <th className="text-left px-4 py-3 font-semibold hidden lg:table-cell">Estado</th>
-              <th className="text-left px-4 py-3 font-semibold">Score</th>
-              <th className="text-right px-4 py-3 font-semibold">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(rows ?? []).map((p) => {
-              const liveScore = computeOptimizationScore(p as never).total;
-              return (
-                <tr key={p.id} className="border-t border-border hover:bg-secondary/20">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      {p.primary_image && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={p.primary_image}
-                          alt=""
-                          className="h-10 w-10 rounded-lg object-cover bg-secondary shrink-0"
-                        />
-                      )}
-                      <div className="min-w-0">
-                        <p className="font-medium truncate">{p.name}</p>
-                        <p className="text-xs text-muted-foreground truncate">{p.slug}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{p.ref || "—"}</td>
-                  <td className="px-4 py-3 hidden lg:table-cell">
-                    <StatusPill status={p.status} />
-                  </td>
-                  <td className="px-4 py-3">
-                    <ScoreBar value={liveScore} />
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <Link
-                      href={`/admin/products/${p.id}`}
-                      className="text-sm font-medium text-accent hover:underline"
-                    >
-                      Editar →
-                    </Link>
-                  </td>
-                </tr>
-              );
-            })}
-            {total === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-12 text-center text-muted-foreground">
-                  No hay productos todavía. Lanza el seed con{" "}
-                  <code className="bg-secondary px-2 py-0.5 rounded text-xs">npm run seed</code>.
-                </td>
-              </tr>
+      <form className="rounded-2xl border border-border bg-secondary/30 p-5 space-y-5">
+        <div className="grid gap-4 md:grid-cols-[1fr_180px_180px_auto] items-end">
+          <label className="block space-y-1.5">
+            <span className="text-xs uppercase tracking-wider text-muted-foreground">Buscar</span>
+            <input
+              type="search"
+              name="q"
+              defaultValue={q ?? ""}
+              placeholder="nombre, ref, descripción…"
+              className="w-full bg-background border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
+            />
+          </label>
+          <label className="block space-y-1.5">
+            <span className="text-xs uppercase tracking-wider text-muted-foreground">Catálogo</span>
+            <select
+              name="catalog"
+              defaultValue={catalogSlug ?? ""}
+              className="w-full bg-background border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
+            >
+              <option value="">Todos</option>
+              {catalogs.map((c) => (
+                <option key={c.id} value={c.slug}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block space-y-1.5">
+            <span className="text-xs uppercase tracking-wider text-muted-foreground">Familia</span>
+            <select
+              name="family"
+              defaultValue={family ?? ""}
+              className="w-full bg-background border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
+            >
+              <option value="">Todas</option>
+              {families.map((f) => (
+                <option key={f.family} value={f.family}>
+                  {f.family} ({f.count})
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="submit"
+            className="bg-primary text-primary-foreground rounded-full px-5 py-2.5 text-sm font-medium hover:bg-accent transition-colors h-fit"
+          >
+            Filtrar
+          </button>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-[1fr_auto] items-end">
+          <label className="block space-y-1.5">
+            <span className="text-xs uppercase tracking-wider text-muted-foreground">Estado</span>
+            <select
+              name="status"
+              defaultValue={status ?? ""}
+              className="w-full md:w-[180px] bg-background border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
+            >
+              <option value="">Todos</option>
+              <option value="published">Publicado</option>
+              <option value="draft">Borrador</option>
+              <option value="archived">Archivado</option>
+            </select>
+          </label>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-[1fr_auto] items-end">
+          <div className="space-y-1.5">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">
+              Score: <span className="text-foreground font-medium">{scoreMin}</span> – <span className="text-foreground font-medium">{scoreMax}</span>
+            </p>
+            <div className="flex gap-3 items-center">
+              <input
+                type="number"
+                name="score_min"
+                min={0}
+                max={100}
+                defaultValue={scoreMin}
+                className="w-20 bg-background border border-border rounded-lg px-3 py-2 text-sm"
+              />
+              <span className="text-muted-foreground text-sm">–</span>
+              <input
+                type="number"
+                name="score_max"
+                min={0}
+                max={100}
+                defaultValue={scoreMax}
+                className="w-20 bg-background border border-border rounded-lg px-3 py-2 text-sm"
+              />
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-3 items-center">
+            <Toggle name="sin_gluten" label="Sin gluten" checked={onlySinGluten} />
+            <Toggle name="sin_lactosa" label="Sin lactosa" checked={onlySinLactosa} />
+            <Toggle name="vegetariano" label="Vegetariano" checked={onlyVegetariano} />
+            {activeFilters > 0 && (
+              <Link
+                href="/admin/products"
+                className="text-xs text-muted-foreground hover:text-accent ml-auto"
+              >
+                Limpiar ({activeFilters})
+              </Link>
             )}
-          </tbody>
-        </table>
-      </div>
+          </div>
+        </div>
+      </form>
+
+      {totalShown === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground">
+          No hay productos con esos filtros.
+        </div>
+      ) : (
+        <ul className="space-y-2">
+          {filtered.map((p) => {
+            const stat = p.status ?? (p.active === false ? "archived" : "published");
+            const score = Math.min(100, p.optimization_score ?? 0);
+            return (
+              <li key={p.ref}>
+                <Link
+                  href={`/admin/products/${encodeURIComponent(p.ref)}`}
+                  className="grid items-center gap-4 rounded-2xl border border-border bg-background p-3 hover:border-accent hover:bg-secondary/40 transition-colors"
+                  style={{ gridTemplateColumns: "auto 1fr auto auto auto" }}
+                >
+                  {p.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={p.image_url}
+                      alt=""
+                      className="h-14 w-14 rounded-lg object-cover bg-secondary shrink-0"
+                    />
+                  ) : (
+                    <div className="h-14 w-14 rounded-lg bg-secondary shrink-0 grid place-items-center text-xs text-muted-foreground">
+                      —
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="font-medium truncate">{p.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      Ref. {p.ref}
+                      {p.family && <> · {p.family}</>}
+                      {p.brand && <> · {p.brand}</>}
+                    </p>
+                    {(productCatalogsMap[p.ref] ?? []).length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        {(productCatalogsMap[p.ref] ?? []).map((slug) => {
+                          const cat = catalogs.find((c) => c.slug === slug);
+                          if (!cat) return null;
+                          return (
+                            <span
+                              key={slug}
+                              className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border"
+                              style={{
+                                borderColor: (cat.color ?? "#fa2ca2") + "44",
+                                color: cat.color ?? "#fa2ca2",
+                                background: (cat.color ?? "#fa2ca2") + "14",
+                              }}
+                            >
+                              {cat.name}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                  <div className="hidden md:block w-32">
+                    <ScoreBar value={score} />
+                  </div>
+                  <StatusPill status={stat} />
+                  <span className="rounded-full bg-primary text-primary-foreground text-xs font-semibold px-4 py-2 hover:bg-accent transition-colors">
+                    Editar →
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
+  );
+}
+
+function Toggle({
+  name,
+  label,
+  checked,
+}: {
+  name: string;
+  label: string;
+  checked: boolean;
+}) {
+  return (
+    <label className="inline-flex items-center gap-2 text-sm cursor-pointer">
+      <input
+        type="checkbox"
+        name={name}
+        value="1"
+        defaultChecked={checked}
+        className="h-4 w-4 accent-accent"
+      />
+      <span>{label}</span>
+    </label>
   );
 }
 
@@ -139,18 +352,19 @@ function StatusPill({ status }: { status: string }) {
 }
 
 function ScoreBar({ value }: { value: number }) {
+  const clamped = Math.min(100, Math.max(0, value));
   const color =
-    value >= 80
+    clamped >= 80
       ? "bg-emerald-500"
-      : value >= 50
+      : clamped >= 50
         ? "bg-amber-500"
         : "bg-destructive";
   return (
     <div className="flex items-center gap-2 min-w-[120px]">
       <div className="relative h-1.5 flex-1 rounded-full bg-secondary overflow-hidden">
-        <div className={`absolute inset-y-0 left-0 ${color}`} style={{ width: `${value}%` }} />
+        <div className={`absolute inset-y-0 left-0 ${color}`} style={{ width: `${clamped}%` }} />
       </div>
-      <span className="text-xs tabular-nums text-foreground w-9 text-right">{value}</span>
+      <span className="text-xs tabular-nums text-foreground w-9 text-right">{clamped}</span>
     </div>
   );
 }

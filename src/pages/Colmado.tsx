@@ -8,7 +8,7 @@ import { products } from "@/lib/products";
 import { ArrowRight, MessageCircle, Store } from "lucide-react";
 import Link from "next/link";
 import { waLink } from "@/lib/contact";
-import colmadoImg from "@/assets/colmado.jpg";
+const colmadoImg = "/images/colmado.jpg";
 
 const Colmado = () => {
   const items = products.filter((p) =>

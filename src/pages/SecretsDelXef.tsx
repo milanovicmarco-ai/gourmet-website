@@ -8,7 +8,7 @@ import { products } from "@/lib/products";
 import { ArrowRight, MessageCircle, ChefHat } from "lucide-react";
 import Link from "next/link";
 import { waLink } from "@/lib/contact";
-import xef from "@/assets/xef.jpg";
+const xef = "/images/xef.jpg";
 
 const SecretsDelXef = () => {
   const items = products.filter((p) => p.specialties.includes("secrets") || p.category === "Foie");

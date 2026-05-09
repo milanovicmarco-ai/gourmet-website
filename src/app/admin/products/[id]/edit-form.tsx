@@ -1,52 +1,71 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, ReactNode, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/integrations/supabase/client";
-import { computeOptimizationScore } from "@/lib/pim/score";
+import { updateProduct } from "../actions";
+import type { FormFields } from "@/lib/pim/api-mapper";
+import { AIAssistButton } from "./ai-assist-button";
+import type { AIField } from "../ai-actions";
 
-type Product = Record<string, unknown> & {
-  id: string;
-  slug: string;
-  name: string;
-  ref: string | null;
-  short_description: string | null;
-  long_description: string | null;
-  origin: string | null;
-  flavor: string | null;
-  format: string | null;
-  price_eur: number | null;
-  status: string;
-  seo_title: string | null;
-  seo_description: string | null;
-  badges: string[] | null;
-  pairings: string[] | null;
-  allergens: string[] | null;
-};
+interface ProductEditFormProps {
+  productRef: string;
+  initial: FormFields;
+}
 
-export function ProductEditForm({ product }: { product: Product }) {
+export function ProductEditForm({ productRef, initial }: ProductEditFormProps) {
   const router = useRouter();
   const [form, setForm] = useState({
-    name: product.name ?? "",
-    ref: product.ref ?? "",
-    short_description: product.short_description ?? "",
-    long_description: product.long_description ?? "",
-    origin: product.origin ?? "",
-    flavor: product.flavor ?? "",
-    format: product.format ?? "",
-    price_eur: product.price_eur != null ? String(product.price_eur) : "",
-    status: product.status ?? "draft",
-    seo_title: product.seo_title ?? "",
-    seo_description: product.seo_description ?? "",
-    badges: (product.badges ?? []).join(", "),
-    pairings: (product.pairings ?? []).join(", "),
-    allergens: (product.allergens ?? []).join(", "),
+    name: initial.name ?? "",
+    family: initial.family ?? "",
+    brand: initial.brand ?? "",
+    short_description: initial.short_description ?? "",
+    long_description: initial.long_description ?? "",
+    origin: initial.origin ?? "",
+    flavor: initial.flavor ?? "",
+    format: initial.format ?? "",
+    price_eur: initial.price_eur != null ? String(initial.price_eur) : "",
+    status: (initial.status as "draft" | "published" | "archived") ?? "published",
+    seo_title: initial.seo_title ?? "",
+    seo_description: initial.seo_description ?? "",
+    badges: Array.isArray(initial.badges) ? initial.badges.join(", ") : (initial.badges ?? ""),
+    pairings: Array.isArray(initial.pairings) ? initial.pairings.join(", ") : (initial.pairings ?? ""),
+    allergens: Array.isArray(initial.allergens) ? initial.allergens.join(", ") : (initial.allergens ?? ""),
+    ingredients: initial.ingredients ?? "",
+    gluten_free: !!initial.gluten_free,
+    lactose_free: !!initial.lactose_free,
   });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
 
-  function set<K extends keyof typeof form>(k: K, v: string) {
+  function set<K extends keyof typeof form>(k: K, v: typeof form[K]) {
     setForm((f) => ({ ...f, [k]: v }));
+  }
+
+  /** Snapshot del form en español plano para que la IA tenga contexto. */
+  const aiContext = () => ({
+    name: form.name,
+    brand: form.brand,
+    family: form.family,
+    origen: form.origin,
+    flavor: form.flavor,
+    formato: form.format,
+    ingredientes: form.ingredients,
+    alergenos: form.allergens,
+    tags: form.badges,
+    pairings: form.pairings,
+    descripcion_corta: form.short_description,
+    description_rich: form.long_description,
+  });
+
+  function aiButton(field: AIField, label: string, target: keyof typeof form) {
+    return (
+      <AIAssistButton
+        field={field}
+        getContext={aiContext}
+        label={label}
+        onAccept={(s) => set(target, s as never)}
+      />
+    );
   }
 
   async function onSubmit(e: FormEvent) {
@@ -54,46 +73,31 @@ export function ProductEditForm({ product }: { product: Product }) {
     setSaving(true);
     setMessage(null);
 
-    const payload = {
-      name: form.name.trim(),
-      ref: form.ref.trim() || null,
-      short_description: form.short_description.trim() || null,
-      long_description: form.long_description.trim() || null,
-      origin: form.origin.trim() || null,
-      flavor: form.flavor.trim() || null,
-      format: form.format.trim() || null,
-      price_eur: form.price_eur ? Number(form.price_eur) : null,
-      status: form.status,
-      seo_title: form.seo_title.trim() || null,
-      seo_description: form.seo_description.trim() || null,
-      badges: csvToArray(form.badges),
-      pairings: csvToArray(form.pairings),
-      allergens: csvToArray(form.allergens),
-    };
-
-    const score = computeOptimizationScore({ ...product, ...payload } as never);
-
-    const { error } = await supabase
-      .from("products")
-      .update({ ...payload, optimization_score: score.total })
-      .eq("id", product.id);
-
-    setSaving(false);
-    if (error) {
-      setMessage({ kind: "err", text: error.message });
-      return;
+    try {
+      const data = await updateProduct(productRef, {
+        ...form,
+        price_eur: form.price_eur === "" ? null : Number(form.price_eur),
+      });
+      setMessage({
+        kind: "ok",
+        text: `Guardado · score ${data.optimization_score ?? "?"}/100`,
+      });
+      router.refresh();
+    } catch (e) {
+      setMessage({ kind: "err", text: (e as Error).message });
+    } finally {
+      setSaving(false);
     }
-    setMessage({ kind: "ok", text: `Guardado · score ${score.total}/100` });
-    router.refresh();
   }
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
       <div className="grid sm:grid-cols-2 gap-5">
         <Field label="Nombre" value={form.name} onChange={(v) => set("name", v)} />
-        <Field label="Referencia" value={form.ref} onChange={(v) => set("ref", v)} />
+        <Field label="Marca" value={form.brand} onChange={(v) => set("brand", v)} placeholder="ej. Maison Lafleur" />
+        <Field label="Familia" value={form.family} onChange={(v) => set("family", v)} placeholder="QUESOS, FOIE_GRAS, …" />
         <Field label="Origen" value={form.origin} onChange={(v) => set("origin", v)} />
-        <Field label="Formato" value={form.format} onChange={(v) => set("format", v)} />
+        <Field label="Formato" value={form.format} onChange={(v) => set("format", v)} placeholder="ej. 250 g · cuña" />
         <Field
           label="Precio (€)"
           value={form.price_eur}
@@ -104,7 +108,7 @@ export function ProductEditForm({ product }: { product: Product }) {
         <SelectField
           label="Estado"
           value={form.status}
-          onChange={(v) => set("status", v)}
+          onChange={(v) => set("status", v as typeof form.status)}
           options={[
             { value: "draft", label: "Borrador" },
             { value: "published", label: "Publicado" },
@@ -118,43 +122,53 @@ export function ProductEditForm({ product }: { product: Product }) {
         value={form.flavor}
         onChange={(v) => set("flavor", v)}
         rows={2}
+        action={aiButton("flavor", "Sugerir sabor", "flavor")}
       />
-
       <Textarea
         label="Descripción corta (≤ 220 caracteres)"
         value={form.short_description}
         onChange={(v) => set("short_description", v)}
         rows={3}
         max={220}
+        action={aiButton("short_description", "Sugerir descripción corta", "short_description")}
       />
-
       <Textarea
         label="Descripción larga"
         value={form.long_description}
         onChange={(v) => set("long_description", v)}
         rows={6}
+        action={aiButton("long_description", "Sugerir descripción larga", "long_description")}
+      />
+      <Textarea
+        label="Ingredientes"
+        value={form.ingredients}
+        onChange={(v) => set("ingredients", v)}
+        rows={3}
       />
 
       <div className="grid sm:grid-cols-3 gap-5">
         <Field
-          label="Badges (coma)"
+          label="Tags / badges (coma)"
           value={form.badges}
           onChange={(v) => set("badges", v)}
           placeholder="DOP, Premium"
+          action={aiButton("tags", "Sugerir tags", "badges")}
         />
         <Field
           label="Maridajes (coma)"
           value={form.pairings}
           onChange={(v) => set("pairings", v)}
           placeholder="Membrillo, Vino tinto"
+          action={aiButton("pairings", "Sugerir maridajes", "pairings")}
         />
-        <Field
-          label="Alérgenos (coma)"
-          value={form.allergens}
-          onChange={(v) => set("allergens", v)}
-          placeholder="lactosa, frutos secos"
-        />
+        <Field label="Alérgenos (coma)" value={form.allergens} onChange={(v) => set("allergens", v)} placeholder="lactosa, frutos secos" />
       </div>
+
+      <fieldset className="rounded-2xl border border-border p-5 grid sm:grid-cols-2 gap-3">
+        <legend className="px-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">Atributos dietéticos</legend>
+        <Toggle label="Sin gluten" checked={form.gluten_free} onChange={(v) => set("gluten_free", v)} />
+        <Toggle label="Sin lactosa" checked={form.lactose_free} onChange={(v) => set("lactose_free", v)} />
+      </fieldset>
 
       <fieldset className="rounded-2xl border border-border p-5 space-y-4">
         <legend className="px-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">SEO</legend>
@@ -163,6 +177,7 @@ export function ProductEditForm({ product }: { product: Product }) {
           value={form.seo_title}
           onChange={(v) => set("seo_title", v)}
           max={60}
+          action={aiButton("seo_title", "Sugerir title SEO", "seo_title")}
         />
         <Textarea
           label="Description (≤ 160)"
@@ -170,6 +185,7 @@ export function ProductEditForm({ product }: { product: Product }) {
           onChange={(v) => set("seo_description", v)}
           rows={2}
           max={160}
+          action={aiButton("seo_description", "Sugerir description SEO", "seo_description")}
         />
       </fieldset>
 
@@ -182,22 +198,13 @@ export function ProductEditForm({ product }: { product: Product }) {
           {saving ? "Guardando…" : "Guardar cambios"}
         </button>
         {message && (
-          <p
-            className={`text-sm ${message.kind === "ok" ? "text-emerald-600" : "text-destructive"}`}
-          >
+          <p className={`text-sm ${message.kind === "ok" ? "text-emerald-600" : "text-destructive"}`}>
             {message.text}
           </p>
         )}
       </div>
     </form>
   );
-}
-
-function csvToArray(s: string): string[] {
-  return s
-    .split(",")
-    .map((x) => x.trim())
-    .filter(Boolean);
 }
 
 function Field({
@@ -208,6 +215,7 @@ function Field({
   step,
   placeholder,
   max,
+  action,
 }: {
   label: string;
   value: string;
@@ -216,10 +224,14 @@ function Field({
   step?: string;
   placeholder?: string;
   max?: number;
+  action?: ReactNode;
 }) {
   return (
     <label className="block space-y-1.5">
-      <span className="text-xs uppercase tracking-wider text-muted-foreground">{label}</span>
+      <span className="text-xs uppercase tracking-wider text-muted-foreground flex items-center justify-between gap-2">
+        <span>{label}</span>
+        {action}
+      </span>
       <input
         type={type}
         step={step}
@@ -239,22 +251,27 @@ function Textarea({
   onChange,
   rows = 3,
   max,
+  action,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   rows?: number;
   max?: number;
+  action?: ReactNode;
 }) {
   return (
     <label className="block space-y-1.5">
-      <span className="text-xs uppercase tracking-wider text-muted-foreground flex items-center justify-between">
-        <span>{label}</span>
-        {max && (
-          <span className={`text-[10px] tabular-nums ${value.length > max ? "text-destructive" : ""}`}>
-            {value.length}/{max}
-          </span>
-        )}
+      <span className="text-xs uppercase tracking-wider text-muted-foreground flex items-center justify-between gap-2">
+        <span className="flex items-center gap-2">
+          <span>{label}</span>
+          {max && (
+            <span className={`text-[10px] tabular-nums ${value.length > max ? "text-destructive" : ""}`}>
+              {value.length}/{max}
+            </span>
+          )}
+        </span>
+        {action}
       </span>
       <textarea
         value={value}
@@ -292,6 +309,28 @@ function SelectField({
           </option>
         ))}
       </select>
+    </label>
+  );
+}
+
+function Toggle({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <label className="flex items-center gap-2 text-sm cursor-pointer">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="h-4 w-4 accent-accent"
+      />
+      <span>{label}</span>
     </label>
   );
 }

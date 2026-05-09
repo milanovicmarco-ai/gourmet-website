@@ -5,7 +5,9 @@ const nextConfig: NextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [
-      // Imágenes alojadas en Supabase Storage (PIM)
+      // Imágenes alojadas en Cloudinary (catálogo en producción)
+      { protocol: "https", hostname: "res.cloudinary.com" },
+      // Supabase Storage (legacy, se puede quitar cuando no quede ningún uso)
       { protocol: "https", hostname: "*.supabase.co" },
       { protocol: "https", hostname: "*.supabase.in" },
     ],

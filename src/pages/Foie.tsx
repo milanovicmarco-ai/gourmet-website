@@ -7,7 +7,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { products } from "@/lib/products";
 import { MessageCircle } from "lucide-react";
 import { waLink } from "@/lib/contact";
-import foie from "@/assets/foie-vegano.jpg";
+const foie = "/images/foie-vegano.jpg";
 
 const Foie = () => {
   const items = products.filter((p) => p.category === "Foie");

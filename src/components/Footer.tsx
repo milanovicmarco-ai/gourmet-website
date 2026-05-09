@@ -46,40 +46,8 @@ export const Footer = () => {
         position: "relative",
         background: "#080808",
         fontFamily: "'Inter', sans-serif",
-        overflow: "hidden",
       }}
     >
-      {/* Fade-in desde la sección anterior */}
-      <div
-        aria-hidden
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: "80px",
-          background: "linear-gradient(180deg, transparent 0%, #080808 100%)",
-          pointerEvents: "none",
-          zIndex: 1,
-        }}
-      />
-
-      {/* Glow rosa decorativo */}
-      <div
-        aria-hidden
-        style={{
-          position: "absolute",
-          top: "-100px",
-          left: "-100px",
-          width: "500px",
-          height: "500px",
-          borderRadius: "50%",
-          background:
-            "radial-gradient(circle, rgba(250,44,162,0.12) 0%, transparent 70%)",
-          pointerEvents: "none",
-        }}
-      />
-
       {/* Contenedor centrado, pero footer full width */}
       <div
         style={{
@@ -127,7 +95,7 @@ export const Footer = () => {
                 }}
               />
               Aurellano
-              <span style={{ color: "rgba(255,255,255,0.35)", fontWeight: 400 }}>· 1968</span>
+              <span style={{ color: "#ffffff", fontWeight: 700 }}>· 1968</span>
             </p>
             <p
               style={{

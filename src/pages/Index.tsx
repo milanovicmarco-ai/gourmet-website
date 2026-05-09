@@ -9,15 +9,15 @@ import { ProductCard } from "@/components/ProductCard";
 import { products } from "@/lib/products";
 import { WHATSAPP_LINK } from "@/lib/contact";
 import { useI18n } from "@/lib/i18n";
-import heroFoie from "@/assets/hero-foie.jpg";
-import cheeses from "@/assets/cheeses.jpg";
-import quesoDetalle from "@/assets/queso-detalle.jpg";
-import xef from "@/assets/xef.jpg";
-import colmado from "@/assets/colmado.jpg";
-import aniversari from "@/assets/aniversari.png";
-import especialidadDelicatessen from "@/assets/especialidad-delicatessen.jpg";
-import especialidadHealthy from "@/assets/especialidad-healthy.jpg";
-import especialidadLimited from "@/assets/limited-bialetti.png";
+const heroFoie = "/images/hero-foie.jpg";
+const cheeses = "/images/cheeses.jpg";
+const quesoDetalle = "/images/queso-detalle.jpg";
+const xef = "/images/xef.jpg";
+const colmado = "/images/colmado.jpg";
+const aniversari = "/images/aniversari.png";
+const especialidadDelicatessen = "/images/especialidad-delicatessen.jpg";
+const especialidadHealthy = "/images/especialidad-healthy.jpg";
+const especialidadLimited = "/images/limited-bialetti.png";
 
 const Index = () => {
   const { t } = useI18n();
@@ -171,32 +171,34 @@ const Index = () => {
         </div>
       </section>
 
-      {/* ========== ZONAS DE SERVICIO ========== */}
-      <section className="container-edit py-20 md:py-28">
-        <SectionHeader
-          align="center"
-          eyebrow={t("Donde servimos")}
-          title={<>{t("Cataluña")} <span className="pink-underline">{t("y Andorra")}</span>.</>}
-          subtitle={t("Logística propia con entrega 24-48h en Cataluña y 48-72h en Andorra. Cobertura completa para HORECA y comercio especializado.")}
-        />
-        <div className="mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-5">
-          {[
-            { city: "Barcelona", note: "Restauración y comercio gourmet" },
-            { city: "Girona", note: "Costa Brava y Empordà" },
-            { city: "Lleida", note: "Sede central y logística" },
-            { city: "Tarragona", note: "HORECA y comercio" },
-            { city: "Andorra", note: "Servicio al Principat" },
-          ].map((z) => (
-            <div
-              key={z.city}
-              className="group rounded-2xl border border-border bg-secondary/30 p-5 md:p-6 transition-colors hover:border-accent hover:bg-secondary/60"
-            >
-              <p className="font-display font-light text-2xl md:text-3xl tracking-tight">{t(z.city)}</p>
-              <p className="text-xs md:text-sm text-muted-foreground mt-1.5 leading-relaxed">{t(z.note)}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* ========== ZONAS DE SERVICIO (oculta temporalmente) ========== */}
+      {false && (
+        <section className="container-edit py-20 md:py-28">
+          <SectionHeader
+            align="center"
+            eyebrow={t("Donde servimos")}
+            title={<>{t("Cataluña")} <span className="pink-underline">{t("y Andorra")}</span>.</>}
+            subtitle={t("Logística propia con entrega 24-48h en Cataluña y 48-72h en Andorra. Cobertura completa para HORECA y comercio especializado.")}
+          />
+          <div className="mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-5">
+            {[
+              { city: "Barcelona", note: "Restauración y comercio gourmet" },
+              { city: "Girona", note: "Costa Brava y Empordà" },
+              { city: "Lleida", note: "Sede central y logística" },
+              { city: "Tarragona", note: "HORECA y comercio" },
+              { city: "Andorra", note: "Servicio al Principat" },
+            ].map((z) => (
+              <div
+                key={z.city}
+                className="group rounded-2xl border border-border bg-secondary/30 p-5 md:p-6 transition-colors hover:border-accent hover:bg-secondary/60"
+              >
+                <p className="font-display font-light text-2xl md:text-3xl tracking-tight">{t(z.city)}</p>
+                <p className="text-xs md:text-sm text-muted-foreground mt-1.5 leading-relaxed">{t(z.note)}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ========== BLOQUES PRODUCTO ========== */}
       <section className="container-edit py-20 md:py-32">
@@ -350,13 +352,13 @@ const Index = () => {
         </div>
       </section>
 
-      
-      {/* ========== CTA FINAL — gradient rosa → blanco ========== */}
+
+      {/* ========== CTA FINAL — blanco arriba → rosa abajo ========== */}
       <section
-        className="relative overflow-hidden border-t border-border"
+        className="relative overflow-hidden"
         style={{
           background:
-            "linear-gradient(135deg, hsl(322 96% 58%) 0%, hsl(322 96% 75%) 35%, hsl(322 80% 92%) 70%, hsl(0 0% 100%) 100%)",
+            "linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(322 100% 98%) 35%, hsl(322 85% 92%) 75%, hsl(322 80% 86%) 100%)",
         }}
       >
         <div className="container-edit py-24 md:py-36 text-center relative">

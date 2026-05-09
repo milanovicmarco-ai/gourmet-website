@@ -7,8 +7,8 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { ProductCard } from "@/components/ProductCard";
 import { products } from "@/lib/products";
 import { WHATSAPP_LINK, waLink } from "@/lib/contact";
-import cheeses from "@/assets/cheeses.jpg";
-import quesoDetalle from "@/assets/queso-detalle.jpg";
+const cheeses = "/images/cheeses.jpg";
+const quesoDetalle = "/images/queso-detalle.jpg";
 
 const origins = ["Cataluña", "Castilla", "Asturias", "País Vasco", "Francia", "Italia", "Suiza", "Holanda"];
 const intensities = ["Suave", "Medio", "Intenso", "Muy intenso"];

@@ -1,0 +1,75 @@
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import { createClient } from "@/integrations/supabase/server";
+import { Tags, Layers, Boxes } from "lucide-react";
+
+export const dynamic = "force-dynamic";
+
+export default async function SettingsIndexPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/admin/login");
+
+  const cards = [
+    {
+      href: "/admin/settings/catalogs",
+      title: "Catálogos",
+      description: "Define en qué áreas de la web aparece cada producto (HORECA, Retail, Especial Sin…).",
+      icon: Boxes,
+      ready: true,
+    },
+    {
+      href: "/admin/settings/families",
+      title: "Familias",
+      description: "Las familias se descubren automáticamente desde la API. Aquí podrás reetiquetar y reordenar.",
+      icon: Layers,
+      ready: false,
+    },
+    {
+      href: "/admin/settings/brands",
+      title: "Marcas",
+      description: "Listado normalizado de marcas distribuidas. Pendiente de la API del backend.",
+      icon: Tags,
+      ready: false,
+    },
+  ];
+
+  return (
+    <div className="px-5 md:px-10 py-8 space-y-8 max-w-4xl">
+      <header>
+        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">PIM · Configuración</p>
+        <h1 className="font-display font-light text-3xl md:text-4xl tracking-tight mt-1">Settings</h1>
+        <p className="text-sm text-muted-foreground mt-2">
+          Configura las taxonomías que organizan tu catálogo y deciden dónde se muestra cada producto.
+        </p>
+      </header>
+
+      <div className="grid sm:grid-cols-2 gap-4">
+        {cards.map((c) => {
+          const Cmp: React.ElementType = c.ready ? Link : "div";
+          const props = c.ready ? { href: c.href } : {};
+          return (
+            <Cmp
+              key={c.title}
+              {...props}
+              className={`block rounded-2xl border border-border p-6 transition-colors ${
+                c.ready
+                  ? "bg-background hover:border-accent hover:bg-secondary/40"
+                  : "bg-secondary/30 opacity-70 cursor-not-allowed"
+              }`}
+            >
+              <c.icon className="h-7 w-7 text-accent mb-4" strokeWidth={1.5} />
+              <h2 className="font-display font-medium text-xl">{c.title}</h2>
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{c.description}</p>
+              {!c.ready && (
+                <p className="text-xs text-muted-foreground mt-3 uppercase tracking-wider">
+                  Próximamente
+                </p>
+              )}
+            </Cmp>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

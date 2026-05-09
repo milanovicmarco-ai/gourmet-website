@@ -51,7 +51,13 @@ export const metadata: Metadata = {
       "Distribuidor gourmet con +200 proveedores y +10.000 referencias para HORECA y tiendas. Servicio en toda Cataluña y Andorra.",
     images: ["/og/aurellano-cover.jpg"],
   },
-  icons: { icon: "/favicon.ico" },
+  icons: {
+    icon: [
+      { url: "/favicon.png", type: "image/png" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    apple: "/favicon.png",
+  },
   robots: { index: true, follow: true },
 };
 

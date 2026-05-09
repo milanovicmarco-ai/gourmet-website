@@ -7,7 +7,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { products } from "@/lib/products";
 import { MessageCircle } from "lucide-react";
 import { waLink } from "@/lib/contact";
-import sin from "@/assets/sin-alergenos.jpg";
+const sin = "/images/sin-alergenos.jpg";
 
 const EspecialSin = () => {
   const items = products.filter((p) => p.category === "Especial Sin" || p.allergens.length === 0);

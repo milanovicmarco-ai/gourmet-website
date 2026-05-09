@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Layout } from "@/components/Layout";
 import { Circle } from "@/components/Circle";
 import { SectionHeader } from "@/components/SectionHeader";
-import empresa from "@/assets/empresa.jpg";
+const empresa = "/images/empresa.jpg";
 import { MessageCircle } from "lucide-react";
 import { WHATSAPP_LINK } from "@/lib/contact";
 
