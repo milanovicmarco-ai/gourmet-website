@@ -6,14 +6,20 @@ import { updateProduct } from "../actions";
 import type { FormFields } from "@/lib/pim/api-mapper";
 import { AIAssistButton } from "./ai-assist-button";
 import type { AIField } from "../ai-actions";
+import { EntityCombobox, type EntityOption } from "./entity-combobox";
 
 interface ProductEditFormProps {
   productRef: string;
   initial: FormFields;
+  brandOptions: EntityOption[];
+  familyOptions: EntityOption[];
+  hasImage: boolean;
 }
 
-export function ProductEditForm({ productRef, initial }: ProductEditFormProps) {
+export function ProductEditForm({ productRef, initial, brandOptions: initialBrands, familyOptions: initialFamilies, hasImage }: ProductEditFormProps) {
   const router = useRouter();
+  const [brandOptions, setBrandOptions] = useState(initialBrands);
+  const [familyOptions, setFamilyOptions] = useState(initialFamilies);
   const [form, setForm] = useState({
     name: initial.name ?? "",
     family: initial.family ?? "",
@@ -35,7 +41,7 @@ export function ProductEditForm({ productRef, initial }: ProductEditFormProps) {
     lactose_free: !!initial.lactose_free,
   });
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const [message, setMessage] = useState<{ kind: "ok" | "warn" | "err"; text: string } | null>(null);
 
   function set<K extends keyof typeof form>(k: K, v: typeof form[K]) {
     setForm((f) => ({ ...f, [k]: v }));
@@ -70,6 +76,16 @@ export function ProductEditForm({ productRef, initial }: ProductEditFormProps) {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+
+    // Bloqueo cliente: si pretende publicar y faltan obligatorios, no enviamos.
+    if (form.status === "published" && missingRequired.length > 0) {
+      setMessage({
+        kind: "err",
+        text: `No puedes publicar todavía. Faltan: ${missingRequired.join(", ")}.`,
+      });
+      return;
+    }
+
     setSaving(true);
     setMessage(null);
 
@@ -78,9 +94,13 @@ export function ProductEditForm({ productRef, initial }: ProductEditFormProps) {
         ...form,
         price_eur: form.price_eur === "" ? null : Number(form.price_eur),
       });
+      const score = data.optimization_score ?? "?";
       setMessage({
-        kind: "ok",
-        text: `Guardado · score ${data.optimization_score ?? "?"}/100`,
+        kind: missingRequired.length > 0 ? "warn" : "ok",
+        text:
+          missingRequired.length > 0
+            ? `Guardado · score ${score}/100. Para publicar te faltan: ${missingRequired.join(", ")}`
+            : `Guardado · score ${score}/100`,
       });
       router.refresh();
     } catch (e) {
@@ -90,12 +110,73 @@ export function ProductEditForm({ productRef, initial }: ProductEditFormProps) {
     }
   }
 
+  // Campos obligatorios para PUBLICAR. Faltarlos no bloquea guardar en draft,
+  // pero sí bloquea cambiar status a "published".
+  const allergensStr = typeof form.allergens === "string"
+    ? form.allergens
+    : Array.isArray(form.allergens) ? form.allergens.join(",") : "";
+  const missingRequired: string[] = [];
+  if (!form.name?.trim()) missingRequired.push("nombre");
+  if (!form.brand) missingRequired.push("marca");
+  if (!form.family) missingRequired.push("familia");
+  if (!form.short_description?.trim()) missingRequired.push("descripción corta");
+  if (!form.long_description?.trim()) missingRequired.push("descripción larga");
+  if (!hasImage) missingRequired.push("imagen");
+  if (!allergensStr.trim()) missingRequired.push("alérgenos (escribe 'ninguno' si no aplica)");
+  const canPublish = missingRequired.length === 0;
+
   return (
     <form onSubmit={onSubmit} className="space-y-6">
+      {missingRequired.length > 0 ? (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 flex items-start gap-3">
+          <span aria-hidden className="text-amber-600 text-lg leading-none mt-0.5">⚠️</span>
+          <div className="text-sm flex-1">
+            <p className="font-medium text-amber-900">
+              Faltan {missingRequired.length} {missingRequired.length === 1 ? "campo obligatorio" : "campos obligatorios"} para publicar
+            </p>
+            <p className="text-amber-800 mt-0.5">
+              {missingRequired.join(" · ")}
+            </p>
+            <p className="text-xs text-amber-700/80 mt-1">
+              Puedes guardarlo en borrador, pero no podrás cambiarlo a &quot;Publicado&quot; hasta completarlos.
+            </p>
+          </div>
+        </div>
+      ) : (
+        form.status !== "published" && (
+          <div className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 flex items-start gap-3">
+            <span aria-hidden className="text-emerald-600 text-lg leading-none mt-0.5">✓</span>
+            <div className="text-sm flex-1">
+              <p className="font-medium text-emerald-900">Listo para publicar</p>
+              <p className="text-emerald-800/80 text-xs mt-0.5">
+                Cambia el estado a &quot;Publicado&quot; cuando quieras que aparezca en el escaparate.
+              </p>
+            </div>
+          </div>
+        )
+      )}
       <div className="grid sm:grid-cols-2 gap-5">
         <Field label="Nombre" value={form.name} onChange={(v) => set("name", v)} />
-        <Field label="Marca" value={form.brand} onChange={(v) => set("brand", v)} placeholder="ej. Maison Lafleur" />
-        <Field label="Familia" value={form.family} onChange={(v) => set("family", v)} placeholder="QUESOS, FOIE_GRAS, …" />
+        <ComboField label="Marca">
+          <EntityCombobox
+            kind="brand"
+            value={form.brand || null}
+            options={brandOptions}
+            onChange={(slug) => set("brand", slug ?? "")}
+            onOptionsChange={setBrandOptions}
+            placeholder="— Elegir marca —"
+          />
+        </ComboField>
+        <ComboField label="Familia">
+          <EntityCombobox
+            kind="family"
+            value={form.family || null}
+            options={familyOptions}
+            onChange={(slug) => set("family", slug ?? "")}
+            onOptionsChange={setFamilyOptions}
+            placeholder="— Elegir familia —"
+          />
+        </ComboField>
         <Field label="Origen" value={form.origin} onChange={(v) => set("origin", v)} />
         <Field label="Formato" value={form.format} onChange={(v) => set("format", v)} placeholder="ej. 250 g · cuña" />
         <Field
@@ -104,16 +185,6 @@ export function ProductEditForm({ productRef, initial }: ProductEditFormProps) {
           onChange={(v) => set("price_eur", v)}
           type="number"
           step="0.01"
-        />
-        <SelectField
-          label="Estado"
-          value={form.status}
-          onChange={(v) => set("status", v as typeof form.status)}
-          options={[
-            { value: "draft", label: "Borrador" },
-            { value: "published", label: "Publicado" },
-            { value: "archived", label: "Archivado" },
-          ]}
         />
       </div>
 
@@ -189,6 +260,31 @@ export function ProductEditForm({ productRef, initial }: ProductEditFormProps) {
         />
       </fieldset>
 
+      <fieldset className="rounded-2xl border border-border p-5 space-y-3">
+        <legend className="px-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+          Estado de publicación
+        </legend>
+        <SelectField
+          label={canPublish ? "Estado" : "Estado (publicar bloqueado)"}
+          value={form.status}
+          onChange={(v) => set("status", v as typeof form.status)}
+          options={[
+            { value: "draft", label: "Borrador" },
+            {
+              value: "published",
+              label: canPublish ? "Publicado" : "Publicado (faltan obligatorios)",
+              disabled: !canPublish && form.status !== "published",
+            },
+            { value: "archived", label: "Archivado" },
+          ]}
+        />
+        {!canPublish && (
+          <p className="text-xs text-amber-700">
+            Completa los campos obligatorios del banner de arriba para desbloquear &quot;Publicado&quot;.
+          </p>
+        )}
+      </fieldset>
+
       <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-border">
         <button
           type="submit"
@@ -198,12 +294,32 @@ export function ProductEditForm({ productRef, initial }: ProductEditFormProps) {
           {saving ? "Guardando…" : "Guardar cambios"}
         </button>
         {message && (
-          <p className={`text-sm ${message.kind === "ok" ? "text-emerald-600" : "text-destructive"}`}>
+          <p
+            className={`text-sm ${
+              message.kind === "ok"
+                ? "text-emerald-600"
+                : message.kind === "warn"
+                  ? "text-amber-700"
+                  : "text-destructive"
+            }`}
+          >
+            {message.kind === "warn" && "⚠️ "}
             {message.text}
           </p>
         )}
       </div>
     </form>
+  );
+}
+
+function ComboField({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <label className="block space-y-1.5">
+      <span className="text-xs uppercase tracking-wider text-muted-foreground">
+        {label}
+      </span>
+      {children}
+    </label>
   );
 }
 
@@ -293,7 +409,7 @@ function SelectField({
   label: string;
   value: string;
   onChange: (v: string) => void;
-  options: { value: string; label: string }[];
+  options: { value: string; label: string; disabled?: boolean }[];
 }) {
   return (
     <label className="block space-y-1.5">
@@ -304,7 +420,7 @@ function SelectField({
         className="w-full bg-background border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
       >
         {options.map((o) => (
-          <option key={o.value} value={o.value}>
+          <option key={o.value} value={o.value} disabled={o.disabled}>
             {o.label}
           </option>
         ))}

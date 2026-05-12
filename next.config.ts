@@ -14,6 +14,12 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     optimizePackageImports: ["lucide-react"],
+    serverActions: {
+      // Las fotos del catálogo pueden pasar de 1 MB (default), especialmente los
+      // PNGs transparentes. El backend (Cloudinary) admite hasta 10 MB, así que
+      // alineamos el límite del frontend.
+      bodySizeLimit: "12mb",
+    },
   },
 };
 

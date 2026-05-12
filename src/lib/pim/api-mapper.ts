@@ -75,7 +75,7 @@ export function mapToApi(f: FormFields): Record<string, unknown> {
 }
 
 /** Convierte la respuesta de la API a los nombres del form. */
-export function mapFromApi(p: ApiProduct): FormFields & { ref: string; image_url: string | null; optimization_score: number | null } {
+export function mapFromApi(p: ApiProduct): FormFields & { ref: string; image_url: string | null; gallery: string[]; optimization_score: number | null } {
   return {
     ref: p.ref,
     name: p.name,
@@ -101,6 +101,7 @@ export function mapFromApi(p: ApiProduct): FormFields & { ref: string; image_url
     gluten_free: !!p.sin_gluten,
     lactose_free: !!p.sin_lactosa,
     image_url: p.image_url ?? null,
+    gallery: Array.isArray(p.gallery) ? p.gallery : (p.image_url ? [p.image_url] : []),
     optimization_score: p.optimization_score ?? null,
   };
 }

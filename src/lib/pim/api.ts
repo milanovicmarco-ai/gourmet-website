@@ -46,6 +46,7 @@ export type ApiProduct = {
   venta_a_granel?: boolean | null;
   peso_variable?: boolean | null;
   image_url?: string | null;
+  gallery?: string[] | null;
   active?: boolean | null;
   status?: "draft" | "published" | "archived" | null;
   optimization_score?: number | null;
@@ -106,5 +107,37 @@ export async function listFamilies(revalidate = 3600): Promise<FamilyCount[]> {
     next: { revalidate },
   });
   if (!res.ok) throw new Error(`listFamilies ${res.status}: ${await res.text()}`);
+  return res.json();
+}
+
+export type BrandEntity = {
+  slug: string;
+  name: string;
+  origin?: string | null;
+  logo_url?: string | null;
+};
+
+export type FamilyEntity = {
+  slug: string;
+  name: string;
+  is_entity?: boolean;
+  count?: number;
+};
+
+/** Lista marcas activas como entidades ricas (slug + name + metadata). */
+export async function listBrands(revalidate = 60): Promise<BrandEntity[]> {
+  const res = await fetch(`${AURELLANO_API}/catalog/brands`, {
+    next: { revalidate },
+  });
+  if (!res.ok) throw new Error(`listBrands ${res.status}: ${await res.text()}`);
+  return res.json();
+}
+
+/** Lista familias como entidades — devuelve {slug, name}. */
+export async function listFamiliesEntities(revalidate = 60): Promise<FamilyEntity[]> {
+  const res = await fetch(`${AURELLANO_API}/catalog/families`, {
+    next: { revalidate },
+  });
+  if (!res.ok) throw new Error(`listFamiliesEntities ${res.status}: ${await res.text()}`);
   return res.json();
 }

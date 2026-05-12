@@ -2,7 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/integrations/supabase/server";
 import { computeOptimizationScore, adaptApiProduct } from "@/lib/pim/score";
-import { getProductByRef } from "@/lib/pim/api";
+import { getProductByRef, listBrands, listFamiliesEntities } from "@/lib/pim/api";
 import { mapFromApi } from "@/lib/pim/api-mapper";
 import { listCatalogs, getProductCatalogs } from "@/lib/pim/catalogs";
 import { ProductEditForm } from "./edit-form";
@@ -19,16 +19,29 @@ export default async function AdminProductDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: ref } = await params;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/admin/login");
+  // Skip Supabase auth completamente cuando DEV_BYPASS_ADMIN_AUTH=1 — evita
+  // el lookup DNS lento si el proyecto Supabase no está configurado.
+  let user: { email?: string | null } | null = null;
+  if (process.env.DEV_BYPASS_ADMIN_AUTH !== "1") {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+    if (!user) redirect("/admin/login");
+  }
 
-  const [product, allCatalogs, assignedSlugs] = await Promise.all([
+  const [product, allCatalogs, assignedSlugs, allBrands, allFamilies] = await Promise.all([
     getProductByRef(ref).catch(() => null),
     listCatalogs(true).catch(() => []),
     getProductCatalogs(ref).catch(() => []),
+    listBrands().catch(() => []),
+    listFamiliesEntities().catch(() => []),
   ]);
   if (!product) notFound();
+
+  const brandOptions = allBrands.map((b) => ({ slug: b.slug, name: b.name }));
+  const familyOptions = allFamilies
+    .filter((f) => f.is_entity !== false)
+    .map((f) => ({ slug: f.slug, name: f.name }));
 
   // Mapeamos slugs asignados a IDs reales del catálogo
   const assignedIds = allCatalogs.filter((c) => assignedSlugs.includes(c.slug)).map((c) => c.id);
@@ -87,7 +100,13 @@ export default async function AdminProductDetailPage({
           <section className="rounded-2xl border border-border p-6 bg-background">
             <ImagesEditor
               productRef={product.ref}
-              imageUrl={product.image_url ?? null}
+              gallery={
+                Array.isArray(product.gallery) && product.gallery.length > 0
+                  ? product.gallery
+                  : product.image_url
+                    ? [product.image_url]
+                    : []
+              }
             />
           </section>
           <section className="rounded-2xl border border-border p-6 bg-background">
@@ -100,6 +119,12 @@ export default async function AdminProductDetailPage({
           <ProductEditForm
             productRef={product.ref}
             initial={formInitial}
+            brandOptions={brandOptions}
+            familyOptions={familyOptions}
+            hasImage={
+              !!product.image_url ||
+              (Array.isArray(product.gallery) && product.gallery.length > 0)
+            }
           />
         </div>
         <aside className="lg:col-span-4">
