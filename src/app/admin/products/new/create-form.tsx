@@ -1,19 +1,27 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, ReactNode, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createProduct } from "../actions";
+import { EntityCombobox, type EntityOption } from "../[id]/entity-combobox";
 
 interface ProductCreateFormProps {
-  families: string[];
+  brandOptions: EntityOption[];
+  familyOptions: EntityOption[];
 }
 
-export function ProductCreateForm({ families }: ProductCreateFormProps) {
+export function ProductCreateForm({
+  brandOptions: initialBrands,
+  familyOptions: initialFamilies,
+}: ProductCreateFormProps) {
   const router = useRouter();
+  const [brandOptions, setBrandOptions] = useState(initialBrands);
+  const [familyOptions, setFamilyOptions] = useState(initialFamilies);
   const [form, setForm] = useState({
     ref: "",
     name: "",
-    family: families[0] ?? "",
+    family: "" as string,
+    brand: "" as string,
     short_description: "",
     base_price_eur: "",
     status: "draft" as "draft" | "published" | "archived",
@@ -34,6 +42,7 @@ export function ProductCreateForm({ families }: ProductCreateFormProps) {
         ref: form.ref.trim() || undefined,
         name: form.name.trim(),
         family: form.family || undefined,
+        brand: form.brand || null,
         short_description: form.short_description.trim() || null,
         price_eur: form.base_price_eur === "" ? null : Number(form.base_price_eur),
         status: form.status,
@@ -55,15 +64,16 @@ export function ProductCreateForm({ families }: ProductCreateFormProps) {
           onChange={(v) => set("ref", v)}
           placeholder="ej. 17999 — déjalo vacío para que se autogenere"
         />
-        <SelectField
-          label="Familia"
-          value={form.family}
-          onChange={(v) => set("family", v)}
-          options={[
-            { value: "", label: "— Selecciona —" },
-            ...families.map((f) => ({ value: f, label: f })),
-          ]}
-        />
+        <ComboField label="Familia">
+          <EntityCombobox
+            kind="family"
+            value={form.family || null}
+            options={familyOptions}
+            onChange={(slug) => set("family", slug ?? "")}
+            onOptionsChange={setFamilyOptions}
+            placeholder="— Elegir familia —"
+          />
+        </ComboField>
         <Field
           label="Nombre"
           value={form.name}
@@ -71,6 +81,16 @@ export function ProductCreateForm({ families }: ProductCreateFormProps) {
           placeholder="ej. Manchego curado 12M"
           required
         />
+        <ComboField label="Marca (opcional)">
+          <EntityCombobox
+            kind="brand"
+            value={form.brand || null}
+            options={brandOptions}
+            onChange={(slug) => set("brand", slug ?? "")}
+            onOptionsChange={setBrandOptions}
+            placeholder="— Elegir marca —"
+          />
+        </ComboField>
         <Field
           label="Precio (€)"
           value={form.base_price_eur}
@@ -94,7 +114,7 @@ export function ProductCreateForm({ families }: ProductCreateFormProps) {
         onChange={(v) => set("status", v as typeof form.status)}
         options={[
           { value: "draft", label: "Borrador" },
-          { value: "published", label: "Publicado" },
+          { value: "published", label: "Publicado (no podrás si faltan obligatorios)" },
           { value: "archived", label: "Archivado" },
         ]}
       />
@@ -113,8 +133,22 @@ export function ProductCreateForm({ families }: ProductCreateFormProps) {
         >
           {saving ? "Creando…" : "Crear y editar"}
         </button>
+        <p className="text-xs text-muted-foreground">
+          Tras crear pasarás al editor completo donde subes imagen, alérgenos y resto.
+        </p>
       </div>
     </form>
+  );
+}
+
+function ComboField({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <label className="block space-y-1.5">
+      <span className="text-xs uppercase tracking-wider text-muted-foreground">
+        {label}
+      </span>
+      {children}
+    </label>
   );
 }
 

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/integrations/supabase/server";
-import { listFamilies } from "@/lib/pim/api";
+import { listBrands, listFamiliesEntities } from "@/lib/pim/api";
 import { ProductCreateForm } from "./create-form";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +17,15 @@ export default async function NewProductPage() {
     if (!user) redirect("/admin/login");
   }
 
-  const families = await listFamilies().catch(() => []);
+  const [brands, families] = await Promise.all([
+    listBrands().catch(() => []),
+    listFamiliesEntities().catch(() => []),
+  ]);
+
+  const brandOptions = brands.map((b) => ({ slug: b.slug, name: b.name }));
+  const familyOptions = families
+    .filter((f) => f.is_entity !== false)
+    .map((f) => ({ slug: f.slug, name: f.name }));
 
   return (
     <div className="px-5 md:px-10 py-8 space-y-8 max-w-3xl">
@@ -34,12 +42,15 @@ export default async function NewProductPage() {
           Nuevo producto
         </h1>
         <p className="text-sm text-muted-foreground mt-2">
-          Asigna la <code>ref</code> (código interno de Aurellano) y la familia. La imagen,
-          el resto de campos y el SEO los puedes completar después en la edición.
+          Asigna la <code>ref</code> (código interno de Aurellano), familia y opcionalmente la
+          marca. La imagen, descripciones, alérgenos y SEO los completas después en la edición.
         </p>
       </header>
 
-      <ProductCreateForm families={families.map((f) => f.family)} />
+      <ProductCreateForm
+        brandOptions={brandOptions}
+        familyOptions={familyOptions}
+      />
     </div>
   );
 }
