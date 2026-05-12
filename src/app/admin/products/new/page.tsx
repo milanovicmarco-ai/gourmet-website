@@ -7,9 +7,15 @@ import { ProductCreateForm } from "./create-form";
 export const dynamic = "force-dynamic";
 
 export default async function NewProductPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/admin/login");
+  // Skip Supabase auth completamente cuando DEV_BYPASS_ADMIN_AUTH=1 — evita
+  // el lookup DNS lento si el proyecto Supabase no está configurado.
+  let user: { email?: string | null } | null = null;
+  if (process.env.DEV_BYPASS_ADMIN_AUTH !== "1") {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+    if (!user) redirect("/admin/login");
+  }
 
   const families = await listFamilies().catch(() => []);
 

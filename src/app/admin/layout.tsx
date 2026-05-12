@@ -15,8 +15,13 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  // Skip Supabase cuando DEV_BYPASS_ADMIN_AUTH=1 (evita lookup DNS lento).
+  let user: { email?: string | null } | null = null;
+  if (process.env.DEV_BYPASS_ADMIN_AUTH !== "1") {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  }
 
   // Si no está autenticado y no estamos ya en /admin/login → redirigir.
   // Como este layout aplica a /admin/login también, dejamos pasar el caso login.

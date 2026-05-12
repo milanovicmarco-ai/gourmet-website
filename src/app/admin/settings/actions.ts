@@ -2,21 +2,43 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/integrations/supabase/server";
+import { listCatalogs as fetchCatalogs } from "@/lib/pim/catalogs";
+
+// FUENTE DE VERDAD para catálogos = backend Aurellano (FastAPI + Neon),
+// bloque 3 LIVE 2026-05-09. Las mutaciones llaman a `/catalog/catalogs/*`
+// con `Authorization: Bearer ADMIN_API_KEY`. La auth Supabase se mantiene
+// solo como gate del admin (gating del usuario humano que abre la UI).
+
+const API_BASE =
+  process.env.NEXT_PUBLIC_AURELLANO_API ?? "https://aurellano-api.srv1124642.hstgr.cloud";
+const API_KEY = process.env.ADMIN_API_KEY;
 
 async function requireAdmin() {
+  // En dev se puede saltar el gate Supabase con DEV_BYPASS_ADMIN_AUTH=1.
+  if (process.env.DEV_BYPASS_ADMIN_AUTH === "1") return;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
-  return { supabase, user };
 }
 
-const slugify = (s: string) =>
-  s
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
+function authHeaders(): HeadersInit {
+  if (!API_KEY) {
+    throw new Error("ADMIN_API_KEY no configurada en .env.local — necesaria para mutar catálogos.");
+  }
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${API_KEY}`,
+  };
+}
+
+/** Mapea UUID interno (que la UI usa) → slug (que la API espera en la URL). */
+async function slugForCatalogId(id: string): Promise<string> {
+  // listCatalogs incluye inactivos para que también se puedan reactivar/borrar.
+  const catalogs = await fetchCatalogs(true);
+  const found = catalogs.find((c) => c.id === id);
+  if (!found) throw new Error(`Catálogo con id ${id} no encontrado.`);
+  return found.slug;
+}
 
 // ============================
 // CATÁLOGOS
@@ -28,22 +50,22 @@ export async function createCatalog(input: {
   color?: string;
   sort_order?: number;
 }) {
-  const { supabase } = await requireAdmin();
-  const slug = (input.slug?.trim() || slugify(input.name)).slice(0, 64);
-  const { data, error } = await supabase
-    .from("catalogs")
-    .insert({
-      slug,
+  await requireAdmin();
+  const r = await fetch(`${API_BASE}/catalog/catalogs`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({
+      // El backend normaliza el slug; si no se pasa, usa el name como base.
+      slug: (input.slug?.trim() || input.name).slice(0, 80),
       name: input.name.trim(),
       description: input.description?.trim() || null,
       color: input.color || "#fa2ca2",
       sort_order: input.sort_order ?? 0,
-    })
-    .select()
-    .single();
-  if (error) throw new Error(error.message);
+    }),
+  });
+  if (!r.ok) throw new Error(`createCatalog: ${r.status} ${await r.text()}`);
   revalidatePath("/admin/settings/catalogs");
-  return data;
+  return r.json();
 }
 
 export async function updateCatalog(id: string, input: {
@@ -54,27 +76,35 @@ export async function updateCatalog(id: string, input: {
   sort_order?: number;
   active?: boolean;
 }) {
-  const { supabase } = await requireAdmin();
-  const { error } = await supabase
-    .from("catalogs")
-    .update({
-      ...(input.slug !== undefined && { slug: input.slug.trim() }),
-      ...(input.name !== undefined && { name: input.name.trim() }),
-      ...(input.description !== undefined && { description: input.description?.trim() || null }),
-      ...(input.color !== undefined && { color: input.color }),
-      ...(input.sort_order !== undefined && { sort_order: input.sort_order }),
-      ...(input.active !== undefined && { active: input.active }),
-    })
-    .eq("id", id);
-  if (error) throw new Error(error.message);
+  await requireAdmin();
+  const slug = await slugForCatalogId(id);
+  const patch: Record<string, unknown> = {};
+  if (input.slug !== undefined) patch.slug = input.slug.trim();
+  if (input.name !== undefined) patch.name = input.name.trim();
+  if (input.description !== undefined) patch.description = input.description?.trim() || null;
+  if (input.color !== undefined) patch.color = input.color;
+  if (input.sort_order !== undefined) patch.sort_order = input.sort_order;
+  if (input.active !== undefined) patch.active = input.active;
+
+  const r = await fetch(`${API_BASE}/catalog/catalogs/${encodeURIComponent(slug)}`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify(patch),
+  });
+  if (!r.ok) throw new Error(`updateCatalog: ${r.status} ${await r.text()}`);
   revalidatePath("/admin/settings/catalogs");
   revalidatePath("/admin/products");
 }
 
 export async function deleteCatalog(id: string) {
-  const { supabase } = await requireAdmin();
-  const { error } = await supabase.from("catalogs").delete().eq("id", id);
-  if (error) throw new Error(error.message);
+  await requireAdmin();
+  const slug = await slugForCatalogId(id);
+  // hard=true para liberar el slug y limpiar la pivote (CASCADE).
+  const r = await fetch(
+    `${API_BASE}/catalog/catalogs/${encodeURIComponent(slug)}?hard=true`,
+    { method: "DELETE", headers: authHeaders() },
+  );
+  if (!r.ok) throw new Error(`deleteCatalog: ${r.status} ${await r.text()}`);
   revalidatePath("/admin/settings/catalogs");
   revalidatePath("/admin/products");
 }
@@ -83,20 +113,26 @@ export async function deleteCatalog(id: string) {
 // ASIGNACIÓN PRODUCTO ↔ CATÁLOGOS
 // ============================
 export async function setProductCatalogs(productRef: string, catalogIds: string[]) {
-  const { supabase } = await requireAdmin();
+  await requireAdmin();
 
-  // Borra todos los actuales y reinserta. Más simple que diff y para volúmenes bajos es suficiente.
-  const { error: delErr } = await supabase
-    .from("product_catalogs")
-    .delete()
-    .eq("product_ref", productRef);
-  if (delErr) throw new Error(delErr.message);
+  // La UI sigue trabajando con UUIDs internos; los traducimos a slugs porque la
+  // API del backend acepta `catalogs: [slug, slug]` (no UUIDs). Reemplaza el set
+  // completo en una sola llamada PUT (atómico, equivalente al delete+reinsert
+  // anterior pero sin race conditions).
+  const all = await fetchCatalogs(true);
+  const slugs = catalogIds
+    .map((id) => all.find((c) => c.id === id)?.slug)
+    .filter((s): s is string => Boolean(s));
 
-  if (catalogIds.length > 0) {
-    const rows = catalogIds.map((catalog_id) => ({ product_ref: productRef, catalog_id }));
-    const { error: insErr } = await supabase.from("product_catalogs").insert(rows);
-    if (insErr) throw new Error(insErr.message);
-  }
+  const r = await fetch(
+    `${API_BASE}/catalog/products/${encodeURIComponent(productRef)}`,
+    {
+      method: "PUT",
+      headers: authHeaders(),
+      body: JSON.stringify({ catalogs: slugs }),
+    },
+  );
+  if (!r.ok) throw new Error(`setProductCatalogs: ${r.status} ${await r.text()}`);
 
   revalidatePath(`/admin/products/${productRef}`);
   revalidatePath("/admin/products");

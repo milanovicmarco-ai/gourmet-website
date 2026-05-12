@@ -5,6 +5,8 @@ import { chat, SYSTEM_VOICE } from "@/lib/ai";
 import { getProductByRef } from "@/lib/pim/api";
 
 async function requireAdmin() {
+  // En dev se puede saltar el gate Supabase con DEV_BYPASS_ADMIN_AUTH=1.
+  if (process.env.DEV_BYPASS_ADMIN_AUTH === "1") return;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
