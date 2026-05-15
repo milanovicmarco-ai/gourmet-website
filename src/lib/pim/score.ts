@@ -69,7 +69,7 @@ export function computeOptimizationScore(p: PimProduct): ScoreResult {
     {
       key: "gallery",
       label: "Galería con ≥ 2 imágenes",
-      weight: 5,
+      weight: 10,
       passed: Array.isArray(p.gallery) && (p.gallery?.length ?? 0) >= 2,
     },
     {
@@ -107,12 +107,6 @@ export function computeOptimizationScore(p: PimProduct): ScoreResult {
       label: "Origen",
       weight: 5,
       passed: !!p.origin && p.origin.length > 0,
-    },
-    {
-      key: "price",
-      label: "Precio",
-      weight: 5,
-      passed: typeof p.price_eur === "number" && p.price_eur > 0,
     },
     {
       key: "brand",
@@ -153,7 +147,7 @@ export function adaptApiProduct(p: ApiProduct): PimProduct {
     short_description: p.descripcion_corta ?? null,
     long_description: p.description_rich ?? null,
     primary_image: p.image_url ?? null,
-    gallery: p.image_url ? [p.image_url] : [],
+    gallery: p.gallery ?? [],
     allergens,
     badges: p.tags ?? [],
     pairings: p.pairings ?? [],
