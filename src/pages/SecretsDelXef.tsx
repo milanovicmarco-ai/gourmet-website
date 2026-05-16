@@ -4,14 +4,31 @@ import { Layout } from "@/components/Layout";
 import { Circle } from "@/components/Circle";
 import { SectionHeader } from "@/components/SectionHeader";
 import { ProductCard } from "@/components/ProductCard";
-import { products } from "@/lib/products";
 import { ArrowRight, MessageCircle, ChefHat } from "lucide-react";
 import Link from "next/link";
 import { waLink } from "@/lib/contact";
+import type { CuratedProduct } from "@/lib/pim/featured";
+import { useI18n } from "@/lib/i18n";
+
 const xef = "/images/xef.jpg";
 
-const SecretsDelXef = () => {
-  const items = products.filter((p) => p.specialties.includes("secrets") || p.category === "Foie");
+interface Props {
+  /** Productos destacados del catálogo HORECA. */
+  featured?: CuratedProduct[];
+  /** Total de productos publicados en el catálogo HORECA (para diagnóstico de vacío). */
+  featuredCatalogCount?: number;
+  /** Productos "primer precio" del catálogo HORECA (entry-level con margen). */
+  primerPrecio?: CuratedProduct[];
+  primerPrecioCatalogCount?: number;
+}
+
+const SecretsDelXef = ({
+  featured = [],
+  featuredCatalogCount = 0,
+  primerPrecio = [],
+  primerPrecioCatalogCount = 0,
+}: Props) => {
+  const { t } = useI18n();
   return (
     <Layout
       navTheme="dark"
@@ -25,13 +42,13 @@ const SecretsDelXef = () => {
         <div className="container-edit pt-28 md:pt-36 pb-20 md:pb-28 relative grid lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-6 space-y-6">
             <p className="eyebrow text-primary-foreground/60">Para hostelería</p>
-            <h1 className="display text-balance">Secrets<br /><span className="italic font-light text-accent">del Xef.</span></h1>
+            <h1 className="display text-balance">Secrets<br /><span className="italic font-light text-accent">du Xef.</span></h1>
             <p className="text-lg text-primary-foreground/75 max-w-xl">Producto pensado para servicio. 4ª y 5ª gama, platos preparados de autor, ingredientes diferenciales que ahorran tiempo sin renunciar al criterio.</p>
             <div className="flex flex-wrap gap-3">
-              <Link href="/catalogo?cliente=horeca" className="inline-flex items-center gap-2 bg-accent text-accent-foreground rounded-full pl-6 pr-7 py-4 font-medium hover:opacity-90 transition-opacity">
+              <Link href="/catalogo?catalog=horeca" className="inline-flex items-center gap-2 bg-accent text-accent-foreground rounded-full pl-6 pr-7 py-4 font-medium hover:opacity-90 transition-opacity">
                 <ChefHat className="h-5 w-5" /> Catálogo para tu negocio
               </Link>
-              <a href={waLink("Hola, me interesa la gama Secrets del Xef.")} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 border border-primary-foreground/40 text-primary-foreground rounded-full pl-6 pr-7 py-4 font-medium hover:bg-primary-foreground hover:text-primary transition-colors">
+              <a href={waLink("Hola, me interesa la gama Secrets du Xef.")} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 border border-primary-foreground/40 text-primary-foreground rounded-full pl-6 pr-7 py-4 font-medium hover:bg-primary-foreground hover:text-primary transition-colors">
                 <MessageCircle className="h-5 w-5" /> Hablar con comercial
               </a>
             </div>
@@ -64,16 +81,139 @@ const SecretsDelXef = () => {
         </div>
       </section>
 
-      <section className="container-edit pb-24 md:pb-32">
-        <SectionHeader eyebrow="Selección" title="Lo que está saliendo de cocina." />
-        <div className="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-          {items.map((p) => (
-            <ProductCard key={p.slug} image={p.image} title={p.name} category={p.category} origin={p.origin} href={`/producto/${p.slug}`} />
-          ))}
+      {/* Selección destacada del catálogo HORECA */}
+      <CuratedGrid
+        eyebrow="Selección"
+        title="Lo que está saliendo de cocina."
+        products={featured}
+        catalogPublishedCount={featuredCatalogCount}
+        catalogName="HORECA"
+        flagLabel="Destacado"
+      />
+
+      {/* Primer precio — siempre visible, con mensaje si está vacío */}
+      <section className="bg-accent/5 border-y border-border">
+        <div className="container-edit py-20 md:py-28">
+          <SectionHeader
+            eyebrow="Primer precio"
+            title={<>Margen para tu negocio, <span className="pink-underline">precio para tu carta</span>.</>}
+            subtitle="Una selección de productos económicos y de alta rotación para escalar márgenes sin perder criterio."
+          />
+          {primerPrecio.length > 0 ? (
+            <>
+              <div className="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+                {primerPrecio.map((p) => (
+                  <ProductCard
+                    key={p.ref}
+                    image={p.image_url ?? "/images/placeholder.svg"}
+                    title={p.name}
+                    category={p.family || "—"}
+                    origin={`Ref. ${p.ref}`}
+                    href={`/producto/${p.slug}`}
+                  />
+                ))}
+              </div>
+              <div className="mt-10 text-center">
+                <Link
+                  href="/catalogo?catalog=horeca&especialidad=primer_precio"
+                  className="inline-flex items-center gap-2 border border-foreground rounded-full pl-5 pr-6 py-3 text-sm font-medium"
+                >
+                  Ver todos los primer precio HORECA <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </>
+          ) : (
+            <EmptyHubMessage
+              catalogPublishedCount={primerPrecioCatalogCount}
+              catalogName="HORECA"
+              flagLabel="Primer precio"
+            />
+          )}
         </div>
       </section>
     </Layout>
   );
 };
+
+/** Sección compartida para "Selección destacada". Mensaje empty distingue entre
+ *  "no hay productos en el catálogo" y "hay productos pero ninguno con el flag". */
+function CuratedGrid({
+  eyebrow,
+  title,
+  products,
+  catalogPublishedCount,
+  catalogName,
+  flagLabel,
+}: {
+  eyebrow: string;
+  title: string;
+  products: CuratedProduct[];
+  catalogPublishedCount: number;
+  catalogName: string;
+  flagLabel: string;
+}) {
+  return (
+    <section className="container-edit pb-24 md:pb-32">
+      <SectionHeader eyebrow={eyebrow} title={title} />
+      {products.length > 0 ? (
+        <div className="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+          {products.map((p) => (
+            <ProductCard
+              key={p.ref}
+              image={p.image_url ?? "/images/placeholder.svg"}
+              title={p.name}
+              category={p.family || "—"}
+              origin={`Ref. ${p.ref}`}
+              href={`/producto/${p.slug}`}
+            />
+          ))}
+        </div>
+      ) : (
+        <EmptyHubMessage
+          catalogPublishedCount={catalogPublishedCount}
+          catalogName={catalogName}
+          flagLabel={flagLabel}
+        />
+      )}
+    </section>
+  );
+}
+
+/** Mensaje empty con diagnóstico: distingue "catálogo sin productos" vs "productos
+ *  en catálogo pero sin el flag" — Marco sabe qué acción tomar en el PIM. */
+function EmptyHubMessage({
+  catalogPublishedCount,
+  catalogName,
+  flagLabel,
+}: {
+  catalogPublishedCount: number;
+  catalogName: string;
+  flagLabel: string;
+}) {
+  return (
+    <div className="mt-12 rounded-2xl border border-dashed border-border p-8 text-sm text-muted-foreground space-y-2 max-w-2xl">
+      {catalogPublishedCount === 0 ? (
+        <>
+          <p className="font-medium text-foreground">Aún no hay productos publicados en {catalogName}.</p>
+          <p>
+            En el PIM, abre un producto y márcalo con el catálogo &ldquo;{catalogName}&rdquo;.
+            Cuando esté en estado &ldquo;Publicado&rdquo;, aparecerá aquí en cuanto le actives el flag &ldquo;{flagLabel}&rdquo;.
+          </p>
+        </>
+      ) : (
+        <>
+          <p className="font-medium text-foreground">
+            {catalogPublishedCount} producto{catalogPublishedCount === 1 ? "" : "s"} en {catalogName}, pero ninguno con el flag &ldquo;{flagLabel}&rdquo;.
+          </p>
+          <p>
+            Abre un producto en el PIM, activa el toggle &ldquo;{flagLabel}&rdquo; en la sección
+            &ldquo;Clasificación gastronómica&rdquo; y guarda. Si el toggle aparece atenuado, falta correr
+            la migración SQL <code>20260515_product_meta_clasificacion.sql</code> en Supabase.
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default SecretsDelXef;

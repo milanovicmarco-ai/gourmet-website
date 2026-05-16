@@ -10,7 +10,7 @@ export const ADDRESS_POSTAL = "25005";
 export const ADDRESS_CITY = "Lleida";
 export const ADDRESS_REGION = "Catalunya";
 export const ADDRESS_COUNTRY = "ES";
-export const GOOGLE_BUSINESS_URL = "https://maps.app.goo.gl/F5UcMPmLUjiCbqBr6";
+export const GOOGLE_BUSINESS_URL = "https://maps.app.goo.gl/VbHPYXEZtijvx3JJ9";
 
 export const waLink = (msg: string) =>
   `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;

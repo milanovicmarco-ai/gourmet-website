@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Instagram, Linkedin, MessageCircle } from "lucide-react";
-import { WHATSAPP_LINK, INSTAGRAM } from "@/lib/contact";
+import { Instagram, MapPin, MessageCircle } from "lucide-react";
+import { WHATSAPP_LINK, INSTAGRAM, GOOGLE_BUSINESS_URL } from "@/lib/contact";
 import { useI18n } from "@/lib/i18n";
 
 const socials = [
   { href: INSTAGRAM, label: "Instagram", icon: Instagram },
-  { href: "https://linkedin.com/company/aurellano", label: "LinkedIn", icon: Linkedin },
+  { href: GOOGLE_BUSINESS_URL, label: "Google Maps", icon: MapPin },
   { href: WHATSAPP_LINK, label: "WhatsApp", icon: MessageCircle },
 ];
 
@@ -17,18 +17,19 @@ export const Footer = () => {
     {
       title: t("Productos"),
       links: [
-        { to: "/catalogo", label: t("Todos los productos") },
+        { to: "/catalogo", label: t("Catálogo") },
         { to: "/secrets-du-xef", label: t("Secrets du Xef") },
         { to: "/colmado", label: t("Colmado") },
-        { to: "/catalogo", label: t("Catálogo") },
+        { to: "/inspiracion", label: t("Inspiración") },
       ],
     },
     {
       title: t("Gourmet"),
       links: [
-        { to: "/catalogo?especialidad=delicatessen", label: t("Delicatessen") },
-        { to: "/especial-sin", label: t("Healthy Food") },
-        { to: "/catalogo?especialidad=limited", label: t("Limited Edition") },
+        { to: "/quesos", label: t("Formages") },
+        { to: "/catalogo?catalog=delicatessen", label: t("Delicatessen") },
+        { to: "/catalogo?catalog=healthy", label: t("Healthy") },
+        { to: "/catalogo?catalog=limited-edition", label: t("Limited Edition") },
       ],
     },
     {
@@ -94,8 +95,11 @@ export const Footer = () => {
                   flexShrink: 0,
                 }}
               />
-              Aurellano
-              <span style={{ color: "#ffffff", fontWeight: 700 }}>· 1968</span>
+              <span>
+                {t("Aurellano")}{" "}
+                <span style={{ color: "#fa2ca2" }}>{t("Productos")}</span>{" "}
+                {t("Gastronómicos")}
+              </span>
             </p>
             <p
               style={{
@@ -106,7 +110,7 @@ export const Footer = () => {
                 maxWidth: "340px",
               }}
             >
-              {t("Distribuimos producto gourmet con criterio propio para restaurantes, hoteles y tiendas que buscan algo más.")}
+              {t("Especialistas en distribución de productos gourmet para restaurantes, hoteles y tiendas especializadas.")}
             </p>
 
             <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
@@ -231,8 +235,7 @@ export const Footer = () => {
           }}
         >
           <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.22)" }}>
-            © {new Date().getFullYear()} Aurellano productes gastronòmics · Lleida,
-            Catalunya
+            © {new Date().getFullYear()} {t("Aurellano Productos Gastronómicos")} · Lleida, Catalunya
           </p>
           <div style={{ display: "flex", gap: "22px" }}>
             {[t("Privacidad"), t("Condiciones"), t("Cookies")].map((label) => (

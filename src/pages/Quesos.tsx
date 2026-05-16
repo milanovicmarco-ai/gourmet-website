@@ -1,14 +1,15 @@
 "use client";
 
-import { ArrowRight, MessageCircle } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { Circle } from "@/components/Circle";
 import { SectionHeader } from "@/components/SectionHeader";
 import { ProductCard } from "@/components/ProductCard";
-import { products } from "@/lib/products";
-import { WHATSAPP_LINK, waLink } from "@/lib/contact";
+import { waLink } from "@/lib/contact";
+import type { CuratedProduct } from "@/lib/pim/featured";
+import { useI18n } from "@/lib/i18n";
+
 const cheeses = "/images/cheeses.jpg";
-const quesoDetalle = "/images/queso-detalle.jpg";
 
 const origins = ["Cataluña", "Castilla", "Asturias", "País Vasco", "Francia", "Italia", "Suiza", "Holanda"];
 const intensities = ["Suave", "Medio", "Intenso", "Muy intenso"];
@@ -21,12 +22,17 @@ const pairings = [
   { cheese: "Idiazábal ahumado", with: "Pera + sidra natural" },
 ];
 
-const Quesos = () => {
-  const quesos = products.filter((p) => p.category === "Quesos");
+interface Props {
+  /** Productos destacados del catálogo formages. */
+  featured?: CuratedProduct[];
+  featuredCatalogCount?: number;
+}
 
+const Quesos = ({ featured = [], featuredCatalogCount = 0 }: Props) => {
+  useI18n(); // se mantiene importado para futuras strings traducibles
   return (
     <Layout
-      seoTitle="Quesos afinados | Aurellano Productos Gastronómicos"
+      seoTitle="Formages | Aurellano Productos Gastronómicos"
       seoDescription="Selección de quesos afinados por origen, intensidad y familia. DOP, artesanos y veganos. Maridajes y montaje de tabla a medida."
     >
       {/* HERO */}
@@ -85,14 +91,30 @@ const Quesos = () => {
         </div>
       </section>
 
-      {/* DESTACADOS */}
+      {/* DESTACADOS — productos marcados como `destacado` en el catálogo formages */}
       <section className="container-edit py-20 md:py-28">
         <SectionHeader eyebrow="Hoy en cámara" title={<>Algunos de nuestros <span className="pink-underline">imprescindibles</span>.</>} />
-        <div className="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-          {[...quesos, ...quesos, ...quesos, ...quesos].slice(0, 4).map((p, i) => (
-            <ProductCard key={i} image={p.image} title={p.name} category={p.category} origin={p.origin} href={`/producto/${p.slug}`} circle={i % 2 === 0} />
-          ))}
-        </div>
+        {featured.length > 0 ? (
+          <div className="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+            {featured.map((p, i) => (
+              <ProductCard
+                key={p.ref}
+                image={p.image_url ?? "/images/placeholder.svg"}
+                title={p.name}
+                category={p.family || "—"}
+                origin={`Ref. ${p.ref}`}
+                href={`/producto/${p.slug}`}
+                circle={i % 2 === 0}
+              />
+            ))}
+          </div>
+        ) : (
+          <EmptyHubMessage
+            catalogPublishedCount={featuredCatalogCount}
+            catalogName="Formages"
+            flagLabel="Destacado"
+          />
+        )}
       </section>
 
       {/* MARIDAJES */}
@@ -131,5 +153,41 @@ const Quesos = () => {
     </Layout>
   );
 };
+
+/** Mensaje empty diagnóstico: distingue "catálogo sin productos" vs "sin flag". */
+function EmptyHubMessage({
+  catalogPublishedCount,
+  catalogName,
+  flagLabel,
+}: {
+  catalogPublishedCount: number;
+  catalogName: string;
+  flagLabel: string;
+}) {
+  return (
+    <div className="mt-12 rounded-2xl border border-dashed border-border p-8 text-sm text-muted-foreground space-y-2 max-w-2xl">
+      {catalogPublishedCount === 0 ? (
+        <>
+          <p className="font-medium text-foreground">Aún no hay productos publicados en {catalogName}.</p>
+          <p>
+            En el PIM, abre un producto y márcalo con el catálogo &ldquo;{catalogName}&rdquo;.
+            Cuando esté en estado &ldquo;Publicado&rdquo;, aparecerá aquí en cuanto le actives el flag &ldquo;{flagLabel}&rdquo;.
+          </p>
+        </>
+      ) : (
+        <>
+          <p className="font-medium text-foreground">
+            {catalogPublishedCount} producto{catalogPublishedCount === 1 ? "" : "s"} en {catalogName}, pero ninguno con el flag &ldquo;{flagLabel}&rdquo;.
+          </p>
+          <p>
+            Abre un producto en el PIM, activa el toggle &ldquo;{flagLabel}&rdquo; en la sección
+            &ldquo;Clasificación gastronómica&rdquo; y guarda. Si el toggle aparece atenuado, falta correr
+            la migración SQL <code>20260515_product_meta_clasificacion.sql</code> en Supabase.
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default Quesos;

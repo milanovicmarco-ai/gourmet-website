@@ -4,17 +4,31 @@ import { Layout } from "@/components/Layout";
 import { Circle } from "@/components/Circle";
 import { SectionHeader } from "@/components/SectionHeader";
 import { ProductCard } from "@/components/ProductCard";
-import { products } from "@/lib/products";
 import { ArrowRight, MessageCircle, Store } from "lucide-react";
 import Link from "next/link";
 import { waLink } from "@/lib/contact";
+import type { CuratedProduct } from "@/lib/pim/featured";
+import { useI18n } from "@/lib/i18n";
+
 const colmadoImg = "/images/colmado.jpg";
 
-const Colmado = () => {
-  const items = products.filter((p) =>
-    p.clientTypes.some((c) => c === "establecimientos" || c === "tiendas-gourmet"),
-  );
+interface Props {
+  /** Productos destacados del catálogo retail. */
+  featured?: CuratedProduct[];
+  featuredCatalogCount?: number;
+  /** Productos "primer precio" del catálogo retail. */
+  primerPrecio?: CuratedProduct[];
+  primerPrecioCatalogCount?: number;
+}
 
+const Colmado = ({
+  featured = [],
+  featuredCatalogCount = 0,
+  primerPrecio = [],
+  primerPrecioCatalogCount = 0,
+}: Props) => {
+  // useI18n se importa pero ya no se usa con texto inline — se queda por si añadimos copy traducido.
+  useI18n();
   return (
     <Layout
       navTheme="dark"
@@ -39,7 +53,7 @@ const Colmado = () => {
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
-                href="/catalogo?cliente=retail"
+                href="/catalogo?catalog=retail"
                 className="inline-flex items-center gap-2 bg-accent text-accent-foreground rounded-full pl-6 pr-7 py-4 font-medium hover:opacity-90 transition-opacity"
               >
                 <Store className="h-5 w-5" /> Ver catálogo para tu tienda
@@ -86,13 +100,69 @@ const Colmado = () => {
         </div>
       </section>
 
-      {/* SELECCIÓN */}
+      {/* SELECCIÓN destacada del catálogo retail */}
       <section className="container-edit pb-20 md:pb-28">
         <SectionHeader eyebrow="Selección retail" title="Lo que está volando del lineal." />
-        <div className="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-          {items.slice(0, 8).map((p) => (
-            <ProductCard key={p.slug} image={p.image} title={p.name} category={p.category} origin={p.origin} href={`/producto/${p.slug}`} />
-          ))}
+        {featured.length > 0 ? (
+          <div className="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+            {featured.map((p) => (
+              <ProductCard
+                key={p.ref}
+                image={p.image_url ?? "/images/placeholder.svg"}
+                title={p.name}
+                category={p.family || "—"}
+                origin={`Ref. ${p.ref}`}
+                href={`/producto/${p.slug}`}
+              />
+            ))}
+          </div>
+        ) : (
+          <EmptyHubMessage
+            catalogPublishedCount={featuredCatalogCount}
+            catalogName="Retail"
+            flagLabel="Destacado"
+          />
+        )}
+      </section>
+
+      {/* Primer precio — siempre visible con mensaje empty si no hay */}
+      <section className="bg-accent/5 border-y border-border">
+        <div className="container-edit py-20 md:py-28">
+          <SectionHeader
+            eyebrow="Primer precio"
+            title={<>Económicos para tu lineal, <span className="pink-underline">margen para tu tienda</span>.</>}
+            subtitle="Productos de alta rotación con precio entry-level y buen margen para escalar volumen."
+          />
+          {primerPrecio.length > 0 ? (
+            <>
+              <div className="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+                {primerPrecio.map((p) => (
+                  <ProductCard
+                    key={p.ref}
+                    image={p.image_url ?? "/images/placeholder.svg"}
+                    title={p.name}
+                    category={p.family || "—"}
+                    origin={`Ref. ${p.ref}`}
+                    href={`/producto/${p.slug}`}
+                  />
+                ))}
+              </div>
+              <div className="mt-10 text-center">
+                <Link
+                  href="/catalogo?catalog=retail&especialidad=primer_precio"
+                  className="inline-flex items-center gap-2 border border-foreground rounded-full pl-5 pr-6 py-3 text-sm font-medium"
+                >
+                  Ver todos los primer precio Retail <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </>
+          ) : (
+            <EmptyHubMessage
+              catalogPublishedCount={primerPrecioCatalogCount}
+              catalogName="Retail"
+              flagLabel="Primer precio"
+            />
+          )}
         </div>
       </section>
 
@@ -105,7 +175,7 @@ const Colmado = () => {
               Catálogo pensado<br /><em className="font-light">para tu tienda.</em>
             </h2>
             <Link
-              href="/catalogo?cliente=retail"
+              href="/catalogo?catalog=retail"
               className="inline-flex items-center gap-2 bg-accent-foreground text-accent rounded-full pl-6 pr-7 py-4 font-medium hover:opacity-90 transition-opacity"
             >
               Ver catálogo para tiendas <ArrowRight className="h-4 w-4" />
@@ -116,5 +186,41 @@ const Colmado = () => {
     </Layout>
   );
 };
+
+/** Mensaje empty diagnóstico: distingue "catálogo sin productos" vs "sin flag". */
+function EmptyHubMessage({
+  catalogPublishedCount,
+  catalogName,
+  flagLabel,
+}: {
+  catalogPublishedCount: number;
+  catalogName: string;
+  flagLabel: string;
+}) {
+  return (
+    <div className="mt-12 rounded-2xl border border-dashed border-border p-8 text-sm text-muted-foreground space-y-2 max-w-2xl">
+      {catalogPublishedCount === 0 ? (
+        <>
+          <p className="font-medium text-foreground">Aún no hay productos publicados en {catalogName}.</p>
+          <p>
+            En el PIM, abre un producto y márcalo con el catálogo &ldquo;{catalogName}&rdquo;.
+            Cuando esté en estado &ldquo;Publicado&rdquo;, aparecerá aquí en cuanto le actives el flag &ldquo;{flagLabel}&rdquo;.
+          </p>
+        </>
+      ) : (
+        <>
+          <p className="font-medium text-foreground">
+            {catalogPublishedCount} producto{catalogPublishedCount === 1 ? "" : "s"} en {catalogName}, pero ninguno con el flag &ldquo;{flagLabel}&rdquo;.
+          </p>
+          <p>
+            Abre un producto en el PIM, activa el toggle &ldquo;{flagLabel}&rdquo; en la sección
+            &ldquo;Clasificación gastronómica&rdquo; y guarda. Si el toggle aparece atenuado, falta correr
+            la migración SQL <code>20260515_product_meta_clasificacion.sql</code> en Supabase.
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default Colmado;

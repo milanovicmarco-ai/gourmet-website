@@ -13,18 +13,19 @@ import {
   INSTAGRAM,
   GOOGLE_BUSINESS_URL,
 } from "@/lib/contact";
+import { BRAND, SEO_TITLE_TEMPLATE } from "@/lib/brand";
 
 const SITE_URL = "https://aurellano.com";
+const DEFAULT_TITLE = `${BRAND.es.name} · ${BRAND.es.claim} ${BRAND.es.claimSub}`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Aurellano Productos Gastronómicos · Distribución gourmet",
-    template: "%s | Aurellano Productos Gastronómicos",
+    default: DEFAULT_TITLE,
+    template: SEO_TITLE_TEMPLATE,
   },
-  description:
-    "Distribuidor gourmet con +200 proveedores y +10.000 referencias para HORECA y tiendas. Servicio en toda Cataluña y Andorra. Pedidos por WhatsApp.",
-  authors: [{ name: "Aurellano Productos Gastronómicos" }],
+  description: BRAND.es.description,
+  authors: [{ name: BRAND.es.name }],
   alternates: {
     canonical: "/",
     languages: {
@@ -35,20 +36,18 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
-    siteName: "Aurellano Productos Gastronómicos",
+    siteName: BRAND.es.name,
     locale: "es_ES",
     alternateLocale: ["ca_ES"],
     url: SITE_URL,
-    title: "Aurellano Productos Gastronómicos · Distribución gourmet",
-    description:
-      "Distribuidor gourmet con +200 proveedores y +10.000 referencias para HORECA y tiendas. Servicio en toda Cataluña y Andorra.",
-    images: [{ url: "/og/aurellano-cover.jpg", width: 1200, height: 630, alt: "Aurellano Productos Gastronómicos" }],
+    title: DEFAULT_TITLE,
+    description: BRAND.es.description,
+    images: [{ url: "/og/aurellano-cover.jpg", width: 1200, height: 630, alt: BRAND.es.name }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Aurellano Productos Gastronómicos · Distribución gourmet",
-    description:
-      "Distribuidor gourmet con +200 proveedores y +10.000 referencias para HORECA y tiendas. Servicio en toda Cataluña y Andorra.",
+    title: DEFAULT_TITLE,
+    description: BRAND.es.description,
     images: ["/og/aurellano-cover.jpg"],
   },
   icons: {
@@ -71,8 +70,10 @@ export const viewport: Viewport = {
 const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
-  name: "Aurellano Productos Gastronómicos",
-  alternateName: "Aurellano",
+  name: BRAND.es.name,
+  alternateName: BRAND.es.short,
+  slogan: `${BRAND.es.claim} ${BRAND.es.claimSub}`,
+  description: BRAND.es.description,
   url: SITE_URL,
   logo: `${SITE_URL}/og/aurellano-cover.jpg`,
   email: EMAIL,
@@ -91,7 +92,7 @@ const organizationSchema = {
 const localBusinessSchema = {
   "@context": "https://schema.org",
   "@type": "FoodEstablishment",
-  name: "Aurellano Productos Gastronómicos",
+  name: BRAND.es.name,
   url: SITE_URL,
   image: `${SITE_URL}/og/aurellano-cover.jpg`,
   telephone: PHONE_FIXED,

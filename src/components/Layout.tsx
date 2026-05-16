@@ -9,9 +9,12 @@ import { NavTheme, NavThemeContext } from "@/lib/nav-theme";
 
 interface LayoutProps {
   children: React.ReactNode;
-  /** "dark" = nav blanco sobre fondo oscuro/imagen; "light" = nav negro sobre fondo claro */
+  /** "dark" = nav blanco sobre fondo oscuro/imagen (nav absolute superpuesto al hero);
+   *  "light" = nav negro sobre fondo claro (nav relative, ocupa su espacio en flujo). */
   navTheme?: NavTheme;
-  /** Si true, el contenido empieza pegado arriba (hero full-bleed). Si false, deja padding superior. */
+  /** Legacy: se mantiene en la API por retrocompat con páginas que lo pasan.
+   *  No se usa internamente — el espacio bajo el nav lo controla el nav theme
+   *  (absolute en dark, relative en light). */
   heroFlush?: boolean;
   /** Compatibilidad legacy. En Next.js los metadatos los gestiona `export const metadata` en `page.tsx`. */
   seoTitle?: string;
@@ -21,9 +24,9 @@ interface LayoutProps {
 export const Layout = ({
   children,
   navTheme = "light",
-  heroFlush = false,
-  // seoTitle y seoDescription se aceptan por compatibilidad pero no hacen nada:
-  // los metadatos se gestionan vía Next.js Metadata API en cada page.tsx.
+  // heroFlush, seoTitle y seoDescription se aceptan por compat pero no hacen nada:
+  // - los metadatos van vía Next.js Metadata API en cada page.tsx;
+  // - el padding superior está implícito en el theme del nav (absolute vs relative).
 }: LayoutProps) => {
   const pathname = usePathname();
   useEffect(() => {
@@ -36,7 +39,7 @@ export const Layout = ({
     <NavThemeContext.Provider value={navTheme}>
       <div className="min-h-screen flex flex-col bg-background">
         <Nav />
-        <main className={heroFlush ? "flex-1" : "flex-1 pt-16 md:pt-20"}>{children}</main>
+        <main className="flex-1">{children}</main>
         <Footer />
         <FloatingActions />
       </div>

@@ -18,6 +18,7 @@ export type FormFields = {
   origin?: string | null;
   flavor?: string | null;
   format?: string | null;
+  units_per_box?: number | string | null;
   price_eur?: number | string | null;
   status?: "draft" | "published" | "archived";
   seo_title?: string | null;
@@ -26,8 +27,9 @@ export type FormFields = {
   pairings?: string[] | string | null;
   allergens?: string[] | string | null;
   ingredients?: string | null;
-  // Booleans dietéticos
+  // Booleans dietéticos (los 3 que tiene la API canónica)
   vegan?: boolean;
+  vegetarian?: boolean;
   gluten_free?: boolean;
   lactose_free?: boolean;
 };
@@ -38,37 +40,79 @@ const csv = (v: unknown): string[] => {
   return [];
 };
 
-/** Convierte nuestro form al payload que espera la API (POST /PUT). */
+/** slug URL-safe: minúsculas, sin acentos, no-alfanum → guiones, sin duplicados. */
+const slugify = (s: string): string =>
+  s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+
+/** Convierte nuestro form al payload que espera la API (POST /PUT).
+ *
+ * Reglas defensivas: NO se mandan strings vacíos. Si un campo opcional viene "",
+ * lo omitimos para no sobreescribir lo que haya en BBDD con vacío.
+ */
 export function mapToApi(f: FormFields): Record<string, unknown> {
-  const formatoOpciones =
-    f.format && String(f.format).trim().length > 0
-      ? [{ label: String(f.format).trim(), peso_kg: null, precio_eur: null }]
+  const s = (v: unknown): string | undefined => {
+    if (v == null) return undefined;
+    const str = String(v).trim();
+    return str.length === 0 ? undefined : str;
+  };
+
+  const formatoLabel = s(f.format);
+  const formatoOpciones = formatoLabel
+    ? [{ label: formatoLabel, peso_kg: null, precio_eur: null }]
+    : undefined;
+
+  const tags = csv(f.badges);
+  const pairings = csv(f.pairings);
+  const allergensArr = csv(f.allergens);
+
+  // Regeneramos el slug en cada save para que el URL público refleje el nombre y
+  // la ref actuales. La API trata `ref` como PK inmutable, así que NO la enviamos
+  // — el override editable vive en product_meta (Supabase) como display_ref.
+  const nameForSlug = s(f.name);
+  const refForSlug = s(f.ref);
+  const slug =
+    nameForSlug && refForSlug
+      ? `${slugify(nameForSlug)}-${slugify(refForSlug)}`
       : undefined;
 
   const payload: Record<string, unknown> = {
-    name: f.name,
-    slug: f.slug,
-    family: f.family,
-    brand: f.brand ?? undefined,
-    descripcion_corta: f.short_description ?? undefined,
-    description_rich: f.long_description ?? undefined,
-    origen: f.origin ?? undefined,
-    flavor: f.flavor ?? undefined,
+    name: s(f.name),
+    slug,
+    family: s(f.family),
+    // Brand NUNCA viaja a la API: tiene FK estricta a su tabla `brands` y eso
+    // genera fricción innecesaria. La marca real (texto libre) vive en
+    // product_meta.brand_override (Supabase) y se aplica como overlay en la web.
+    // Si el backend exige marca para publicar, el retry de actions.ts inyecta un
+    // sentinel "Aurellano" (auto-creado en su tabla) sólo para pasar el gate.
+    descripcion_corta: s(f.short_description),
+    description_rich: s(f.long_description),
+    origen: s(f.origin),
+    flavor: s(f.flavor),
     base_price_eur:
       f.price_eur === "" || f.price_eur == null ? undefined : Number(f.price_eur),
+    units_per_box:
+      f.units_per_box === "" || f.units_per_box == null
+        ? undefined
+        : Number(f.units_per_box),
     status: f.status,
-    seo_title: f.seo_title ?? undefined,
-    seo_description: f.seo_description ?? undefined,
-    tags: csv(f.badges),
-    pairings: csv(f.pairings),
-    alergenos: csv(f.allergens).join(", "),
-    ingredientes: f.ingredients ?? undefined,
+    seo_title: s(f.seo_title),
+    seo_description: s(f.seo_description),
+    tags: tags.length ? tags : undefined,
+    pairings: pairings.length ? pairings : undefined,
+    alergenos: allergensArr.length ? allergensArr.join(", ") : undefined,
+    ingredientes: s(f.ingredients),
     sin_gluten: f.gluten_free,
     sin_lactosa: f.lactose_free,
+    vegetariano: f.vegetarian,
     formato_opciones: formatoOpciones,
   };
 
-  // No mandes claves con `undefined`: la API trata `null` y `ausente` distinto.
+  // Quitar todas las claves con undefined: la API trata "ausente" como "no cambiar".
   return Object.fromEntries(
     Object.entries(payload).filter(([, v]) => v !== undefined),
   );
@@ -87,6 +131,7 @@ export function mapFromApi(p: ApiProduct): FormFields & { ref: string; image_url
     origin: p.origen ?? "",
     flavor: p.flavor ?? "",
     format: p.formato_opciones?.[0]?.label ?? "",
+    units_per_box: p.units_per_box ?? "",
     price_eur: p.base_price_eur ?? "",
     status: (p.status as FormFields["status"]) ?? (p.active === false ? "archived" : "published"),
     seo_title: p.seo_title ?? "",

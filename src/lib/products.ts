@@ -194,7 +194,7 @@ export const products: Product[] = [
   {
     slug: "canelones-xl-rustido",
     name: "Canelones XL de rustido",
-    brand: "Secrets del Xef",
+    brand: "Secrets du Xef",
     ref: "SX-CX-6",
     category: "Platos preparados",
     description:
@@ -215,7 +215,7 @@ export const products: Product[] = [
   {
     slug: "croquetas-jamon-iberico",
     name: "Croquetas de jamón ibérico",
-    brand: "Secrets del Xef",
+    brand: "Secrets du Xef",
     ref: "SX-CJ-30",
     category: "Platos preparados",
     description:
@@ -301,7 +301,7 @@ export const products: Product[] = [
   {
     slug: "tartar-atun-rojo",
     name: "Tartar de atún rojo Balfegó",
-    brand: "Secrets del Xef",
+    brand: "Secrets du Xef",
     ref: "SX-TA-120",
     category: "Platos preparados",
     description: "Atún rojo de almadraba marinado con soja, sésamo y aguacate. Listo para emplatar como entrante premium.",
@@ -322,7 +322,7 @@ export const products: Product[] = [
   {
     slug: "solomillo-wellington",
     name: "Solomillo Wellington",
-    brand: "Secrets del Xef",
+    brand: "Secrets du Xef",
     ref: "SX-SW-1K",
     category: "Platos preparados",
     description: "Solomillo de ternera nacional envuelto en hojaldre, duxelles de champiñón y jamón serrano.",

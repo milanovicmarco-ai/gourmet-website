@@ -41,3 +41,7 @@ dist-ssr
 
 # Word lock files
 ~$*.docx
+
+# Local agent state (Claude / Cursor)
+.claude/
+

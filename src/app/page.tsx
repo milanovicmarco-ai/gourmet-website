@@ -1,13 +1,48 @@
 import type { Metadata } from "next";
-import Index from "@/pages/Index";
+import Index, { type FeaturedProduct } from "@/pages/Index";
+import { BRAND } from "@/lib/brand";
+import { getRefsByCatalogSlug } from "@/lib/pim/catalogs";
+import { getProductByRef } from "@/lib/pim/api";
+import { getMetasForProducts, effectiveRef } from "@/lib/pim/product-meta";
 
 export const metadata: Metadata = {
-  title: "Aurellano Productos Gastronómicos · Distribución gourmet",
-  description:
-    "Distribuidor gourmet con +200 proveedores y +10.000 referencias para HORECA y tiendas. Servicio en toda Cataluña y Andorra. Pedidos por WhatsApp.",
+  // En la home no aplicamos el template "%s | naming" — usamos el naming + claim directamente.
+  title: `${BRAND.es.name} · ${BRAND.es.claim} ${BRAND.es.claimSub}`,
+  description: BRAND.es.description,
   alternates: { canonical: "/" },
 };
 
-export default function HomePage() {
-  return <Index />;
+// La home es dinámica porque la sección "Selección curada" lee productos del
+// catálogo `seleccion-aurellano` (overlay Supabase + API del socio) y queremos
+// que los cambios del PIM se reflejen sin redeploy.
+export const dynamic = "force-dynamic";
+
+const FEATURED_CATALOG = "seleccion-aurellano";
+const FEATURED_LIMIT = 4;
+
+async function loadFeatured(): Promise<FeaturedProduct[]> {
+  const refs = await getRefsByCatalogSlug(FEATURED_CATALOG).catch(() => []);
+  if (refs.length === 0) return [];
+  // Trae cada producto en paralelo, ignora 404s (productos borrados que aún tienen
+  // fila huérfana en product_catalogs — defensivo).
+  const results = await Promise.all(refs.map((r) => getProductByRef(r).catch(() => null)));
+  const products = results.filter((p): p is NonNullable<typeof p> => p != null);
+  // Sólo publicados
+  const published = products.filter(
+    (p) => (p.status ?? (p.active === false ? "archived" : "published")) === "published",
+  );
+  if (published.length === 0) return [];
+  const metas = await getMetasForProducts(published.map((p) => p.ref)).catch(() => ({}));
+  return published.slice(0, FEATURED_LIMIT).map((p) => ({
+    ref: effectiveRef(metas[p.ref], p.ref),
+    slug: p.slug ?? p.ref,
+    name: p.name,
+    family: p.family ?? "",
+    image_url: p.image_url ?? null,
+  }));
+}
+
+export default async function HomePage() {
+  const featured = await loadFeatured();
+  return <Index featured={featured} />;
 }

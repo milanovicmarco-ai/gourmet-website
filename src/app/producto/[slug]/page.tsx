@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import ProductDetail from "@/pages/ProductDetail";
 import { getProductBySlug, getProductByRef, type ApiProduct } from "@/lib/pim/api";
+import { getTranslation, type Locale } from "@/lib/pim/translations";
+import { getProductMeta, effectiveRef } from "@/lib/pim/product-meta";
 
 type Params = { slug: string };
 
-export const revalidate = 3600;
+// Sin caché: la página renderiza según la cookie `aurellano_lang`, así que cada request
+// puede ver una traducción distinta. La cache estática estaba sirviendo siempre la versión ES.
+export const dynamic = "force-dynamic";
 
 // El slug oficial es "{slugify(name)}-{ref}". Si by-slug 404 (porque el slug ha
 // cambiado, o el catálogo viene con otro formato), intentamos por la `ref` que
@@ -52,6 +57,29 @@ export async function generateMetadata({
   };
 }
 
+async function getLocale(): Promise<Locale | "es"> {
+  const cookieStore = await cookies();
+  const c = cookieStore.get("aurellano_lang")?.value;
+  if (c === "ca" || c === "en") return c;
+  return "es";
+}
+
+/** Aplica la traducción del overlay (CA) por encima de los datos canónicos (ES). */
+function applyTranslation(product: ApiProduct, translation: Awaited<ReturnType<typeof getTranslation>>): ApiProduct {
+  if (!translation) return product;
+  return {
+    ...product,
+    name: translation.name?.trim() || product.name,
+    descripcion_corta: translation.descripcion_corta?.trim() || product.descripcion_corta,
+    description_rich: translation.description_rich?.trim() || product.description_rich,
+    flavor: translation.flavor?.trim() || product.flavor,
+    origen: translation.origen?.trim() || product.origen,
+    ingredientes: translation.ingredientes?.trim() || product.ingredientes,
+    seo_title: translation.seo_title?.trim() || product.seo_title,
+    seo_description: translation.seo_description?.trim() || product.seo_description,
+  };
+}
+
 export default async function ProductoPage({
   params,
 }: {
@@ -60,5 +88,30 @@ export default async function ProductoPage({
   const { slug } = await params;
   const product = await fetchProduct(slug);
   if (!product) notFound();
-  return <ProductDetail product={product} />;
+  // La web pública sólo enseña productos publicados.
+  const effectiveStatus =
+    product.status ?? (product.active === false ? "archived" : "published");
+  if (effectiveStatus !== "published") notFound();
+
+  const locale = await getLocale();
+  let display = product;
+  if (locale === "ca" || locale === "en") {
+    const translation = await getTranslation(product.ref, locale);
+    display = applyTranslation(product, translation);
+  }
+  // Overlay de nuestro Supabase: la ref visible (display_ref) y la marca real
+  // (brand_override). La API trata ambos como problemáticos (PK inmutable, FK estricta),
+  // así que la fuente de verdad para el usuario final son estos campos.
+  const meta = await getProductMeta(product.ref).catch(() => null);
+  const displayRef = effectiveRef(meta, product.ref);
+  const brandOverride = meta?.brand_override?.trim();
+  return (
+    <ProductDetail
+      product={{
+        ...display,
+        ref: displayRef,
+        brand: brandOverride && brandOverride.length > 0 ? brandOverride : display.brand,
+      }}
+    />
+  );
 }

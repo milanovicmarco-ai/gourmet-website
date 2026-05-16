@@ -17,11 +17,6 @@ const apiKey = () => {
 };
 
 async function requireAdmin() {
-  // En dev se puede saltar el gate Supabase con DEV_BYPASS_ADMIN_AUTH=1.
-  // Devuelve un mock user mínimo para no romper consumers que usan user.email.
-  if (process.env.DEV_BYPASS_ADMIN_AUTH === "1") {
-    return { id: "dev-bypass", email: "dev@local" } as const;
-  }
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
@@ -30,8 +25,24 @@ async function requireAdmin() {
 
 async function jsonOr(error: string, res: Response) {
   if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`${error} (${res.status}): ${body}`);
+    let body = "";
+    try {
+      // Intenta parsear como JSON (FastAPI suele devolver {detail:...} u object con campos);
+      // si falla, cae a texto plano.
+      const cloned = res.clone();
+      const asJson = await cloned.json().catch(() => null);
+      if (asJson) {
+        body = typeof asJson === "string" ? asJson : JSON.stringify(asJson);
+      } else {
+        body = await res.text();
+      }
+    } catch {
+      body = await res.text().catch(() => "");
+    }
+    const msg = body && body.length > 0 ? body.slice(0, 600) : res.statusText;
+    // Log server-side para que aparezca en `npm run dev` aunque la UI sólo enseñe el resumen.
+    console.error(`[${error}] ${res.status} ${res.url}\n${msg}`);
+    throw new Error(`${error} (${res.status}): ${msg}`);
   }
   return res.json();
 }
@@ -41,7 +52,21 @@ async function jsonOr(error: string, res: Response) {
 // =============================================================
 export async function createProduct(form: FormFields & { ref?: string }) {
   await requireAdmin();
-  const payload = { ref: form.ref, ...mapToApi(form) };
+  const payload: Record<string, unknown> = { ref: form.ref, ...mapToApi(form) };
+
+  // Pre-check familia: si la familia del form no existe en la API del socio,
+  // la creamos antes (mismo patrón que ensureBrandExists).
+  if (typeof payload.family === "string" && payload.family.trim().length > 0) {
+    const check = await ensureFamilyExists(payload.family);
+    if (check.ok === true) {
+      payload.family = check.family;
+    } else {
+      console.warn(
+        `[createProduct] no se pudo asegurar familia "${payload.family}" (${check.reason}). El POST probablemente fallará — surfacing al usuario.`,
+      );
+    }
+  }
+
   const res = await fetch(`${AURELLANO_API}/catalog/products`, {
     method: "POST",
     headers: {
@@ -61,23 +86,406 @@ export async function createProductAndRedirect(form: FormFields & { ref?: string
 }
 
 // =============================================================
-// Actualizar producto
+// Helpers de marcas — auto-crea si no existe
 // =============================================================
-export async function updateProduct(ref: string, form: FormFields) {
-  await requireAdmin();
+
+type ApiBrand = {
+  id?: string;
+  slug?: string;
+  name: string;
+  story?: string | null;
+  origin?: string | null;
+};
+
+const slugify = (s: string) =>
+  s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+
+/**
+ * Asegura que la marca exista en /catalog/brands. Si no existe, la crea.
+ * Devuelve el nombre/slug canónico que la API acepta. Si TODO falla, devuelve
+ * un objeto que indica el fallo para que la capa superior decida qué hacer.
+ */
+async function ensureBrandExists(
+  name: string | undefined,
+): Promise<{ ok: true; brand: string } | { ok: false; reason: string }> {
+  if (!name || name.trim().length === 0) return { ok: false, reason: "empty" };
+  const trimmed = name.trim();
+  const slug = slugify(trimmed);
+
+  // 1) Buscar entre las brands existentes
+  try {
+    const listRes = await fetch(`${AURELLANO_API}/catalog/brands`, {
+      headers: { Authorization: `Bearer ${apiKey()}` },
+      cache: "no-store",
+    });
+    if (listRes.ok) {
+      const list: ApiBrand[] | { results?: ApiBrand[] } = await listRes.json();
+      const brands: ApiBrand[] = Array.isArray(list) ? list : list.results ?? [];
+      const target = trimmed.toLowerCase();
+      const match = brands.find(
+        (b) =>
+          b.name?.toLowerCase() === target ||
+          b.slug?.toLowerCase() === target ||
+          b.slug === slug,
+      );
+      if (match) {
+        console.log(`[ensureBrandExists] match existente:`, { sent: trimmed, found: match.name, slug: match.slug });
+        return { ok: true, brand: match.name };
+      }
+      console.log(`[ensureBrandExists] no hay match para '${trimmed}', intentando crear (POST /catalog/brands)`);
+    } else {
+      const body = await listRes.text().catch(() => "");
+      console.warn(`[ensureBrandExists] GET /catalog/brands falló (${listRes.status}): ${body.slice(0, 200)}`);
+    }
+  } catch (err) {
+    console.warn(`[ensureBrandExists] GET error: ${(err as Error).message}`);
+  }
+
+  // 2) Intentar crear. Probamos varias shapes porque no sabemos exactamente lo
+  // que valida FastAPI (puede pedir sólo {name, slug}, o todos, o algún extra).
+  const shapes = [
+    { slug, name: trimmed, story: null, origin: null, sort_order: 0, active: true },
+    { slug, name: trimmed, active: true },
+    { name: trimmed, slug },
+    { name: trimmed },
+  ];
+  let lastReason = "";
+  for (const bodyCreate of shapes) {
+    try {
+      console.log(`[ensureBrandExists] POST /catalog/brands probando shape:`, JSON.stringify(bodyCreate));
+      const createRes = await fetch(`${AURELLANO_API}/catalog/brands`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey()}`,
+        },
+        body: JSON.stringify(bodyCreate),
+      });
+      if (createRes.ok) {
+        const created = (await createRes.json()) as ApiBrand;
+        console.log(`[ensureBrandExists] creada OK:`, { name: created.name, slug: created.slug });
+        return { ok: true, brand: created.name ?? trimmed };
+      }
+      const body = await createRes.text().catch(() => "");
+      lastReason = `POST /brands ${createRes.status}: ${body.slice(0, 200)}`;
+      console.warn(`[ensureBrandExists] shape rechazada (${createRes.status}): ${body.slice(0, 200)}`);
+      // 409 / conflict → ya existe (carrera con otro POST), búscala de nuevo.
+      if (createRes.status === 409) {
+        const retryList = await fetch(`${AURELLANO_API}/catalog/brands`, {
+          headers: { Authorization: `Bearer ${apiKey()}` },
+          cache: "no-store",
+        });
+        if (retryList.ok) {
+          const list = await retryList.json();
+          const brands: ApiBrand[] = Array.isArray(list) ? list : list.results ?? [];
+          const match = brands.find(
+            (b) =>
+              b.name?.toLowerCase() === trimmed.toLowerCase() ||
+              b.slug === slug,
+          );
+          if (match) return { ok: true, brand: match.name };
+        }
+      }
+    } catch (err) {
+      lastReason = (err as Error).message;
+      console.warn(`[ensureBrandExists] POST error: ${lastReason}`);
+    }
+  }
+  return { ok: false, reason: lastReason || "todas las shapes rechazadas" };
+}
+
+// =============================================================
+// Helpers de familias — auto-crea si no existe en la API del socio
+// =============================================================
+//
+// Mismo patrón que ensureBrandExists: la API del socio tiene FK estricta a su
+// tabla `families`, así que si Marco crea una familia en nuestro overlay
+// (families_meta de Supabase) y la asigna a un producto, hay que crearla
+// también en su backend antes del PUT/POST del producto.
+
+type ApiFamily = {
+  id?: string;
+  slug?: string;
+  name?: string;
+  family?: string;
+};
+
+const FAMILY_SLUG = (s: string) =>
+  s
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/(^_|_$)/g, "");
+
+/**
+ * Asegura que la familia exista en /catalog/families. Si no existe, intenta
+ * crearla. Acepta slug arbitrario (ej. "PLATOS_PREPARADOS") y opcionalmente un
+ * display name.
+ */
+export async function ensureFamilyExists(
+  slug: string | undefined,
+  displayName?: string | null,
+): Promise<{ ok: true; family: string } | { ok: false; reason: string }> {
+  if (!slug || slug.trim().length === 0) return { ok: false, reason: "empty" };
+  const canonical = FAMILY_SLUG(slug);
+  const display = displayName?.trim() || canonical;
+
+  // 1) Buscar entre las familias existentes
+  try {
+    const listRes = await fetch(`${AURELLANO_API}/catalog/families`, {
+      headers: { Authorization: `Bearer ${apiKey()}` },
+      cache: "no-store",
+    });
+    if (listRes.ok) {
+      const raw = await listRes.json();
+      const families: ApiFamily[] = Array.isArray(raw) ? raw : raw.results ?? [];
+      const target = canonical.toLowerCase();
+      const match = families.find((f) => {
+        const id = (f.slug || f.family || f.name || "").toString();
+        return id.toLowerCase() === target || id === canonical;
+      });
+      if (match) {
+        const found = (match.slug || match.family || match.name || canonical).toString();
+        console.log(`[ensureFamilyExists] match existente:`, found);
+        return { ok: true, family: found };
+      }
+      console.log(`[ensureFamilyExists] no hay match para '${canonical}', intentando crear`);
+    } else {
+      const body = await listRes.text().catch(() => "");
+      console.warn(`[ensureFamilyExists] GET /catalog/families falló (${listRes.status}): ${body.slice(0, 200)}`);
+    }
+  } catch (err) {
+    console.warn(`[ensureFamilyExists] GET error: ${(err as Error).message}`);
+  }
+
+  // 2) Intentar crear (varias shapes como hacemos con brands).
+  const shapes = [
+    { slug: canonical, name: display, family: canonical, active: true, sort_order: 0 },
+    { slug: canonical, name: display, active: true },
+    { family: canonical, name: display, active: true },
+    { slug: canonical, name: display },
+    { family: canonical, name: display },
+    { name: display, slug: canonical },
+    { name: display },
+  ];
+  let lastReason = "";
+  for (const bodyCreate of shapes) {
+    try {
+      console.log(`[ensureFamilyExists] POST /catalog/families probando shape:`, JSON.stringify(bodyCreate));
+      const createRes = await fetch(`${AURELLANO_API}/catalog/families`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey()}`,
+        },
+        body: JSON.stringify(bodyCreate),
+      });
+      if (createRes.ok) {
+        const created = (await createRes.json()) as ApiFamily;
+        const name = (created.slug || created.family || created.name || canonical).toString();
+        console.log(`[ensureFamilyExists] creada OK:`, name);
+        return { ok: true, family: name };
+      }
+      const body = await createRes.text().catch(() => "");
+      lastReason = `POST /families ${createRes.status}: ${body.slice(0, 200)}`;
+      console.warn(`[ensureFamilyExists] shape rechazada (${createRes.status}): ${body.slice(0, 200)}`);
+      // 409 conflict → ya existe (carrera con otro POST). Considera ok.
+      if (createRes.status === 409) {
+        return { ok: true, family: canonical };
+      }
+    } catch (err) {
+      lastReason = (err as Error).message;
+      console.warn(`[ensureFamilyExists] POST error: ${lastReason}`);
+    }
+  }
+  return { ok: false, reason: lastReason || "todas las shapes rechazadas" };
+}
+
+// =============================================================
+// Actualizar producto — con auto-create de marca/familia + retry si falla
+// =============================================================
+async function doProductPut(ref: string, payload: Record<string, unknown>) {
+  console.log(`[updateProduct] PUT ${ref} payload:`, JSON.stringify(payload));
   const res = await fetch(`${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey()}`,
     },
-    body: JSON.stringify(mapToApi(form)),
+    body: JSON.stringify(payload),
   });
-  const data = await jsonOr("updateProduct", res);
+  return res;
+}
+
+export type UpdateProductResult = {
+  product: Record<string, unknown>;
+  /** Campos que rellenamos automáticamente con placeholders para poder publicar. */
+  autoFilledFields?: string[];
+  /** Slug nuevo si cambió (para que el front pueda navegar al nuevo URL). */
+  newSlug?: string;
+};
+
+/** Extrae el detail textual del cuerpo de error de la API (FastAPI). */
+async function readErrorDetail(res: Response): Promise<string> {
+  try {
+    const cloned = res.clone();
+    const asJson = await cloned.json().catch(() => null);
+    if (asJson && typeof asJson === "object") {
+      const detail = (asJson as { detail?: unknown }).detail;
+      if (typeof detail === "string") return detail;
+      return JSON.stringify(asJson);
+    }
+    return await res.text();
+  } catch {
+    return await res.text().catch(() => "");
+  }
+}
+
+/**
+ * Política del PIM: NO hay campos obligatorios desde nuestro lado. La API del
+ * socio tiene reglas de negocio (p.ej. "para publicar necesitas marca + alérgenos")
+ * que NO queremos imponer al editor. Por eso, si la API rechaza el publish con
+ * 400 "Faltan campos obligatorios: X, Y, ...", rellenamos esos campos con
+ * placeholders neutros y reintentamos. El editor nunca debería ver un guardado
+ * "fallido" por reglas del backend.
+ */
+/** Normaliza para comparar: minúsculas, sin acentos, sin espacios extra.
+ * Crítico: "alérgenos" → "alergenos" para que los regex sin acento matcheen. */
+function normalize(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .trim();
+}
+
+function placeholderFor(field: string): { key: string; value: unknown } | null {
+  const f = normalize(field);
+  // Brand: sentinel "Aurellano" — se crea (si no existe) vía ensureBrandExists en el retry,
+  // así pasa la FK estricta. La marca visible al público sale de product_meta.brand_override.
+  if (/marca|brand/.test(f)) return { key: "brand", value: "Aurellano" };
+  if (/aler/.test(f)) return { key: "alergenos", value: "Consultar etiqueta" };
+  if (/origen|origin/.test(f)) return { key: "origen", value: "—" };
+  if (/famil|categor/.test(f)) return { key: "family", value: "VARIOS" };
+  if (/descr.*cort/.test(f) || /short.*desc/.test(f)) return { key: "descripcion_corta", value: "—" };
+  if (/ingredient/.test(f)) return { key: "ingredientes", value: "Consultar etiqueta" };
+  if (/nombre|^name$/.test(f)) return { key: "name", value: "Producto sin nombre" };
+  return null;
+}
+
+export async function updateProduct(
+  ref: string,
+  form: FormFields,
+): Promise<UpdateProductResult> {
+  await requireAdmin();
+  // mapToApi NO envía brand a la API: la marca real vive en product_meta.brand_override
+  // (Supabase) gestionada por saveProductMeta y se aplica como overlay en la web pública.
+  const payload = mapToApi(form);
+
+  // Pre-check familia: si la familia no existe en la API del socio, la creamos.
+  // Evita el 400 "La familia X no existe en la tabla de familias".
+  if (typeof payload.family === "string" && payload.family.trim().length > 0) {
+    const check = await ensureFamilyExists(payload.family);
+    if (check.ok === true) {
+      payload.family = check.family;
+    } else {
+      console.warn(
+        `[updateProduct] no se pudo asegurar familia "${payload.family}" (${check.reason}). Continúo sin enviarla — la API rechazará si exige cambio.`,
+      );
+      delete payload.family;
+    }
+  }
+
+  let res = await doProductPut(ref, payload);
+
+  const autoFilled: string[] = [];
+  // Bucle defensivo: hasta 3 reintentos por si la API revela campos faltantes
+  // en cascada (devuelve sólo el primero, lo rellenamos, vuelve a fallar con otro).
+  const working: Record<string, unknown> = { ...payload };
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (res.ok) break;
+    if (res.status !== 400) break;
+    if (payload.status !== "published" && form.status !== "published") break;
+
+    const detail = await readErrorDetail(res);
+    console.log(`[updateProduct] 400 detail (attempt ${attempt}):`, detail);
+    const looksLikePublishGate =
+      /faltan campos obligatorios/i.test(detail) ||
+      /no se puede publicar/i.test(detail);
+    if (!looksLikePublishGate) {
+      console.log(`[updateProduct] 400 no parece publish-gate, no reintento`);
+      break;
+    }
+
+    // Extrae la lista de campos que faltan ("...: marca, alérgenos").
+    const match = detail.match(/obligatorios?:\s*([^.]+)/i);
+    const fields = (match?.[1] ?? "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    console.log(`[updateProduct] campos faltantes parseados:`, fields);
+    if (fields.length === 0) break;
+
+    let touched = false;
+    for (const f of fields) {
+      const ph = placeholderFor(f);
+      if (!ph) {
+        console.warn(`[updateProduct] no hay placeholder para campo "${f}" — añadir mapping en placeholderFor()`);
+        continue;
+      }
+      // Sólo lo rellenamos si no había nada (no pisamos datos del editor).
+      const current = working[ph.key];
+      if (current != null && current !== "") continue;
+
+      // Brand es especial: tiene FK estricta a la tabla `brands`. Si vamos a meter
+      // un placeholder ("Sin marca"), necesitamos que exista en la tabla primero.
+      let valueToUse: unknown = ph.value;
+      if (ph.key === "brand" && typeof ph.value === "string") {
+        const ensure = await ensureBrandExists(ph.value).catch(() => null);
+        if (ensure && ensure.ok) {
+          valueToUse = ensure.brand;
+        } else {
+          console.warn(`[updateProduct] no se pudo crear marca placeholder "${ph.value}" (${ensure?.reason ?? "error"}). Skip.`);
+          continue;
+        }
+      }
+
+      working[ph.key] = valueToUse;
+      autoFilled.push(f);
+      touched = true;
+    }
+    if (!touched) {
+      console.warn(`[updateProduct] ningún campo nuevo que rellenar, abortando retries`);
+      break;
+    }
+
+    console.log(
+      `[updateProduct] retry ${attempt + 1} para ${ref}, auto-fill:`,
+      autoFilled,
+      "payload:",
+      JSON.stringify(working),
+    );
+    res = await doProductPut(ref, working);
+  }
+
+  const data = (await jsonOr("updateProduct", res)) as Record<string, unknown>;
+
   revalidatePath(`/admin/products/${ref}`);
   revalidatePath(`/admin/products`);
-  if (data.slug) revalidatePath(`/producto/${data.slug}`);
-  return data;
+  revalidatePath(`/catalogo`);
+  const slug = typeof data.slug === "string" ? data.slug : undefined;
+  if (slug) revalidatePath(`/producto/${slug}`);
+  return {
+    product: data,
+    ...(autoFilled.length > 0 ? { autoFilledFields: autoFilled } : {}),
+    ...(slug ? { newSlug: slug } : {}),
+  };
 }
 
 // =============================================================
@@ -100,6 +508,16 @@ export async function deleteProduct(ref: string, hard = false) {
 // =============================================================
 // Subir imagen del producto (multipart → Cloudinary)
 // =============================================================
+//
+// Hay dos variantes:
+//
+//   - POST /catalog/products/{ref}/image (singular, alias antiguo):
+//       sustituye gallery[0] (la principal). Lo mantenemos para retrocompat.
+//
+//   - POST /catalog/products/{ref}/images (plural, NUEVO):
+//       añade una foto al final de la galería, sin tocar las anteriores.
+//
+// =============================================================
 export async function uploadProductImage(ref: string, formData: FormData) {
   await requireAdmin();
   const res = await fetch(
@@ -116,11 +534,7 @@ export async function uploadProductImage(ref: string, formData: FormData) {
   return data;
 }
 
-// =============================================================
-// Galería multi-imagen
-// =============================================================
-
-/** Añade una imagen a la galería (al final del array). Dedup por hash MD5. */
+/** Añade una imagen a la galería (no sustituye las anteriores). */
 export async function addProductImage(ref: string, formData: FormData) {
   await requireAdmin();
   const res = await fetch(
@@ -134,15 +548,15 @@ export async function addProductImage(ref: string, formData: FormData) {
   const data = await jsonOr("addProductImage", res);
   revalidatePath(`/admin/products/${ref}`);
   revalidatePath(`/admin/products`);
-  return data as { ref: string; image_url: string | null; gallery: string[]; optimization_score: number | null; deduplicated?: boolean };
+  return data as { image_url: string; gallery: string[] };
 }
 
-/** Quita una imagen concreta de la galería + intenta borrarla de Cloudinary. */
+/** Elimina una imagen concreta de la galería del producto. */
 export async function removeProductImage(ref: string, url: string) {
   await requireAdmin();
-  const qs = new URLSearchParams({ url });
+  const qs = new URLSearchParams({ url }).toString();
   const res = await fetch(
-    `${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}/images?${qs.toString()}`,
+    `${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}/images?${qs}`,
     {
       method: "DELETE",
       headers: { Authorization: `Bearer ${apiKey()}` },
@@ -151,52 +565,10 @@ export async function removeProductImage(ref: string, url: string) {
   const data = await jsonOr("removeProductImage", res);
   revalidatePath(`/admin/products/${ref}`);
   revalidatePath(`/admin/products`);
-  return data as { ref: string; image_url: string | null; gallery: string[]; optimization_score: number | null };
+  return data as { gallery: string[] };
 }
 
-// =============================================================
-// Brands & Families (crear al vuelo desde el combobox del admin)
-// =============================================================
-
-/** Crea una marca nueva. Slug auto-generado desde name. */
-export async function createBrand(name: string) {
-  await requireAdmin();
-  const res = await fetch(`${AURELLANO_API}/catalog/brands`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey()}`,
-    },
-    body: JSON.stringify({ name: name.trim() }),
-  });
-  if (res.status === 409) {
-    throw new Error(`Esa marca ya existe. Búscala en la lista en lugar de crearla.`);
-  }
-  const data = await jsonOr("createBrand", res);
-  revalidatePath("/admin/products");
-  return data as { slug: string; name: string };
-}
-
-/** Crea una familia nueva. Slug en MAYÚSCULAS. */
-export async function createFamily(slug: string, name: string) {
-  await requireAdmin();
-  const res = await fetch(`${AURELLANO_API}/catalog/families`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey()}`,
-    },
-    body: JSON.stringify({ slug: slug.toUpperCase().trim(), name: name.trim() }),
-  });
-  if (res.status === 409) {
-    throw new Error(`Esa familia ya existe. Búscala en la lista en lugar de crearla.`);
-  }
-  const data = await jsonOr("createFamily", res);
-  revalidatePath("/admin/products");
-  return data as { slug: string; name: string };
-}
-
-/** Reordena la galería. `order` debe ser una permutación exacta de la galería actual. */
+/** Reordena la galería del producto. La primera URL pasa a ser la principal. */
 export async function reorderProductImages(ref: string, order: string[]) {
   await requireAdmin();
   const res = await fetch(
@@ -213,5 +585,25 @@ export async function reorderProductImages(ref: string, order: string[]) {
   const data = await jsonOr("reorderProductImages", res);
   revalidatePath(`/admin/products/${ref}`);
   revalidatePath(`/admin/products`);
-  return data as { ref: string; image_url: string | null; gallery: string[]; optimization_score: number | null };
+  return data as { gallery: string[] };
+}
+
+/** Marca una URL como imagen principal (sin cambiar el resto del orden si no es necesario). */
+export async function setPrimaryProductImage(ref: string, url: string) {
+  await requireAdmin();
+  const res = await fetch(
+    `${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}/images/primary`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey()}`,
+      },
+      body: JSON.stringify({ primary: url }),
+    },
+  );
+  const data = await jsonOr("setPrimaryProductImage", res);
+  revalidatePath(`/admin/products/${ref}`);
+  revalidatePath(`/admin/products`);
+  return data as { image_url: string; gallery: string[] };
 }

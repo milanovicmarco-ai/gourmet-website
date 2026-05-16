@@ -1,13 +1,19 @@
 import type { Metadata } from "next";
-import Consejos from "@/pages/Consejos";
+import { listActiveInspirationCatalogs } from "@/lib/pim/inspiration";
+import { InspiracionView } from "@/pages/Inspiracion";
 
 export const metadata: Metadata = {
-  title: "Inspiración gourmet",
+  title: "Inspiración",
   description:
-    "Maridajes, técnicas y conservación para profesionales. Saber gourmet aplicado a restauración y comercio especializado.",
+    "Catálogos y colecciones gourmet de Aurellano y nuestras marcas distribuidas. Descárgalos en PDF.",
   alternates: { canonical: "/inspiracion" },
 };
 
-export default function InspiracionPage() {
-  return <Consejos />;
+// Pública dinámica: cuando Marco sube/edita un catálogo desde el PIM, se refleja
+// inmediatamente en la web. listActiveInspirationCatalogs ya filtra a active=true.
+export const dynamic = "force-dynamic";
+
+export default async function InspiracionPage() {
+  const catalogs = await listActiveInspirationCatalogs();
+  return <InspiracionView catalogs={catalogs} />;
 }

@@ -78,6 +78,67 @@ export async function getCatalogsForProducts(refs: string[]): Promise<Record<str
   return map;
 }
 
+export type FamilyMeta = {
+  slug: string;
+  display_name: string | null;
+  description: string | null;
+  sort_order: number;
+  active: boolean;
+};
+
+/** Lista combinada de familias: API (auto-descubiertas) + overlay (creadas en settings).
+ *  Ordenadas por sort_order del overlay → alfabético. Útil para dropdowns del editor. */
+export async function listAllFamilies(): Promise<
+  { slug: string; display_name: string; active: boolean; count: number }[]
+> {
+  const { listFamilies } = await import("./api");
+  const [apiFamilies, metas] = await Promise.all([
+    listFamilies().catch(() => []),
+    getFamilyMetas().catch(() => ({} as Record<string, FamilyMeta>)),
+  ]);
+
+  const apiSlugs = new Set(apiFamilies.map((f) => f.family));
+  const merged = new Map<string, { slug: string; display_name: string; active: boolean; count: number; sort: number }>();
+
+  for (const f of apiFamilies) {
+    const m = metas[f.family];
+    merged.set(f.family, {
+      slug: f.family,
+      display_name: m?.display_name?.trim() || f.family,
+      active: m?.active ?? true,
+      count: f.count,
+      sort: m?.sort_order ?? 9999,
+    });
+  }
+  for (const [slug, m] of Object.entries(metas)) {
+    if (apiSlugs.has(slug)) continue;
+    merged.set(slug, {
+      slug,
+      display_name: m.display_name?.trim() || slug,
+      active: m.active,
+      count: 0,
+      sort: m.sort_order ?? 9999,
+    });
+  }
+
+  return Array.from(merged.values())
+    .sort((a, b) => a.sort - b.sort || a.display_name.localeCompare(b.display_name))
+    .map(({ slug, display_name, active, count }) => ({ slug, display_name, active, count }));
+}
+
+/** Devuelve mapa slug → meta para todas las familias del overlay. */
+export async function getFamilyMetas(): Promise<Record<string, FamilyMeta>> {
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase.from("families_meta").select("*");
+  if (error) {
+    console.warn("[getFamilyMetas] error:", error.message);
+    return {};
+  }
+  return Object.fromEntries(
+    ((data ?? []) as unknown as FamilyMeta[]).map((m) => [m.slug, m]),
+  );
+}
+
 /** Refs de productos asignados a un catálogo (por slug). */
 export async function getRefsByCatalogSlug(slug: string): Promise<string[]> {
   // La API soporta `?catalog={slug}` directamente y devuelve hasta 200 productos

@@ -20,18 +20,12 @@ const buildLinks = (t: (k: string) => string): LinkItem[] => [
   { to: "/catalogo", label: t("Catálogo") },
   { to: "/secrets-du-xef", label: t("Secrets du Xef") },
   { to: "/colmado", label: t("Colmado") },
-  {
-    to: "/catalogo?especialidad=todas",
-    label: t("Especialidades"),
-    children: [
-      { to: "/quesos", label: t("Quesos") },
-      { to: "/catalogo?especialidad=delicatessen", label: t("Delicatessen") },
-      { to: "/catalogo?especialidad=healthy", label: t("Healthy Food") },
-      { to: "/catalogo?especialidad=limited", label: t("Limited Edition") },
-    ],
-  },
+  // "Formages" es la única especialidad enlazada en el menú principal.
+  // El resto (delicatessen, healthy, limited-edition) siguen accesibles vía /catalogo?catalog=…
+  // pero no aparecen como dropdown porque Marco lo prefiere así.
+  { to: "/quesos", label: t("Formages") },
+  { to: "/inspiracion", label: t("Inspiración") },
   { to: "/sobre-nosotros", label: t("Aurellano") },
-  { to: "/inspiracion", label: t("Consejos") },
 ];
 
 const LangSwitcher = ({ isDark }: { isDark: boolean }) => {

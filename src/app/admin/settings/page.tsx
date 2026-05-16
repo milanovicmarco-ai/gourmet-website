@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/integrations/supabase/server";
-import { Tags, Layers, Boxes } from "lucide-react";
+import { Tags, Layers, Boxes, BookOpen } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -27,16 +27,23 @@ export default async function SettingsIndexPage() {
     {
       href: "/admin/settings/families",
       title: "Familias",
-      description: "Las familias se descubren automáticamente desde la API. Aquí podrás reetiquetar y reordenar.",
+      description: "Reetiqueta, reordena o desactiva las familias auto-descubiertas desde la API.",
       icon: Layers,
-      ready: false,
+      ready: true,
     },
     {
       href: "/admin/settings/brands",
       title: "Marcas",
-      description: "Listado normalizado de marcas distribuidas. Pendiente de la API del backend.",
+      description: "Listado deduplicado de marcas distribuidas. Renombra, unifica o desasigna en bulk.",
       icon: Tags,
-      ready: false,
+      ready: true,
+    },
+    {
+      href: "/admin/settings/inspiration",
+      title: "Inspiración",
+      description: "Portfolio público de catálogos PDF. Sube PDF + carátula + logo y aparecen en /inspiracion.",
+      icon: BookOpen,
+      ready: true,
     },
   ];
 

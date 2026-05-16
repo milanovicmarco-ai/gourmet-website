@@ -47,6 +47,7 @@ export type ApiProduct = {
   peso_variable?: boolean | null;
   image_url?: string | null;
   gallery?: string[] | null;
+  families?: string[] | null;
   active?: boolean | null;
   status?: "draft" | "published" | "archived" | null;
   optimization_score?: number | null;
@@ -102,42 +103,47 @@ export async function getProductBySlug(slug: string, revalidate = 3600): Promise
   return res.json();
 }
 
+/** Trae TODOS los productos del catálogo iterando por familia para sortear el cap
+ * de 200 por request de la API. Útil para listados que filtran en memoria por
+ * campos que la API no expone (marca, score, flags overlay, etc.). */
+export async function fetchAllProducts(opts?: {
+  q?: string;
+  revalidate?: number;
+}): Promise<ApiProduct[]> {
+  const families = await listFamilies(opts?.revalidate ?? 600).catch(() => []);
+  const map = new Map<string, ApiProduct>();
+
+  // Pasada base: cubre productos sin familia asignada y los primeros 200 globales.
+  const baseRes = await listProducts({ limit: 200, q: opts?.q, revalidate: opts?.revalidate ?? 300 }).catch(
+    () => ({ results: [] as ApiProduct[] }),
+  );
+  for (const p of baseRes.results) map.set(p.ref, p);
+
+  // Una pasada por cada familia (200 max por familia → cubre catálogos razonables).
+  await Promise.all(
+    families.map(async (f) => {
+      const res = await listProducts({
+        limit: 200,
+        family: f.family,
+        q: opts?.q,
+        revalidate: opts?.revalidate ?? 300,
+      }).catch(() => ({ results: [] as ApiProduct[] }));
+      if (res.results.length === 200) {
+        console.warn(
+          `[fetchAllProducts] familia "${f.family}" devolvió 200 (cap saturado). Podría haber productos sin cargar.`,
+        );
+      }
+      for (const p of res.results) map.set(p.ref, p);
+    }),
+  );
+
+  return Array.from(map.values());
+}
+
 export async function listFamilies(revalidate = 3600): Promise<FamilyCount[]> {
   const res = await fetch(`${AURELLANO_API}/catalog/families`, {
     next: { revalidate },
   });
   if (!res.ok) throw new Error(`listFamilies ${res.status}: ${await res.text()}`);
-  return res.json();
-}
-
-export type BrandEntity = {
-  slug: string;
-  name: string;
-  origin?: string | null;
-  logo_url?: string | null;
-};
-
-export type FamilyEntity = {
-  slug: string;
-  name: string;
-  is_entity?: boolean;
-  count?: number;
-};
-
-/** Lista marcas activas como entidades ricas (slug + name + metadata). */
-export async function listBrands(revalidate = 60): Promise<BrandEntity[]> {
-  const res = await fetch(`${AURELLANO_API}/catalog/brands`, {
-    next: { revalidate },
-  });
-  if (!res.ok) throw new Error(`listBrands ${res.status}: ${await res.text()}`);
-  return res.json();
-}
-
-/** Lista familias como entidades — devuelve {slug, name}. */
-export async function listFamiliesEntities(revalidate = 60): Promise<FamilyEntity[]> {
-  const res = await fetch(`${AURELLANO_API}/catalog/families`, {
-    next: { revalidate },
-  });
-  if (!res.ok) throw new Error(`listFamiliesEntities ${res.status}: ${await res.text()}`);
   return res.json();
 }

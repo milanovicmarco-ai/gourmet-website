@@ -1,16 +1,17 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/integrations/supabase/server";
-import { listProducts, listFamilies } from "@/lib/pim/api";
+import { fetchAllProducts, listFamilies, type ApiProduct } from "@/lib/pim/api";
 import { listCatalogs, getRefsByCatalogSlug, getCatalogsForProducts } from "@/lib/pim/catalogs";
+import { getMetasForProducts, effectiveRef, effectiveBrand } from "@/lib/pim/product-meta";
+import { computeOptimizationScore, adaptApiProduct } from "@/lib/pim/score";
 
 export const dynamic = "force-dynamic";
-
-const PAGE_LIMIT = 200; // máximo permitido por la API actualmente
 
 type SP = {
   q?: string;
   family?: string;
+  brand?: string;
   catalog?: string;
   status?: string;
   score_min?: string;
@@ -38,6 +39,7 @@ export default async function AdminProductsPage({
   const sp = await searchParams;
   const q = sp.q?.trim() || undefined;
   const family = sp.family?.trim() || undefined;
+  const brandFilter = sp.brand?.trim() || undefined;
   const catalogSlug = sp.catalog?.trim() || undefined;
   const status = sp.status?.trim() || undefined;
   const scoreMin = sp.score_min ? Number(sp.score_min) : 0;
@@ -46,22 +48,30 @@ export default async function AdminProductsPage({
   const onlySinLactosa = sp.sin_lactosa === "1";
   const onlyVegetariano = sp.vegetariano === "1";
 
-  let products: Awaited<ReturnType<typeof listProducts>>["results"] = [];
+  let products: ApiProduct[] = [];
   let families: Awaited<ReturnType<typeof listFamilies>> = [];
   let catalogs: Awaited<ReturnType<typeof listCatalogs>> = [];
   let error: string | null = null;
 
   try {
     const [pr, fa, ca] = await Promise.all([
-      listProducts({ limit: PAGE_LIMIT, q, family }),
+      // fetchAllProducts itera por familia para sortear el cap de 200/request,
+      // así el filtro por marca / score / catálogo ve TODO el catálogo, no sólo 200.
+      fetchAllProducts({ q }),
       listFamilies(),
       listCatalogs(true),
     ]);
-    products = pr.results;
+    products = pr;
     families = fa;
     catalogs = ca;
   } catch (e) {
     error = (e as Error).message;
+  }
+
+  // Filtro por familia se aplica en memoria ahora (la API filtraba por query, pero
+  // como cargamos todo igual, lo hacemos uniformemente con el resto de filtros).
+  if (family) {
+    products = products.filter((p) => p.family === family);
   }
 
   // Filtro por catálogo: intersecta los refs de la API con los asignados a ese catálogo en Supabase.
@@ -87,13 +97,37 @@ export default async function AdminProductsPage({
     );
   }
 
+  // Calculamos el score local de cada producto para que el listado y la ficha cuadren.
+  // Incluye los flags dietéticos de nuestro overlay (Supabase) para que cuenten en el criterio.
+  const metas = await getMetasForProducts(products.map((p) => p.ref)).catch(() => ({}));
+  const productScores = new Map<string, number>(
+    products.map((p) => [p.ref, computeOptimizationScore(adaptApiProduct(p, metas[p.ref])).total]),
+  );
+
+  // Lista única de marcas (case-insensitive). Mantiene la primera capitalización
+  // que ve para mostrar en el dropdown, pero compara en minúsculas para que
+  // "Comtesse du Barry" y "Comtesse du barry" cuenten como la misma marca.
+  const brandsMap = new Map<string, string>(); // key: lowercase, value: canonical
+  for (const p of products) {
+    const b = effectiveBrand(metas[p.ref], p.brand);
+    if (!b) continue;
+    const key = b.toLowerCase().trim();
+    if (!brandsMap.has(key)) brandsMap.set(key, b);
+  }
+  const allBrands = Array.from(brandsMap.values()).sort((a, b) => a.localeCompare(b));
+  const brandFilterKey = brandFilter?.toLowerCase().trim();
+
   // Filtros aplicados en memoria (la API actual no los expone como query).
   const filtered = products.filter((p) => {
-    const score = Math.min(100, p.optimization_score ?? 0);
+    const score = productScores.get(p.ref) ?? 0;
     if (score < scoreMin || score > scoreMax) return false;
     if (onlySinGluten && !p.sin_gluten) return false;
     if (onlySinLactosa && !p.sin_lactosa) return false;
     if (onlyVegetariano && !p.vegetariano) return false;
+    if (brandFilterKey) {
+      const b = effectiveBrand(metas[p.ref], p.brand).toLowerCase().trim();
+      if (b !== brandFilterKey) return false;
+    }
     if (status) {
       const effective = p.status ?? (p.active === false ? "archived" : "published");
       if (effective !== status) return false;
@@ -106,13 +140,12 @@ export default async function AdminProductsPage({
   const avgScore =
     totalShown > 0
       ? Math.round(
-          filtered.reduce((acc, r) => acc + Math.min(100, r.optimization_score ?? 0), 0) /
-            totalShown,
+          filtered.reduce((acc, r) => acc + (productScores.get(r.ref) ?? 0), 0) / totalShown,
         )
       : 0;
 
   const activeFilters =
-    [q, family, catalogSlug, status, onlySinGluten, onlySinLactosa, onlyVegetariano].filter(Boolean).length +
+    [q, family, brandFilter, catalogSlug, status, onlySinGluten, onlySinLactosa, onlyVegetariano].filter(Boolean).length +
     (scoreMin > 0 ? 1 : 0) +
     (scoreMax < 100 ? 1 : 0);
 
@@ -126,17 +159,24 @@ export default async function AdminProductsPage({
           </h1>
           <p className="text-sm text-muted-foreground mt-2">
             <span className="font-medium text-foreground">{totalShown}</span> de {totalLoaded}
-            {totalLoaded === PAGE_LIMIT && <> (máx. {PAGE_LIMIT} por consulta)</>}
             {" · score medio "}
             <span className="font-medium text-foreground">{avgScore}/100</span>
           </p>
         </div>
-        <Link
-          href="/admin/products/new"
-          className="rounded-full bg-primary text-primary-foreground border border-primary px-5 py-2.5 text-sm font-semibold hover:bg-accent hover:border-accent transition-colors"
-        >
-          + Nuevo producto
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/admin/products/bulk"
+            className="rounded-full border border-border px-5 py-2.5 text-sm font-medium hover:border-foreground transition-colors"
+          >
+            Bulk · Excel
+          </Link>
+          <Link
+            href="/admin/products/new"
+            className="rounded-full bg-primary text-primary-foreground border border-primary px-5 py-2.5 text-sm font-semibold hover:bg-accent hover:border-accent transition-colors"
+          >
+            + Nuevo producto
+          </Link>
+        </div>
       </div>
 
       <form className="rounded-2xl border border-border bg-secondary/30 p-5 space-y-5">
@@ -189,18 +229,33 @@ export default async function AdminProductsPage({
           </button>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-[1fr_auto] items-end">
+        <div className="grid gap-4 md:grid-cols-2 items-end">
           <label className="block space-y-1.5">
             <span className="text-xs uppercase tracking-wider text-muted-foreground">Estado</span>
             <select
               name="status"
               defaultValue={status ?? ""}
-              className="w-full md:w-[180px] bg-background border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
+              className="w-full bg-background border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
             >
               <option value="">Todos</option>
               <option value="published">Publicado</option>
               <option value="draft">Borrador</option>
               <option value="archived">Archivado</option>
+            </select>
+          </label>
+          <label className="block space-y-1.5">
+            <span className="text-xs uppercase tracking-wider text-muted-foreground">Marca</span>
+            <select
+              name="brand"
+              defaultValue={brandFilter ?? ""}
+              className="w-full bg-background border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
+            >
+              <option value="">Todas</option>
+              {allBrands.map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))}
             </select>
           </label>
         </div>
@@ -254,7 +309,7 @@ export default async function AdminProductsPage({
         <ul className="space-y-2">
           {filtered.map((p) => {
             const stat = p.status ?? (p.active === false ? "archived" : "published");
-            const score = Math.min(100, p.optimization_score ?? 0);
+            const score = productScores.get(p.ref) ?? 0;
             return (
               <li key={p.ref}>
                 <Link
@@ -277,9 +332,12 @@ export default async function AdminProductsPage({
                   <div className="min-w-0">
                     <p className="font-medium truncate">{p.name}</p>
                     <p className="text-xs text-muted-foreground truncate">
-                      Ref. {p.ref}
+                      Ref. {effectiveRef(metas[p.ref], p.ref)}
                       {p.family && <> · {p.family}</>}
-                      {p.brand && <> · {p.brand}</>}
+                      {(() => {
+                        const brand = metas[p.ref]?.brand_override?.trim() || p.brand;
+                        return brand ? <> · {brand}</> : null;
+                      })()}
                     </p>
                     {(productCatalogsMap[p.ref] ?? []).length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-1.5">
@@ -360,9 +418,9 @@ function StatusPill({ status }: { status: string }) {
 function ScoreBar({ value }: { value: number }) {
   const clamped = Math.min(100, Math.max(0, value));
   const color =
-    clamped >= 80
+    clamped >= 70
       ? "bg-emerald-500"
-      : clamped >= 50
+      : clamped >= 40
         ? "bg-amber-500"
         : "bg-destructive";
   return (

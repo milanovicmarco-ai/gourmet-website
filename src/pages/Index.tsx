@@ -6,9 +6,18 @@ import { Layout } from "@/components/Layout";
 import { Circle } from "@/components/Circle";
 import { SectionHeader } from "@/components/SectionHeader";
 import { ProductCard } from "@/components/ProductCard";
-import { products } from "@/lib/products";
 import { WHATSAPP_LINK } from "@/lib/contact";
 import { useI18n } from "@/lib/i18n";
+
+/** Shape mínimo que pasa el server component (page.tsx) para la sección
+ * "Selección curada" — provienen del catálogo `seleccion-aurellano` (Supabase). */
+export type FeaturedProduct = {
+  ref: string;
+  slug: string;
+  name: string;
+  family: string;
+  image_url: string | null;
+};
 const heroFoie = "/images/hero-foie.jpg";
 const cheeses = "/images/cheeses.jpg";
 const quesoDetalle = "/images/queso-detalle.jpg";
@@ -19,18 +28,20 @@ const especialidadDelicatessen = "/images/especialidad-delicatessen.jpg";
 const especialidadHealthy = "/images/especialidad-healthy.jpg";
 const especialidadLimited = "/images/limited-bialetti.png";
 
-const Index = () => {
+interface IndexProps {
+  /** Productos destacados de "Selección Aurellano" (vienen del server component). */
+  featured?: FeaturedProduct[];
+}
+
+const Index = ({ featured = [] }: IndexProps) => {
   const { t } = useI18n();
-  const featured = ["foie-mi-cuit-tradicional", "manchego-curado-12m", "anchoas-cantabrico", "canelones-xl-rustido"]
-    .map((s) => products.find((p) => p.slug === s)!)
-    .filter(Boolean);
 
   return (
     <Layout
       navTheme="dark"
       heroFlush
-      seoTitle="Aurellano Productos Gastronómicos · Distribución gourmet"
-      seoDescription="Distribuidor gourmet con +200 proveedores y +10.000 referencias para HORECA y tiendas. Servicio en toda Cataluña y Andorra. Pedidos por WhatsApp."
+      seoTitle="Aurellano Productos Gastronómicos · Tu partner gastronómico de confianza"
+      seoDescription="Especialistas en distribución de productos gourmet para restaurantes, hoteles y tiendas especializadas."
     >
       {/* ========== HERO FULL-SCREEN ========== */}
       <section className="relative h-screen min-h-[640px] w-full overflow-hidden">
@@ -46,13 +57,14 @@ const Index = () => {
 
         <div className="relative h-full container-edit flex flex-col justify-end pb-16 md:pb-24 pt-24">
           <div className="max-w-3xl space-y-7 animate-fade-up text-primary-foreground">
-            <p className="eyebrow text-primary-foreground/70">{t("Desde 1968 · Lleida")}</p>
+            <p className="eyebrow text-primary-foreground/70">{t("Aurellano Productos Gastronómicos")}</p>
             <h1 className="display text-balance text-primary-foreground">
-              {t("Tu partner")}   <br />
-              <span className="italic font-light text-accent">{t("gastronómico")}</span>
+              {t("Tu partner")}<br />
+              <span className="italic font-light text-accent">{t("gastronómico")}</span><br />
+              <span className="italic font-light text-primary-foreground">{t("de confianza")}</span>
             </h1>
             <p className="text-lg md:text-xl text-primary-foreground/85 max-w-xl text-pretty leading-relaxed">
-              {t("Distribuidora para restauración y comercio especializado con +10.000 referencias y +200 proveedores. Ofrecemos el mayor surtido, calidad y fiabilidad.")}
+              {t("Especialistas en distribución de productos gourmet para restaurantes, hoteles y tiendas especializadas.")}
             </p>
             <div className="flex flex-wrap gap-3 pt-2">
               <a
@@ -212,18 +224,24 @@ const Index = () => {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-          {featured.map((p) => (
-            <ProductCard
-              key={p.slug}
-              image={p.image}
-              title={p.name}
-              category={p.category}
-              origin={p.origin}
-              href={`/producto/${p.slug}`}
-            />
-          ))}
-        </div>
+        {featured.length > 0 ? (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+            {featured.map((p) => (
+              <ProductCard
+                key={p.ref}
+                image={p.image_url ?? "/images/placeholder.svg"}
+                title={p.name}
+                category={p.family || "—"}
+                origin={`Ref. ${p.ref}`}
+                href={`/producto/${p.slug}`}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            {t("Asigna productos al catálogo \"Selección Aurellano\" desde el PIM para que aparezcan aquí.")}
+          </p>
+        )}
       </section>
 
       {/* ========== ESPECIALIZACIÓN: QUESOS — FULL BLEED ========== */}

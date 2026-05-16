@@ -3,45 +3,63 @@
 import { FormEvent, ReactNode, useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateProduct } from "../actions";
+import { saveProductMeta } from "./meta-actions";
 import type { FormFields } from "@/lib/pim/api-mapper";
+import type { ProductMeta } from "@/lib/pim/product-meta";
 import { AIAssistButton } from "./ai-assist-button";
 import type { AIField } from "../ai-actions";
-import { EntityCombobox, type EntityOption } from "./entity-combobox";
+import { computeOptimizationScore } from "@/lib/pim/score";
 
 interface ProductEditFormProps {
   productRef: string;
   initial: FormFields;
-  brandOptions: EntityOption[];
-  familyOptions: EntityOption[];
-  hasImage: boolean;
+  meta: ProductMeta;
+  /** Familias disponibles para autocomplete (combinación API + overlay settings). */
+  families?: { slug: string; display_name: string; active: boolean; count: number }[];
 }
 
-export function ProductEditForm({ productRef, initial, brandOptions: initialBrands, familyOptions: initialFamilies, hasImage }: ProductEditFormProps) {
+export function ProductEditForm({ productRef, initial, meta, families = [] }: ProductEditFormProps) {
   const router = useRouter();
-  const [brandOptions, setBrandOptions] = useState(initialBrands);
-  const [familyOptions, setFamilyOptions] = useState(initialFamilies);
   const [form, setForm] = useState({
+    // La ref del form es la "ref visible al usuario": display_ref si existe, si no la canónica de la API.
+    // Al guardar, se almacena en product_meta.display_ref (la API trata su ref como inmutable).
+    ref: meta.display_ref?.trim() || initial.ref || productRef,
     name: initial.name ?? "",
     family: initial.family ?? "",
-    brand: initial.brand ?? "",
+    // Brand SE EDITA en el PIM pero NO viaja a la API del socio; va a product_meta.
+    brand: meta.brand_override ?? (initial.brand ?? ""),
     short_description: initial.short_description ?? "",
     long_description: initial.long_description ?? "",
     origin: initial.origin ?? "",
     flavor: initial.flavor ?? "",
     format: initial.format ?? "",
+    units_per_box: initial.units_per_box != null ? String(initial.units_per_box) : "",
     price_eur: initial.price_eur != null ? String(initial.price_eur) : "",
     status: (initial.status as "draft" | "published" | "archived") ?? "published",
     seo_title: initial.seo_title ?? "",
     seo_description: initial.seo_description ?? "",
     badges: Array.isArray(initial.badges) ? initial.badges.join(", ") : (initial.badges ?? ""),
     pairings: Array.isArray(initial.pairings) ? initial.pairings.join(", ") : (initial.pairings ?? ""),
-    allergens: Array.isArray(initial.allergens) ? initial.allergens.join(", ") : (initial.allergens ?? ""),
     ingredients: initial.ingredients ?? "",
+    // 3 dietéticos que vienen de la API
     gluten_free: !!initial.gluten_free,
     lactose_free: !!initial.lactose_free,
+    vegetarian: false, // se cargará abajo si lo tenemos en initial (extender si quieres)
+    // 5 dietéticos extras del overlay nuestro
+    diet_no_nuts: meta.diet_no_nuts,
+    diet_vegan: meta.diet_vegan,
+    diet_no_added_sugar: meta.diet_no_added_sugar,
+    diet_high_protein: meta.diet_high_protein,
+    diet_keto: meta.diet_keto,
+    diet_other: meta.diet_other ?? "",
+    // Clasificación gastronómica (overlay)
+    gama: meta.gama != null ? String(meta.gama) : "",
+    momento_plato: meta.momento_plato ?? "",
+    destacado: !!meta.destacado,
+    primer_precio: !!meta.primer_precio,
   });
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ kind: "ok" | "warn" | "err"; text: string } | null>(null);
+  const [message, setMessage] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
 
   function set<K extends keyof typeof form>(k: K, v: typeof form[K]) {
     setForm((f) => ({ ...f, [k]: v }));
@@ -56,7 +74,6 @@ export function ProductEditForm({ productRef, initial, brandOptions: initialBran
     flavor: form.flavor,
     formato: form.format,
     ingredientes: form.ingredients,
-    alergenos: form.allergens,
     tags: form.badges,
     pairings: form.pairings,
     descripcion_corta: form.short_description,
@@ -76,115 +93,169 @@ export function ProductEditForm({ productRef, initial, brandOptions: initialBran
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-
-    // Bloqueo cliente: si pretende publicar y faltan obligatorios, no enviamos.
-    if (form.status === "published" && missingRequired.length > 0) {
-      setMessage({
-        kind: "err",
-        text: `No puedes publicar todavía. Faltan: ${missingRequired.join(", ")}.`,
-      });
-      return;
-    }
-
     setSaving(true);
     setMessage(null);
 
     try {
-      const data = await updateProduct(productRef, {
+      // 1) Producto a la API del socio. Si publica y no cumple requisitos del
+      // backend (marca, etc.), updateProduct hará fallback automático a "draft"
+      // — el PIM nunca rechaza un guardado.
+      const result = await updateProduct(productRef, {
         ...form,
         price_eur: form.price_eur === "" ? null : Number(form.price_eur),
+        units_per_box: form.units_per_box === "" ? null : Number(form.units_per_box),
       });
-      const score = data.optimization_score ?? "?";
-      setMessage({
-        kind: missingRequired.length > 0 ? "warn" : "ok",
-        text:
-          missingRequired.length > 0
-            ? `Guardado · score ${score}/100. Para publicar te faltan: ${missingRequired.join(", ")}`
-            : `Guardado · score ${score}/100`,
+      const data = result.product as {
+        image_url?: string | null;
+        gallery?: string[];
+        info_nutricional?: unknown;
+      };
+
+      // 2) Overlay (brand + diet extras + display_ref + clasificación) a Supabase.
+      const metaResult = await saveProductMeta({
+        product_ref: productRef,
+        display_ref: form.ref,
+        brand_override: form.brand,
+        diet_no_nuts: form.diet_no_nuts,
+        diet_vegan: form.diet_vegan,
+        diet_no_added_sugar: form.diet_no_added_sugar,
+        diet_high_protein: form.diet_high_protein,
+        diet_keto: form.diet_keto,
+        diet_other: form.diet_other,
+        gama: form.gama === "" ? null : Number(form.gama),
+        momento_plato: form.momento_plato === ""
+          ? null
+          : (form.momento_plato as "aperitivo" | "entrante" | "principal" | "guarnicion" | "postre"),
+        destacado: form.destacado,
+        primer_precio: form.primer_precio,
       });
+
+      // Calculamos el score localmente con lo que se acaba de guardar (mismo criterio que el checklist).
+      const localScore = computeOptimizationScore({
+        name: form.name,
+        short_description: form.short_description,
+        long_description: form.long_description,
+        primary_image: data.image_url ?? null,
+        gallery: Array.isArray(data.gallery) ? data.gallery : data.image_url ? [data.image_url] : [],
+        allergens: [],
+        badges: form.badges
+          ? String(form.badges).split(",").map((s) => s.trim()).filter(Boolean)
+          : [],
+        pairings: form.pairings
+          ? String(form.pairings).split(",").map((s) => s.trim()).filter(Boolean)
+          : [],
+        nutrition: data.info_nutricional,
+        format: form.format,
+        origin: form.origin,
+        brand_id: form.brand,
+        category_id: form.family,
+        seo_title: form.seo_title,
+        seo_description: form.seo_description,
+        // Cualquier flag dietético activo (8 toggles) hace pasar el criterio de "info dietética".
+        diet_flags: [
+          form.gluten_free,
+          form.lactose_free,
+          form.vegetarian,
+          form.diet_no_nuts,
+          form.diet_vegan,
+          form.diet_no_added_sugar,
+          form.diet_high_protein,
+          form.diet_keto,
+          !!form.diet_other && form.diet_other.trim().length > 0,
+        ],
+      });
+
+      const refChanged = form.ref !== productRef;
+      const refNote = refChanged ? ` · ref visible: ${form.ref}` : "";
+      const slugNote = result.newSlug ? ` · slug: ${result.newSlug}` : "";
+
+      // Aviso explícito si la ref alias NO se persistió (columna display_ref no existe).
+      if (!metaResult.displayRefPersisted) {
+        setMessage({
+          kind: "err",
+          text: `Guardado parcial: la referencia alias "${form.ref}" NO se persistió. Falta ejecutar en Supabase la migración 20260513_product_meta_display_ref.sql. Tras correrla, vuelve a guardar.`,
+        });
+      } else if (result.autoFilledFields && result.autoFilledFields.length > 0) {
+        setMessage({
+          kind: "ok",
+          text: `Guardado · score ${localScore.total}/100 · rellenados por defecto: ${result.autoFilledFields.join(", ")}${refNote}${slugNote}`,
+        });
+      } else {
+        setMessage({
+          kind: "ok",
+          text: `Guardado · score ${localScore.total}/100${refNote}${slugNote}`,
+        });
+      }
+
       router.refresh();
     } catch (e) {
+      // Llegamos aquí sólo si fallan cosas no esperadas (red caída, 5xx, auth).
+      // Los 400 de "campos obligatorios" ya se reconvierten a draft arriba.
       setMessage({ kind: "err", text: (e as Error).message });
     } finally {
       setSaving(false);
     }
   }
 
-  // Campos obligatorios para PUBLICAR. Faltarlos no bloquea guardar en draft,
-  // pero sí bloquea cambiar status a "published".
-  const allergensStr = typeof form.allergens === "string"
-    ? form.allergens
-    : Array.isArray(form.allergens) ? form.allergens.join(",") : "";
-  const missingRequired: string[] = [];
-  if (!form.name?.trim()) missingRequired.push("nombre");
-  if (!form.brand) missingRequired.push("marca");
-  if (!form.family) missingRequired.push("familia");
-  if (!form.short_description?.trim()) missingRequired.push("descripción corta");
-  if (!form.long_description?.trim()) missingRequired.push("descripción larga");
-  if (!hasImage) missingRequired.push("imagen");
-  if (!allergensStr.trim()) missingRequired.push("alérgenos (escribe 'ninguno' si no aplica)");
-  const canPublish = missingRequired.length === 0;
-
   return (
     <form onSubmit={onSubmit} className="space-y-6">
-      {missingRequired.length > 0 ? (
-        <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 flex items-start gap-3">
-          <span aria-hidden className="text-amber-600 text-lg leading-none mt-0.5">⚠️</span>
-          <div className="text-sm flex-1">
-            <p className="font-medium text-amber-900">
-              Faltan {missingRequired.length} {missingRequired.length === 1 ? "campo obligatorio" : "campos obligatorios"} para publicar
-            </p>
-            <p className="text-amber-800 mt-0.5">
-              {missingRequired.join(" · ")}
-            </p>
-            <p className="text-xs text-amber-700/80 mt-1">
-              Puedes guardarlo en borrador, pero no podrás cambiarlo a &quot;Publicado&quot; hasta completarlos.
-            </p>
-          </div>
-        </div>
-      ) : (
-        form.status !== "published" && (
-          <div className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 flex items-start gap-3">
-            <span aria-hidden className="text-emerald-600 text-lg leading-none mt-0.5">✓</span>
-            <div className="text-sm flex-1">
-              <p className="font-medium text-emerald-900">Listo para publicar</p>
-              <p className="text-emerald-800/80 text-xs mt-0.5">
-                Cambia el estado a &quot;Publicado&quot; cuando quieras que aparezca en el escaparate.
-              </p>
-            </div>
-          </div>
-        )
-      )}
+      {/* Datalist global de familias — alimenta el autocomplete del input "Familia".
+          Si el slug está inactivo en el overlay, se indica entre paréntesis. */}
+      <datalist id="families-list">
+        {families.map((f) => (
+          <option key={f.slug} value={f.slug}>
+            {f.display_name !== f.slug ? `${f.display_name} (${f.count} productos)` : `${f.count} productos`}
+            {!f.active ? " · inactiva" : ""}
+          </option>
+        ))}
+      </datalist>
+
       <div className="grid sm:grid-cols-2 gap-5">
+        <Field
+          label="Referencia (visible)"
+          value={form.ref}
+          onChange={(v) => set("ref", v)}
+          placeholder={`canónica: ${productRef}`}
+        />
         <Field label="Nombre" value={form.name} onChange={(v) => set("name", v)} />
-        <ComboField label="Marca">
-          <EntityCombobox
-            kind="brand"
-            value={form.brand || null}
-            options={brandOptions}
-            onChange={(slug) => set("brand", slug ?? "")}
-            onOptionsChange={setBrandOptions}
-            placeholder="— Elegir marca —"
-          />
-        </ComboField>
-        <ComboField label="Familia">
-          <EntityCombobox
-            kind="family"
-            value={form.family || null}
-            options={familyOptions}
-            onChange={(slug) => set("family", slug ?? "")}
-            onOptionsChange={setFamilyOptions}
-            placeholder="— Elegir familia —"
-          />
-        </ComboField>
+        <Field label="Marca" value={form.brand} onChange={(v) => set("brand", v)} placeholder="ej. Maison Lafleur" />
+        <Field
+          label="Familia"
+          value={form.family}
+          onChange={(v) => set("family", v)}
+          placeholder="QUESOS, FOIE_GRAS, …"
+          listId="families-list"
+        />
         <Field label="Origen" value={form.origin} onChange={(v) => set("origin", v)} />
-        <Field label="Formato" value={form.format} onChange={(v) => set("format", v)} placeholder="ej. 250 g · cuña" />
+        <Field
+          label="Formato unitario"
+          value={form.format}
+          onChange={(v) => set("format", v)}
+          placeholder="ej. 500 ml · 250 g · cuña"
+        />
+        <Field
+          label="Unidades por caja"
+          value={form.units_per_box}
+          onChange={(v) => set("units_per_box", v)}
+          type="number"
+          placeholder="ej. 12"
+        />
         <Field
           label="Precio (€)"
           value={form.price_eur}
           onChange={(v) => set("price_eur", v)}
           type="number"
           step="0.01"
+        />
+        <SelectField
+          label="Estado"
+          value={form.status}
+          onChange={(v) => set("status", v as typeof form.status)}
+          options={[
+            { value: "draft", label: "Borrador" },
+            { value: "published", label: "Publicado" },
+            { value: "archived", label: "Archivado" },
+          ]}
         />
       </div>
 
@@ -203,13 +274,18 @@ export function ProductEditForm({ productRef, initial, brandOptions: initialBran
         max={220}
         action={aiButton("short_description", "Sugerir descripción corta", "short_description")}
       />
-      <Textarea
-        label="Descripción larga"
-        value={form.long_description}
-        onChange={(v) => set("long_description", v)}
-        rows={6}
-        action={aiButton("long_description", "Sugerir descripción larga", "long_description")}
-      />
+      <div className="space-y-1.5">
+        <Textarea
+          label="Descripción larga"
+          value={form.long_description}
+          onChange={(v) => set("long_description", v)}
+          rows={8}
+          action={aiButton("long_description", "Sugerir descripción larga", "long_description")}
+        />
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          Acepta <strong>Markdown</strong>: doble enter para párrafo nuevo · <code>**negrita**</code> · <code>*cursiva*</code> · <code>- lista</code> · <code>[texto](url)</code>
+        </p>
+      </div>
       <Textarea
         label="Ingredientes"
         value={form.ingredients}
@@ -217,7 +293,7 @@ export function ProductEditForm({ productRef, initial, brandOptions: initialBran
         rows={3}
       />
 
-      <div className="grid sm:grid-cols-3 gap-5">
+      <div className="grid sm:grid-cols-2 gap-5">
         <Field
           label="Tags / badges (coma)"
           value={form.badges}
@@ -232,13 +308,73 @@ export function ProductEditForm({ productRef, initial, brandOptions: initialBran
           placeholder="Membrillo, Vino tinto"
           action={aiButton("pairings", "Sugerir maridajes", "pairings")}
         />
-        <Field label="Alérgenos (coma)" value={form.allergens} onChange={(v) => set("allergens", v)} placeholder="lactosa, frutos secos" />
       </div>
 
-      <fieldset className="rounded-2xl border border-border p-5 grid sm:grid-cols-2 gap-3">
+      <fieldset className="rounded-2xl border border-border p-5 space-y-4">
         <legend className="px-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">Atributos dietéticos</legend>
-        <Toggle label="Sin gluten" checked={form.gluten_free} onChange={(v) => set("gluten_free", v)} />
-        <Toggle label="Sin lactosa" checked={form.lactose_free} onChange={(v) => set("lactose_free", v)} />
+        <div className="grid sm:grid-cols-2 gap-3">
+          <Toggle label="Sin gluten" checked={form.gluten_free} onChange={(v) => set("gluten_free", v)} />
+          <Toggle label="Sin lactosa" checked={form.lactose_free} onChange={(v) => set("lactose_free", v)} />
+          <Toggle label="Sin frutos secos" checked={form.diet_no_nuts} onChange={(v) => set("diet_no_nuts", v)} />
+          <Toggle label="Vegano" checked={form.diet_vegan} onChange={(v) => set("diet_vegan", v)} />
+          <Toggle label="Vegetariano" checked={form.vegetarian} onChange={(v) => set("vegetarian", v)} />
+          <Toggle label="Sin azúcares añadidos" checked={form.diet_no_added_sugar} onChange={(v) => set("diet_no_added_sugar", v)} />
+          <Toggle label="Alto en proteínas" checked={form.diet_high_protein} onChange={(v) => set("diet_high_protein", v)} />
+          <Toggle label="Keto" checked={form.diet_keto} onChange={(v) => set("diet_keto", v)} />
+        </div>
+        <div className="pt-3 border-t border-border">
+          <label className="block space-y-1.5">
+            <span className="text-xs uppercase tracking-wider text-muted-foreground">Otros (texto libre)</span>
+            <input
+              type="text"
+              value={form.diet_other}
+              onChange={(e) => set("diet_other", e.target.value)}
+              placeholder="ej. Bajo en sodio, halal, kosher…"
+              className="w-full bg-background border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
+            />
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset className="rounded-2xl border border-border p-5 space-y-4">
+        <legend className="px-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">Clasificación gastronómica</legend>
+        <div className="grid sm:grid-cols-2 gap-5">
+          <SelectField
+            label="Gama"
+            value={form.gama}
+            onChange={(v) => set("gama", v)}
+            options={[
+              { value: "", label: "— sin asignar —" },
+              { value: "1", label: "1ª gama · fresco sin procesar" },
+              { value: "2", label: "2ª gama · conserva" },
+              { value: "3", label: "3ª gama · congelado" },
+              { value: "4", label: "4ª gama · fresco listo para consumir" },
+              { value: "5", label: "5ª gama · cocinado refrigerado" },
+              { value: "6", label: "6ª gama · liofilizado / deshidratado" },
+            ]}
+          />
+          <SelectField
+            label="Momento del plato"
+            value={form.momento_plato}
+            onChange={(v) => set("momento_plato", v as typeof form.momento_plato)}
+            options={[
+              { value: "", label: "— sin asignar —" },
+              { value: "aperitivo", label: "Aperitivo" },
+              { value: "entrante", label: "Entrante" },
+              { value: "principal", label: "Principal" },
+              { value: "guarnicion", label: "Guarnición" },
+              { value: "postre", label: "Postre" },
+            ]}
+          />
+        </div>
+        <div className="grid sm:grid-cols-2 gap-3 pt-3 border-t border-border">
+          <Toggle label="Destacado" checked={form.destacado} onChange={(v) => set("destacado", v)} />
+          <Toggle label="Primer precio" checked={form.primer_precio} onChange={(v) => set("primer_precio", v)} />
+        </div>
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          <strong>Destacado</strong>: marca visual independiente del catálogo &ldquo;Selección Aurellano&rdquo;.
+          <strong className="ml-2">Primer precio</strong>: indica que es la opción entry-level de su familia, útil para filtros del comercial.
+        </p>
       </fieldset>
 
       <fieldset className="rounded-2xl border border-border p-5 space-y-4">
@@ -260,31 +396,6 @@ export function ProductEditForm({ productRef, initial, brandOptions: initialBran
         />
       </fieldset>
 
-      <fieldset className="rounded-2xl border border-border p-5 space-y-3">
-        <legend className="px-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-          Estado de publicación
-        </legend>
-        <SelectField
-          label={canPublish ? "Estado" : "Estado (publicar bloqueado)"}
-          value={form.status}
-          onChange={(v) => set("status", v as typeof form.status)}
-          options={[
-            { value: "draft", label: "Borrador" },
-            {
-              value: "published",
-              label: canPublish ? "Publicado" : "Publicado (faltan obligatorios)",
-              disabled: !canPublish && form.status !== "published",
-            },
-            { value: "archived", label: "Archivado" },
-          ]}
-        />
-        {!canPublish && (
-          <p className="text-xs text-amber-700">
-            Completa los campos obligatorios del banner de arriba para desbloquear &quot;Publicado&quot;.
-          </p>
-        )}
-      </fieldset>
-
       <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-border">
         <button
           type="submit"
@@ -294,32 +405,12 @@ export function ProductEditForm({ productRef, initial, brandOptions: initialBran
           {saving ? "Guardando…" : "Guardar cambios"}
         </button>
         {message && (
-          <p
-            className={`text-sm ${
-              message.kind === "ok"
-                ? "text-emerald-600"
-                : message.kind === "warn"
-                  ? "text-amber-700"
-                  : "text-destructive"
-            }`}
-          >
-            {message.kind === "warn" && "⚠️ "}
+          <p className={`text-sm ${message.kind === "ok" ? "text-emerald-600" : "text-destructive"}`}>
             {message.text}
           </p>
         )}
       </div>
     </form>
-  );
-}
-
-function ComboField({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <label className="block space-y-1.5">
-      <span className="text-xs uppercase tracking-wider text-muted-foreground">
-        {label}
-      </span>
-      {children}
-    </label>
   );
 }
 
@@ -332,6 +423,7 @@ function Field({
   placeholder,
   max,
   action,
+  listId,
 }: {
   label: string;
   value: string;
@@ -341,6 +433,8 @@ function Field({
   placeholder?: string;
   max?: number;
   action?: ReactNode;
+  /** Si se pasa, el input se enlaza a un <datalist id={listId}> para autocomplete. */
+  listId?: string;
 }) {
   return (
     <label className="block space-y-1.5">
@@ -355,6 +449,7 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         maxLength={max}
+        list={listId}
         className="w-full bg-background border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
       />
     </label>
@@ -409,7 +504,7 @@ function SelectField({
   label: string;
   value: string;
   onChange: (v: string) => void;
-  options: { value: string; label: string; disabled?: boolean }[];
+  options: { value: string; label: string }[];
 }) {
   return (
     <label className="block space-y-1.5">
@@ -420,7 +515,7 @@ function SelectField({
         className="w-full bg-background border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
       >
         {options.map((o) => (
-          <option key={o.value} value={o.value} disabled={o.disabled}>
+          <option key={o.value} value={o.value}>
             {o.label}
           </option>
         ))}

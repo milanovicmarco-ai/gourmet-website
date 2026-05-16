@@ -15,10 +15,10 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["lucide-react"],
     serverActions: {
-      // Las fotos del catálogo pueden pasar de 1 MB (default), especialmente los
-      // PNGs transparentes. El backend (Cloudinary) admite hasta 10 MB, así que
-      // alineamos el límite del frontend.
-      bodySizeLimit: "12mb",
+      // Subida de catálogos PDF al bucket "inspiration" desde el PIM. Por defecto
+      // Next.js limita a 1 MB. Subimos a 50 MB para PDFs de catálogos largos con
+      // imágenes en alta resolución. Si necesitas más, súbelo aquí.
+      bodySizeLimit: "50mb",
     },
   },
 };

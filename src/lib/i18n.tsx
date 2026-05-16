@@ -20,7 +20,39 @@ const ca: Dict = {
   "Limited Edition": "Limited Edition",
   "Aurellano": "Aurellano",
   "Sobre Nosotros": "Sobre Nosaltres",
+
+  // Ficha de producto
+  "Inicio": "Inici",
+  "Sin imagen": "Sense imatge",
+  "Ref.": "Ref.",
+  "Marca": "Marca",
+  "Origen": "Origen",
+  "Formato unitario": "Format unitari",
+  "Unidades por caja": "Unitats per caixa",
+  "u/caja": "u/caixa",
+  "Sabor": "Sabor",
+  "Alérgenos": "Al·lèrgens",
+  "Sin alérgenos declarados": "Sense al·lèrgens declarats",
+  "Pedir información": "Demanar informació",
+  "Hola Aurellano, me interesa": "Hola Aurellano, m'interessa",
+  "Sobre el producto": "Sobre el producte",
+  "El detalle": "El detall",
+  "Maridajes": "Maridatges",
+  "Ingredientes": "Ingredients",
+  "Información nutricional": "Informació nutricional",
+  "Pedido mínimo 200€": "Comanda mínima 200€",
+  "Portes incluidos según zona. Entrega en 24–48h en Cataluña.": "Ports inclosos segons zona. Lliurament en 24-48h a Catalunya.",
+  "Ver condiciones de venta": "Veure condicions de venda",
   "Consejos": "Consells",
+  // Inspiración (página /inspiracion)
+  "Inspiración": "Inspiració",
+  "Catálogos": "Catàlegs",
+  "y colecciones.": "i col·leccions.",
+  "Selecciones y dossieres en PDF de Aurellano y nuestras marcas distribuidas. Descárgalos y enséñalos a tu equipo o clientela.":
+    "Seleccions i dossiers en PDF d'Aurellano i les nostres marques distribuïdes. Descarrega'ls i mostra'ls al teu equip o clientela.",
+  "Próximamente": "Pròximament",
+  "Estamos preparando las nuevas selecciones. Vuelve pronto o pídenos un catálogo concreto por WhatsApp.":
+    "Estem preparant les noves seleccions. Torna aviat o demana'ns un catàleg concret per WhatsApp.",
   "Contacto": "Contacte",
   "Abrir menú": "Obrir menú",
   "Hablar por WhatsApp": "Parlar per WhatsApp",
@@ -53,7 +85,16 @@ const ca: Dict = {
   "Algo ha fallado. Inténtalo de nuevo o escríbenos por WhatsApp.":
     "Alguna cosa ha fallat. Torna-ho a provar o escriu-nos per WhatsApp.",
 
-  // Home
+  // Home — naming + claim corporativo (fuente: src/lib/brand.ts)
+  "Aurellano Productos Gastronómicos": "Aurellano Productes Gastronòmics",
+  "Aurellano Productos": "Aurellano Productes",
+  "Gastronómicos": "Gastronòmics",
+  "Tu partner gastronómico": "El teu partner gastronòmic",
+  "de confianza": "de confiança",
+  "Especialistas en distribución de productos gourmet para restaurantes, hoteles y tiendas especializadas.":
+    "Especialistes en distribució de productes gourmet per restaurants, hotels i botigues especialitzades.",
+  // Strings antiguos del hero — los mantenemos por compatibilidad con otros sitios
+  // (footer, lib/products, etc.) que aún puedan usarlos hasta limpiarse del todo.
   "Desde 1968 · Lleida": "Des de 1968 · Lleida",
   "Tu partner": "El teu partner",
   "gastronómico": "gastronòmic",
@@ -196,16 +237,43 @@ interface I18nCtx {
 const I18nContext = createContext<I18nCtx | null>(null);
 
 export const I18nProvider = ({ children }: { children: ReactNode }) => {
-  const [lang, setLangState] = useState<Lang>(() => {
-    if (typeof window === "undefined") return "es";
-    const saved = window.localStorage.getItem("aurellano.lang");
-    return saved === "ca" ? "ca" : "es";
-  });
+  // IMPORTANTE: arrancamos siempre con "es" para evitar hydration mismatch.
+  const [lang, setLangState] = useState<Lang>("es");
 
+  // Lectura inicial post-mount (sólo cliente)
   useEffect(() => {
-    if (typeof document !== "undefined") document.documentElement.lang = lang;
-    if (typeof window !== "undefined") window.localStorage.setItem("aurellano.lang", lang);
-  }, [lang]);
+    if (typeof window === "undefined") return;
+    const cookieMatch = document.cookie.match(/(?:^|; )aurellano_lang=(es|ca)/);
+    if (cookieMatch) {
+      const v = cookieMatch[1] as Lang;
+      if (v !== lang) setLangState(v);
+      return;
+    }
+    const saved = window.localStorage.getItem("aurellano.lang");
+    if (saved === "ca" && lang !== "ca") setLangState("ca");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persistencia + refresh del servidor cuando cambia el idioma
+  const setLang = (next: Lang) => {
+    // Escribimos cookie SINCRÓNICAMENTE antes de refrescar para que el server la lea bien
+    if (typeof document !== "undefined") {
+      document.documentElement.lang = next;
+      document.cookie = `aurellano_lang=${next}; path=/; max-age=31536000; samesite=lax`;
+    }
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("aurellano.lang", next);
+    }
+    setLangState(next);
+    // Refrescamos el árbol de Server Components con el nuevo cookie set
+    // (Next.js detecta el cookie y vuelve a renderizar páginas dinámicas)
+    if (typeof window !== "undefined") {
+      // Pequeño microtask para que la cookie esté realmente set antes del fetch
+      setTimeout(() => {
+        if (typeof window !== "undefined") window.location.reload();
+      }, 30);
+    }
+  };
 
   const t = (key: string): string => {
     const dict = dictionaries[lang];
@@ -213,7 +281,7 @@ export const I18nProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <I18nContext.Provider value={{ lang, setLang: setLangState, t }}>
+    <I18nContext.Provider value={{ lang, setLang, t }}>
       {children}
     </I18nContext.Provider>
   );

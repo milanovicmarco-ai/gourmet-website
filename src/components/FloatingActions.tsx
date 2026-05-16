@@ -51,13 +51,11 @@ export const FloatingActions = () => {
     abortRef.current = controller;
 
     try {
-      const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/gourmet-chat`;
-      const resp = await fetch(url, {
+      // Nuestro propio endpoint en Next.js (Route Handler) que proxia a OpenAI.
+      // Antes apuntaba a una Supabase Edge Function que nunca se desplegó.
+      const resp = await fetch("/api/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: next, lang }),
         signal: controller.signal,
       });
@@ -122,8 +120,13 @@ export const FloatingActions = () => {
     }
   };
 
+  // Toggle global: el Asistente Gourmet está deshabilitado de momento. Cambia
+  // a `true` para re-activar (sin tocar el resto del componente).
+  const ASSISTANT_ENABLED = false;
+
   return (
     <>
+      {ASSISTANT_ENABLED && <>
       {/* Chat panel */}
       <div
         className={cn(
@@ -227,31 +230,29 @@ export const FloatingActions = () => {
         </form>
       </div>
 
-      {/* AI Floating button */}
+      {/* AI Floating button — sin animaciones ni hover effects (criterio Marco) */}
       <button
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? t("Cerrar Asistente Gourmet") : t("Abrir Asistente Gourmet")}
-        className="fixed bottom-[5.5rem] right-5 z-50 group"
+        className="fixed bottom-[5.5rem] right-5 z-50"
       >
-        {!open && (
-          <span className="absolute inset-0 rounded-full bg-primary/30 animate-ping" aria-hidden />
-        )}
-        <span className="relative flex items-center gap-2 bg-primary text-primary-foreground rounded-full pl-4 pr-5 py-3 shadow-glow hover:shadow-soft transition-all duration-300 hover:translate-y-[-2px]">
+        <span className="relative flex items-center gap-2 bg-primary text-primary-foreground rounded-full pl-4 pr-5 py-3">
           {open ? <X className="h-5 w-5" strokeWidth={2.2} /> : <Sparkles className="h-5 w-5" strokeWidth={2.2} />}
-          <span className="hidden sm:inline text-sm font-medium">{open ? t("Cerrar") : t("Asistente IA")}</span>
+          <span className="hidden sm:inline text-sm font-medium">{open ? t("Cerrar") : t("Asistente Gourmet")}</span>
         </span>
       </button>
 
-      {/* WhatsApp button */}
+      </>}
+
+      {/* WhatsApp button — sin animaciones ni hover effects */}
       <a
         href={WHATSAPP_LINK}
         target="_blank"
         rel="noopener noreferrer"
         aria-label={t("Hablar por WhatsApp con Aurellano")}
-        className="fixed bottom-5 right-5 z-50 group"
+        className="fixed bottom-5 right-5 z-50"
       >
-        <span className="absolute inset-0 rounded-full bg-accent/40 animate-ping" aria-hidden />
-        <span className="relative flex items-center gap-2 bg-accent text-accent-foreground rounded-full pl-4 pr-5 py-3 shadow-glow hover:shadow-soft transition-all duration-300 hover:translate-y-[-2px]">
+        <span className="relative flex items-center gap-2 bg-accent text-accent-foreground rounded-full pl-4 pr-5 py-3">
           <MessageCircle className="h-5 w-5" strokeWidth={2.2} />
           <span className="hidden sm:inline text-sm font-medium">WhatsApp</span>
         </span>
