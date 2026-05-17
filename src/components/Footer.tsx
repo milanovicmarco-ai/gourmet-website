@@ -265,6 +265,22 @@ export const Footer = () => {
         >
           <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.22)" }}>
             © {new Date().getFullYear()} {t("Aurellano Productos Gastronómicos")} · Lleida, Catalunya
+            {" · "}
+            {t("Designed by")}{" "}
+            <a
+              href="https://www.thecuina.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: "rgba(255,255,255,0.5)",
+                textDecoration: "none",
+                transition: "color .15s",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#fa2ca2")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.5)")}
+            >
+              The Cuina AI
+            </a>
           </p>
           <div style={{ display: "flex", gap: "22px" }}>
             {[t("Privacidad"), t("Condiciones"), t("Cookies")].map((label) => (
