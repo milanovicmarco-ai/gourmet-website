@@ -2,7 +2,7 @@
 //
 // IMPORTANTE: estos catálogos NO están en la API del socio. La API del socio
 // gestiona productos, marcas y familias; los "catálogos de publicación"
-// (HORECA, Retail, Formages, Selección Aurellano, etc.) son un concepto propio
+// (HORECA, Retail, Fromages, Selección Aurellano, etc.) son un concepto propio
 // del PIM que vive en la tabla `catalogs` de nuestro Supabase, con la tabla
 // `product_catalogs` para las asignaciones N:M.
 

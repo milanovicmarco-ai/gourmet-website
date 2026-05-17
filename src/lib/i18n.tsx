@@ -16,6 +16,7 @@ const ca: Dict = {
   "Especialidades": "Especialitats",
   "Quesos": "Formatges",
   "Delicatessen": "Delicatessen",
+  "Fromages": "Fromages",
   "Healthy Food": "Healthy Food",
   "Limited Edition": "Limited Edition",
   "Aurellano": "Aurellano",

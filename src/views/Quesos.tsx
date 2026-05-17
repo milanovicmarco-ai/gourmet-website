@@ -32,7 +32,7 @@ const Quesos = ({ featured = [], featuredCatalogCount = 0 }: Props) => {
   useI18n(); // se mantiene importado para futuras strings traducibles
   return (
     <Layout
-      seoTitle="Formages | Aurellano Productos Gastronómicos"
+      seoTitle="Fromages | Aurellano Productos Gastronómicos"
       seoDescription="Selección de quesos afinados por origen, intensidad y familia. DOP, artesanos y veganos. Maridajes y montaje de tabla a medida."
     >
       {/* HERO — pt extra para que el contenido no se solape con el nav absoluto. */}
@@ -111,7 +111,7 @@ const Quesos = ({ featured = [], featuredCatalogCount = 0 }: Props) => {
         ) : (
           <EmptyHubMessage
             catalogPublishedCount={featuredCatalogCount}
-            catalogName="Formages"
+            catalogName="Fromages"
             flagLabel="Destacado"
           />
         )}

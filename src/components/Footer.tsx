@@ -27,7 +27,7 @@ export const Footer = () => {
     {
       title: t("Gourmet"),
       links: [
-        { to: "/quesos", label: t("Formages") },
+        { to: "/quesos", label: t("Fromages") },
         { to: "/catalogo?catalog=delicatessen", label: t("Delicatessen") },
         { to: "/catalogo?catalog=healthy", label: t("Healthy") },
         { to: "/catalogo?catalog=limited-edition", label: t("Limited Edition") },

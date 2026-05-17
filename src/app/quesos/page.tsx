@@ -3,7 +3,7 @@ import Quesos from "@/views/Quesos";
 import { loadCuratedProducts } from "@/lib/pim/featured";
 
 export const metadata: Metadata = {
-  title: "Formages",
+  title: "Fromages",
   description:
     "Selección de quesos afinados por origen, intensidad y familia. DOP, artesanos y veganos. Maridajes y montaje de tabla a medida.",
   alternates: { canonical: "/quesos" },
