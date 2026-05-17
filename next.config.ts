@@ -10,11 +10,6 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  // ESLint también puede bloquear builds por warnings — lo desactivamos en build.
-  // En desarrollo seguimos viendo los warnings normalmente.
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [

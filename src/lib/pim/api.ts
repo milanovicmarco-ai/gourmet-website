@@ -66,6 +66,22 @@ export type FamilyCount = { family: string; count: number };
 // =============================================================
 // LECTURAS (públicas — sin auth).
 // =============================================================
+
+/** Timeout default para fetches a la API del socio. Vercel está en US-East y
+ *  el VPS del socio en Europa; si no contesta en 8s, asumimos fallo y dejamos
+ *  que la página renderice sin esos datos en vez de colgarse 5 minutos. */
+const FETCH_TIMEOUT_MS = 8_000;
+
+async function timeoutFetch(input: string, init?: RequestInit & { next?: { revalidate?: number } }) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(id);
+  }
+}
+
 export async function listProducts(params?: {
   limit?: number;
   family?: string;
@@ -77,7 +93,7 @@ export async function listProducts(params?: {
   if (params?.family) sp.set("family", params.family);
   if (params?.q) sp.set("q", params.q);
 
-  const res = await fetch(`${AURELLANO_API}/catalog/products?${sp.toString()}`, {
+  const res = await timeoutFetch(`${AURELLANO_API}/catalog/products?${sp.toString()}`, {
     next: { revalidate: params?.revalidate ?? 0 },
   });
   if (!res.ok) throw new Error(`listProducts ${res.status}: ${await res.text()}`);
@@ -85,7 +101,7 @@ export async function listProducts(params?: {
 }
 
 export async function getProductByRef(ref: string, revalidate = 0): Promise<ApiProduct | null> {
-  const res = await fetch(`${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}`, {
+  const res = await timeoutFetch(`${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}`, {
     next: { revalidate },
   });
   if (res.status === 404) return null;
@@ -94,7 +110,7 @@ export async function getProductByRef(ref: string, revalidate = 0): Promise<ApiP
 }
 
 export async function getProductBySlug(slug: string, revalidate = 3600): Promise<ApiProduct | null> {
-  const res = await fetch(
+  const res = await timeoutFetch(
     `${AURELLANO_API}/catalog/products/by-slug/${encodeURIComponent(slug)}`,
     { next: { revalidate } },
   );
@@ -141,7 +157,7 @@ export async function fetchAllProducts(opts?: {
 }
 
 export async function listFamilies(revalidate = 3600): Promise<FamilyCount[]> {
-  const res = await fetch(`${AURELLANO_API}/catalog/families`, {
+  const res = await timeoutFetch(`${AURELLANO_API}/catalog/families`, {
     next: { revalidate },
   });
   if (!res.ok) throw new Error(`listFamilies ${res.status}: ${await res.text()}`);

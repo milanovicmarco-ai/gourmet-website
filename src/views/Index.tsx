@@ -297,21 +297,21 @@ const Index = ({ featured = [] }: IndexProps) => {
               title: t("Productos que enamoran"),
               desc: t("Iconos del gusto: foie, quesos afinados, anchoas, vermut. Lo que un paladar exigente reconoce al primer bocado."),
               img: especialidadDelicatessen,
-              to: "/catalogo?especialidad=delicatessen",
+              to: "/catalogo?catalog=delicatessen",
             },
             {
-              tag: t("Healthy Food"),
+              tag: t("Healthy"),
               title: t("Sano sin renunciar"),
               desc: t("Vegano, sin gluten, sin lactosa, fermentados, miel cruda. Bienestar real con sabor de verdad."),
               img: especialidadHealthy,
-              to: "/catalogo?especialidad=healthy",
+              to: "/catalogo?catalog=healthy",
             },
             {
               tag: t("Limited Edition"),
               title: t("Series limitadas"),
               desc: t("Producciones cortas, importaciones puntuales, ediciones numeradas. Lo que está hoy, mañana puede no estar."),
               img: especialidadLimited,
-              to: "/catalogo?especialidad=limited",
+              to: "/catalogo?catalog=limited-edition",
             },
           ].map((i) => (
             <Link
