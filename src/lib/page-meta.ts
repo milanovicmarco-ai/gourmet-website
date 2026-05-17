@@ -7,7 +7,7 @@ import { useEffect } from "react";
  * Interim solution for SPA. Will be replaced by Next.js generateMetadata
  * once the migration is done.
  *
- * Title pattern: "{Página} | Aurellano Productos Gastronómicos" (≤ 60 chars).
+ * Title pattern: "{Página} | Aurellano Productes Gastronòmics" (≤ 60 chars).
  */
 export function useDocumentMeta(title: string, description?: string) {
   useEffect(() => {

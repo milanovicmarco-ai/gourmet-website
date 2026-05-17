@@ -13,7 +13,7 @@ const EspecialSin = () => {
   const items = products.filter((p) => p.category === "Especial Sin" || p.allergens.length === 0);
   return (
     <Layout
-      seoTitle="Especial Sin | Aurellano Productos Gastronómicos"
+      seoTitle="Especial Sin | Aurellano Productes Gastronòmics"
       seoDescription="Selección gourmet sin gluten, sin lactosa, sin huevo y vegana. Para que tu carta no excluya a nadie y mantenga el sabor."
     >
       <section className="relative overflow-hidden bg-secondary/40">

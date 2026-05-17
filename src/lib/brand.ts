@@ -8,9 +8,12 @@
 //   - Footer (badge superior, copyright)
 //   - Cualquier copy que importe BRAND.
 
+/** Naming oficial · invariante entre idiomas (siempre en catalán). */
+export const BRAND_NAME = "Aurellano Productes Gastronòmics";
+
 export const BRAND = {
   es: {
-    name: "Aurellano Productos Gastronómicos",
+    name: BRAND_NAME,
     short: "Aurellano",
     claim: "Tu partner gastronómico",
     claimSub: "de confianza",
@@ -18,7 +21,7 @@ export const BRAND = {
       "Especialistas en distribución de productos gourmet para restaurantes, hoteles y tiendas especializadas.",
   },
   ca: {
-    name: "Aurellano Productes Gastronòmics",
+    name: BRAND_NAME,
     short: "Aurellano",
     claim: "El teu partner gastronòmic",
     claimSub: "de confiança",
@@ -30,4 +33,4 @@ export const BRAND = {
 export type BrandLocale = keyof typeof BRAND;
 
 /** Helper para el head: title pattern "{page} | {naming}" cap a 60 chars. */
-export const SEO_TITLE_TEMPLATE = `%s | ${BRAND.es.name}`;
+export const SEO_TITLE_TEMPLATE = `%s | ${BRAND_NAME}`;

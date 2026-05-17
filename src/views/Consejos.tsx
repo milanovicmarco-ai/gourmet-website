@@ -29,7 +29,7 @@ const articles = [
 const Consejos = () => {
   return (
     <Layout
-      seoTitle="Inspiración gourmet | Aurellano P. Gastronómicos"
+      seoTitle="Inspiración gourmet | Aurellano P. Gastronòmics"
       seoDescription="Maridajes, técnicas y conservación para profesionales. Saber gourmet aplicado a restauración y comercio especializado."
     >
       <section className="container-edit pt-32 md:pt-40 pb-16 relative">

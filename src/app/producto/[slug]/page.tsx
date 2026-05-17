@@ -51,7 +51,7 @@ export async function generateMetadata({
     description,
     alternates: { canonical: `/producto/${product.slug ?? slug}` },
     openGraph: {
-      title: `${title} | Aurellano Productos Gastronómicos`,
+      title: `${title} | Aurellano Productes Gastronòmics`,
       description,
       images: product.image_url ? [product.image_url] : undefined,
     },

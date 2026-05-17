@@ -13,7 +13,7 @@ const Despensa = () => {
   const items = products.filter((p) => p.category === "Conservas" || p.category === "Despensa");
   return (
     <Layout
-      seoTitle="Despensa gourmet | Aurellano Productos Gastronómicos"
+      seoTitle="Despensa gourmet | Aurellano Productes Gastronòmics"
       seoDescription="Conservas premium, AOVE, vinagres, panes artesanos, pasta y dulces gourmet. La base de cualquier cocina con criterio."
     >
       <section className="relative overflow-hidden">

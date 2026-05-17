@@ -7,7 +7,7 @@ import { WHATSAPP_LINK, WHATSAPP_DISPLAY, PHONE_FIXED, EMAIL, INSTAGRAM, INSTAGR
 
 const Contacto = () => (
   <Layout
-    seoTitle="Contacto | Aurellano Productos Gastronómicos"
+    seoTitle="Contacto | Aurellano Productes Gastronòmics"
     seoDescription="WhatsApp +34 621 181 160, teléfono 973 248 266 y email hola@aurellano.com. Lun-Vie 8:00-18:00. Carrer de les Valls d'Andorra 52, 25005 Lleida."
   >
     <section className="relative overflow-hidden">

@@ -40,7 +40,7 @@ const Index = ({ featured = [] }: IndexProps) => {
     <Layout
       navTheme="dark"
       heroFlush
-      seoTitle="Aurellano Productos Gastronómicos · Tu partner gastronómico de confianza"
+      seoTitle="Aurellano Productes Gastronòmics · Tu partner gastronómico de confianza"
       seoDescription="Especialistas en distribución de productos gourmet para restaurantes, hoteles y tiendas especializadas."
     >
       {/* ========== HERO FULL-SCREEN ========== */}
@@ -57,7 +57,7 @@ const Index = ({ featured = [] }: IndexProps) => {
 
         <div className="relative h-full container-edit flex flex-col justify-end pb-16 md:pb-24 pt-24">
           <div className="max-w-3xl space-y-7 animate-fade-up text-primary-foreground">
-            <p className="eyebrow text-primary-foreground/70">{t("Aurellano Productos Gastronómicos")}</p>
+            <p className="eyebrow text-primary-foreground/70">Aurellano Productes Gastronòmics</p>
             <h1 className="display text-balance text-primary-foreground">
               {t("Tu partner")}<br />
               <span className="italic font-light text-accent">{t("gastronómico")}</span><br />

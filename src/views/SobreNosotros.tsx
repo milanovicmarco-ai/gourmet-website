@@ -35,7 +35,7 @@ const SobreNosotros = () => {
 
   return (
   <Layout
-    seoTitle="Sobre nosotros | Aurellano Productos Gastronómicos"
+    seoTitle="Sobre nosotros | Aurellano Productes Gastronòmics"
     seoDescription="Empresa familiar gastronómica. Tres generaciones distribuyendo gourmet con criterio. +200 proveedores en toda España y Andorra."
   >
     <section className="relative overflow-hidden">

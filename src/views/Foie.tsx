@@ -13,7 +13,7 @@ const Foie = () => {
   const items = products.filter((p) => p.category === "Foie");
   return (
     <Layout
-      seoTitle="Foie y terrinas | Aurellano Productos Gastronómicos"
+      seoTitle="Foie y terrinas | Aurellano Productes Gastronòmics"
       seoDescription="Foie mi-cuit, bloc, escalopa y nuestra apuesta inclusiva: foie vegano de anacardo. Producto premium para restauración y tienda."
     >
       <section className="relative overflow-hidden">
@@ -22,7 +22,7 @@ const Foie = () => {
           <div className="lg:col-span-6 space-y-6">
             <p className="eyebrow">Tradición e innovación</p>
             <h1 className="display text-balance">Foie<br /><span className="italic font-light text-accent">en todas sus formas.</span></h1>
-            <p className="text-lg text-muted-foreground max-w-xl">Mi-cuit tradicional, micuit con trufa, bloc, escalopa para plancha. Y nuestra apuesta inclusiva: foie vegano de anacardo, premium e indistinguible.</p>
+            <p className="text-lg text-muted-foreground max-w-xl">Mi-cuit tradicional, mi-cuit con trufa, bloc, escalopa para plancha. Y nuestra apuesta inclusiva: foie vegano de anacardo, premium e indistinguible.</p>
             <a href={waLink("Hola, me interesa vuestra gama de foie.")} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-primary text-primary-foreground rounded-full pl-6 pr-7 py-4 font-medium hover:bg-accent transition-colors">
               <MessageCircle className="h-5 w-5" /> Hablar de foie
             </a>

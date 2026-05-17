@@ -94,10 +94,9 @@ const ca: Dict = {
   "Algo ha fallado. Inténtalo de nuevo o escríbenos por WhatsApp.":
     "Alguna cosa ha fallat. Torna-ho a provar o escriu-nos per WhatsApp.",
 
-  // Home — naming + claim corporativo (fuente: src/lib/brand.ts)
-  "Aurellano Productos Gastronómicos": "Aurellano Productes Gastronòmics",
-  "Aurellano Productos": "Aurellano Productes",
-  "Gastronómicos": "Gastronòmics",
+  // Home — claim corporativo (fuente: src/lib/brand.ts).
+  // El naming "Aurellano Productes Gastronòmics" es invariante: se renderiza
+  // como literal en ambos idiomas, así que no necesita entrada de traducción.
   "Tu partner gastronómico": "El teu partner gastronòmic",
   "de confianza": "de confiança",
   "Especialistas en distribución de productos gourmet para restaurantes, hoteles y tiendas especializadas.":

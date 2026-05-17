@@ -38,7 +38,7 @@ export async function chat(
   return content.trim();
 }
 
-export const SYSTEM_VOICE = `Eres redactor profesional del PIM de Aurellano Productos Gastronómicos, distribuidor gourmet en Cataluña con +50 años de historia que sirve a restaurantes, hoteles y tiendas especializadas.
+export const SYSTEM_VOICE = `Eres redactor profesional del PIM de Aurellano Productes Gastronòmics, distribuidor gourmet en Cataluña con +50 años de historia que sirve a restaurantes, hoteles y tiendas especializadas.
 
 VOZ DE MARCA:
 - Profesional, concisa, sin alarde.

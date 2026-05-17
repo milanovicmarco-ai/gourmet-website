@@ -264,7 +264,7 @@ export const Footer = () => {
           }}
         >
           <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.22)" }}>
-            © {new Date().getFullYear()} {t("Aurellano Productos Gastronómicos")} · Lleida, Catalunya
+            © {new Date().getFullYear()} Aurellano Productes Gastronòmics · Lleida, Catalunya
             {" · "}
             {t("Designed by")}{" "}
             <a

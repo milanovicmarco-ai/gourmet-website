@@ -136,7 +136,7 @@ const Catalogo = () => {
   return (
     <Layout
       navTheme="light"
-      seoTitle="Catálogo gourmet | Aurellano Productos Gastronómicos"
+      seoTitle="Catálogo gourmet | Aurellano Productes Gastronòmics"
       seoDescription="Filtra +10.000 referencias gourmet por tipo de cliente, categoría, alérgeno o precio. Quesos, foie, conservas, despensa y línea Especial Sin."
     >
       {/* HERO */}

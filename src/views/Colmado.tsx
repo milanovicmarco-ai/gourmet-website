@@ -33,7 +33,7 @@ const Colmado = ({
     <Layout
       navTheme="dark"
       heroFlush
-      seoTitle="Colmado | Aurellano Productos Gastronómicos"
+      seoTitle="Colmado | Aurellano Productes Gastronòmics"
       seoDescription="Producto gourmet pensado para tiendas, mercados y supermercados especializados. Alta rotación, márgenes saneados y reposición ágil."
     >
       {/* HERO */}

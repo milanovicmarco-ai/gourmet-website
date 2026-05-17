@@ -33,7 +33,7 @@ const SecretsDelXef = ({
     <Layout
       navTheme="dark"
       heroFlush
-      seoTitle="Secrets du Xef | Aurellano Productos Gastronómicos"
+      seoTitle="Secrets du Xef | Aurellano Productes Gastronòmics"
       seoDescription="4ª y 5ª gama para hostelería: platos preparados de autor e ingredientes diferenciales que ahorran tiempo sin renunciar al criterio."
     >
       <section className="relative overflow-hidden bg-primary text-primary-foreground">
