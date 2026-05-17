@@ -5,7 +5,7 @@
 // los traen filtrados, publicados, con overlay aplicado.
 
 import { getRefsByCatalogSlug, getFamilyMetas, humanizeFamilySlug } from "./catalogs";
-import { listProducts, type ApiProduct } from "./api";
+import { getProductByRef, type ApiProduct } from "./api";
 import { getMetasForProducts, effectiveRef, type ProductMeta } from "./product-meta";
 
 export type CuratedProduct = {
@@ -25,22 +25,25 @@ export type CuratedResult = {
 };
 
 /** Carga el contexto base de un catálogo (refs + productos + metas + families)
- *  UNA sola vez. Reusa el cache de fetch de Next.js (10 min) en visitas
- *  subsiguientes. */
+ *  UNA sola vez. Hace 1 fetch por ref EN PARALELO — cada uno cacheable 10 min,
+ *  así que tras la 1ª visita las siguientes son instantáneas. */
 async function loadCatalogContext(catalogSlug: string) {
-  const [refs, productsRes, familyMetas] = await Promise.all([
+  const [refs, familyMetas] = await Promise.all([
     getRefsByCatalogSlug(catalogSlug).catch(() => [] as string[]),
-    listProducts({ limit: 200 }).catch(() => ({ results: [] as ApiProduct[] })),
     getFamilyMetas().catch(() => ({} as Record<string, { display_name: string | null }>)),
   ]);
   if (refs.length === 0) {
     return { refs: [] as string[], published: [] as ApiProduct[], metas: {} as Record<string, ProductMeta>, familyMetas };
   }
-  const refSet = new Set(refs);
-  const published = productsRes.results.filter(
-    (p) =>
-      refSet.has(p.ref) &&
-      (p.status ?? (p.active === false ? "archived" : "published")) === "published",
+
+  // Fetch por ref en paralelo. Más fiable que `listProducts({limit:200})` que
+  // perdería productos del catálogo que estén en posición 201+ del listado global.
+  const products = (
+    await Promise.all(refs.map((r) => getProductByRef(r).catch(() => null)))
+  ).filter((p): p is ApiProduct => p != null);
+
+  const published = products.filter(
+    (p) => (p.status ?? (p.active === false ? "archived" : "published")) === "published",
   );
   const metas = published.length
     ? await getMetasForProducts(published.map((p) => p.ref)).catch(() => ({} as Record<string, ProductMeta>))
