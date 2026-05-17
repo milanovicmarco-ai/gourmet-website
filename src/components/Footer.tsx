@@ -100,9 +100,9 @@ export const Footer = () => {
                 }}
               />
               <span>
-                {t("Aurellano")}{" "}
-                <span style={{ color: "#fa2ca2" }}>{t("Productos")}</span>{" "}
-                {t("Gastronómicos")}
+                Aurellano{" "}
+                <span style={{ color: "#fa2ca2" }}>Productes</span>{" "}
+                Gastronòmics
               </span>
             </p>
             <p
