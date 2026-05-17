@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import SecretsDelXef from "@/views/SecretsDelXef";
-import { loadCuratedProducts } from "@/lib/pim/featured";
+import { loadHubProducts } from "@/lib/pim/featured";
 
 export const metadata: Metadata = {
   title: "Secrets du Xef",
@@ -14,10 +14,7 @@ export const metadata: Metadata = {
 export const revalidate = 600;
 
 export default async function SecretsPage() {
-  const [featured, primerPrecio] = await Promise.all([
-    loadCuratedProducts({ catalogSlug: "horeca", filter: "destacado" }),
-    loadCuratedProducts({ catalogSlug: "horeca", filter: "primer_precio" }),
-  ]);
+  const { featured, primerPrecio } = await loadHubProducts({ catalogSlug: "horeca" });
   return (
     <SecretsDelXef
       featured={featured.products}

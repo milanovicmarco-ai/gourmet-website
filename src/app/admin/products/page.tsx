@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/integrations/supabase/server";
-import { fetchAllProducts, listFamilies, type ApiProduct } from "@/lib/pim/api";
+import { listProducts, listFamilies, type ApiProduct } from "@/lib/pim/api";
 import { listCatalogs, getRefsByCatalogSlug, getCatalogsForProducts } from "@/lib/pim/catalogs";
 import { getMetasForProducts, effectiveRef, effectiveBrand } from "@/lib/pim/product-meta";
 import { computeOptimizationScore, adaptApiProduct } from "@/lib/pim/score";
@@ -53,13 +53,13 @@ export default async function AdminProductsPage({
   let catalogs: Awaited<ReturnType<typeof listCatalogs>> = [];
   let error: string | null = null;
 
-  // Cada fuente con su propio catch — si la API del socio cae (timeout/abort),
-  // el admin sigue funcionando con lo que tenga (catálogos Supabase OK).
+  // Una sola llamada cacheable (limit 200) en vez de iterar por familia.
+  // Cada combinación de filtros se sirve desde cache de Vercel tras la 1ª visita.
   const [pr, fa, ca] = await Promise.all([
-    fetchAllProducts({ q }).catch((e) => {
-      console.warn("[admin/products] fetchAllProducts error:", (e as Error).message);
+    listProducts({ limit: 200, q, family }).catch((e) => {
+      console.warn("[admin/products] listProducts error:", (e as Error).message);
       error = (e as Error).message;
-      return [] as ApiProduct[];
+      return { results: [] as ApiProduct[] };
     }),
     listFamilies().catch((e) => {
       console.warn("[admin/products] listFamilies error:", (e as Error).message);
@@ -70,15 +70,11 @@ export default async function AdminProductsPage({
       return [] as Awaited<ReturnType<typeof listCatalogs>>;
     }),
   ]);
-  products = pr;
+  products = pr.results;
   families = fa;
   catalogs = ca;
 
-  // Filtro por familia se aplica en memoria ahora (la API filtraba por query, pero
-  // como cargamos todo igual, lo hacemos uniformemente con el resto de filtros).
-  if (family) {
-    products = products.filter((p) => p.family === family);
-  }
+  // El filtro por familia se aplica server-side directamente en listProducts.
 
   // Filtro por catálogo: intersecta los refs de la API con los asignados a ese catálogo en Supabase.
   if (catalogSlug && !error) {

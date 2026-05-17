@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Layout } from "@/components/Layout";
 import { ProductCard } from "@/components/ProductCard";
-import { fetchAllProducts, listFamilies, type ApiProduct } from "@/lib/pim/api";
+import { listProducts, listFamilies, type ApiProduct } from "@/lib/pim/api";
 import { getMetasForProducts, effectiveRef, effectiveBrand } from "@/lib/pim/product-meta";
 import { listCatalogs, listAllFamilies, getRefsByCatalogSlug, humanizeFamilySlug } from "@/lib/pim/catalogs";
 import { MultiSelectFilter } from "./multi-select-filter";
@@ -107,19 +107,18 @@ export default async function CatalogoPage({
   let activeCatalog: (typeof catalogs)[number] | null = null;
   let allFamilies: Awaited<ReturnType<typeof listAllFamilies>> = [];
 
-  // Cada fuente con su propio catch para que la página renderice aunque alguna
-  // (típicamente la API del socio) falle por timeout o aborto.
+  // Una sola llamada cacheable (limit 200) en vez de iterar por familia.
   const [pr, fa, ca, af] = await Promise.all([
-    fetchAllProducts({ q, revalidate: 300 }).catch((e) => {
-      console.warn("[catalogo] fetchAllProducts:", (e as Error).message);
+    listProducts({ limit: 200, q, revalidate: 600 }).catch((e) => {
+      console.warn("[catalogo] listProducts:", (e as Error).message);
       error = (e as Error).message;
-      return [] as ApiProduct[];
+      return { results: [] as ApiProduct[] };
     }),
     listFamilies().catch(() => [] as Awaited<ReturnType<typeof listFamilies>>),
     listCatalogs().catch(() => []),
     listAllFamilies().catch(() => []),
   ]);
-  products = pr;
+  products = pr.results;
   families = fa;
   catalogs = ca;
   allFamilies = af;
@@ -400,17 +399,33 @@ export default async function CatalogoPage({
       </section>
 
       <section className="container-edit pb-24 md:pb-32">
-        <div className="border-b border-border pb-4 mb-8">
+        <div className="border-b border-border pb-4 mb-8 flex flex-wrap items-baseline justify-between gap-3">
           <p className="text-sm text-muted-foreground">
             {error ? (
               <span className="text-destructive">No se pudo conectar con el catálogo.</span>
-            ) : (
+            ) : totalCount > 0 ? (
               <>
-                <span className="font-semibold text-foreground">{filtered.length}</span>{" "}
-                producto{filtered.length === 1 ? "" : "s"}
+                <span className="font-semibold text-foreground">{totalCount}</span>{" "}
+                producto{totalCount === 1 ? "" : "s"}
+                {totalPages > 1 && (
+                  <>
+                    {" · "}
+                    mostrando{" "}
+                    <span className="font-medium text-foreground">
+                      {pageStart + 1}–{Math.min(pageEnd, totalCount)}
+                    </span>
+                  </>
+                )}
               </>
+            ) : (
+              <span>0 productos</span>
             )}
           </p>
+          {totalPages > 1 && (
+            <p className="text-xs text-muted-foreground tabular-nums">
+              Página <span className="font-medium text-foreground">{safePage}</span> de {totalPages}
+            </p>
+          )}
         </div>
 
         {error && (
@@ -419,9 +434,9 @@ export default async function CatalogoPage({
           </div>
         )}
 
-        {!error && filtered.length > 0 ? (
+        {!error && pageItems.length > 0 ? (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-            {filtered.map((p) => (
+            {pageItems.map((p) => (
               <ProductCard
                 key={p.ref}
                 image={p.image_url ?? "/images/placeholder.svg"}
@@ -449,6 +464,75 @@ export default async function CatalogoPage({
             </a>
           </div>
         ) : null}
+
+        {/* Paginación: sólo si hay más de 1 página. */}
+        {!error && totalPages > 1 && (
+          <nav
+            aria-label="Paginación"
+            className="mt-14 flex flex-wrap items-center justify-center gap-2"
+          >
+            {/* Prev */}
+            {safePage > 1 ? (
+              <Link
+                href={hrefForPage(safePage - 1)}
+                className="inline-flex items-center justify-center min-w-10 h-10 px-4 rounded-full border border-border text-sm font-medium hover:border-foreground transition-colors"
+              >
+                ← Anterior
+              </Link>
+            ) : (
+              <span className="inline-flex items-center justify-center min-w-10 h-10 px-4 rounded-full border border-border text-sm font-medium opacity-30 cursor-not-allowed">
+                ← Anterior
+              </span>
+            )}
+
+            {/* Números de página: muestra primera, última y vecinas a la actual.
+                Si hay hueco, intercala "…" en vez de listar 50 botones. */}
+            {(() => {
+              const pages: (number | "ellipsis")[] = [];
+              const push = (n: number) => {
+                if (!pages.includes(n)) pages.push(n);
+              };
+              push(1);
+              if (safePage > 3) pages.push("ellipsis");
+              for (let n = Math.max(2, safePage - 1); n <= Math.min(totalPages - 1, safePage + 1); n++) push(n);
+              if (safePage < totalPages - 2) pages.push("ellipsis");
+              if (totalPages > 1) push(totalPages);
+
+              return pages.map((p, i) =>
+                p === "ellipsis" ? (
+                  <span key={`e${i}`} className="px-2 text-muted-foreground">…</span>
+                ) : (
+                  <Link
+                    key={p}
+                    href={hrefForPage(p)}
+                    className={`inline-flex items-center justify-center min-w-10 h-10 px-3 rounded-full border text-sm font-medium tabular-nums transition-colors ${
+                      p === safePage
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "border-border hover:border-foreground"
+                    }`}
+                    aria-current={p === safePage ? "page" : undefined}
+                  >
+                    {p}
+                  </Link>
+                ),
+              );
+            })()}
+
+            {/* Next */}
+            {safePage < totalPages ? (
+              <Link
+                href={hrefForPage(safePage + 1)}
+                className="inline-flex items-center justify-center min-w-10 h-10 px-4 rounded-full border border-border text-sm font-medium hover:border-foreground transition-colors"
+              >
+                Siguiente →
+              </Link>
+            ) : (
+              <span className="inline-flex items-center justify-center min-w-10 h-10 px-4 rounded-full border border-border text-sm font-medium opacity-30 cursor-not-allowed">
+                Siguiente →
+              </span>
+            )}
+          </nav>
+        )}
       </section>
     </Layout>
   );

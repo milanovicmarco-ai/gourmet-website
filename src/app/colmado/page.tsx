@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Colmado from "@/views/Colmado";
-import { loadCuratedProducts } from "@/lib/pim/featured";
+import { loadHubProducts } from "@/lib/pim/featured";
 
 export const metadata: Metadata = {
   title: "Colmado",
@@ -12,10 +12,7 @@ export const metadata: Metadata = {
 export const revalidate = 600;
 
 export default async function ColmadoPage() {
-  const [featured, primerPrecio] = await Promise.all([
-    loadCuratedProducts({ catalogSlug: "retail", filter: "destacado" }),
-    loadCuratedProducts({ catalogSlug: "retail", filter: "primer_precio" }),
-  ]);
+  const { featured, primerPrecio } = await loadHubProducts({ catalogSlug: "retail" });
   return (
     <Colmado
       featured={featured.products}
