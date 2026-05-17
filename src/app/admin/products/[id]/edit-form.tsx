@@ -57,10 +57,10 @@ export function ProductEditForm({ productRef, initial, meta, families = [] }: Pr
     gama: meta.gama != null ? String(meta.gama) : "",
     momento_plato: meta.momento_plato ?? "",
     destacado: !!meta.destacado,
-    // Catálogos donde está destacado (multi-select: horeca, retail, formages).
+    // Catálogos donde está destacado (multi-select: horeca, retail, fromages).
     destacado_horeca: Array.isArray(meta.destacado_en) ? meta.destacado_en.includes("horeca") : false,
     destacado_retail: Array.isArray(meta.destacado_en) ? meta.destacado_en.includes("retail") : false,
-    destacado_formages: Array.isArray(meta.destacado_en) ? meta.destacado_en.includes("formages") : false,
+    destacado_fromages: Array.isArray(meta.destacado_en) ? meta.destacado_en.includes("fromages") : false,
     primer_precio: !!meta.primer_precio,
   });
   const [saving, setSaving] = useState(false);
@@ -120,7 +120,7 @@ export function ProductEditForm({ productRef, initial, meta, families = [] }: Pr
       const destacadoEn = [
         form.destacado_horeca && "horeca",
         form.destacado_retail && "retail",
-        form.destacado_formages && "formages",
+        form.destacado_fromages && "fromages",
       ].filter((s): s is string => Boolean(s));
       const metaResult = await saveProductMeta({
         product_ref: productRef,
@@ -389,7 +389,7 @@ export function ProductEditForm({ productRef, initial, meta, families = [] }: Pr
           <div className="grid sm:grid-cols-3 gap-3">
             <Toggle label="HORECA" checked={form.destacado_horeca} onChange={(v) => set("destacado_horeca", v)} />
             <Toggle label="Retail" checked={form.destacado_retail} onChange={(v) => set("destacado_retail", v)} />
-            <Toggle label="Quesos" checked={form.destacado_formages} onChange={(v) => set("destacado_formages", v)} />
+            <Toggle label="Quesos" checked={form.destacado_fromages} onChange={(v) => set("destacado_fromages", v)} />
           </div>
         </div>
         <div className="pt-3 border-t border-border">

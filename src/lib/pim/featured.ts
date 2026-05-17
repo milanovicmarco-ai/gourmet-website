@@ -1,6 +1,6 @@
 // Helpers para cargar listas curadas de productos para las páginas públicas.
 //
-// Una vez asignados productos a un catálogo (HORECA, retail, formages, …) desde
+// Una vez asignados productos a un catálogo (HORECA, retail, fromages, …) desde
 // el PIM, y marcados con los flags `destacado` o `primer_precio`, estas funciones
 // los traen filtrados, publicados, con overlay aplicado.
 

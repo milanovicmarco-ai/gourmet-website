@@ -52,7 +52,7 @@ export type ProductMeta = {
    *  forma nueva de destacar es por catálogo (`destacado_en`). */
   destacado: boolean;
   /** Catálogos donde este producto aparece como destacado.
-   *  Slugs típicos: 'horeca', 'retail', 'formages'. */
+   *  Slugs típicos: 'horeca', 'retail', 'fromages'. */
   destacado_en: string[];
   /** Línea de entry-level / "primer precio" para filtros y comunicación HORECA. */
   primer_precio: boolean;

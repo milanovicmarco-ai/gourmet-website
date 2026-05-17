@@ -13,7 +13,7 @@ export const revalidate = 600;
 
 export default async function QuesosPage() {
   const featured = await loadCuratedProducts({
-    catalogSlug: "formages",
+    catalogSlug: "fromages",
     filter: "destacado",
   });
   return (

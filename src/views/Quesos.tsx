@@ -23,7 +23,7 @@ const pairings = [
 ];
 
 interface Props {
-  /** Productos destacados del catálogo formages. */
+  /** Productos destacados del catálogo fromages. */
   featured?: CuratedProduct[];
   featuredCatalogCount?: number;
 }
@@ -91,7 +91,7 @@ const Quesos = ({ featured = [], featuredCatalogCount = 0 }: Props) => {
         </div>
       </section>
 
-      {/* DESTACADOS — productos marcados como `destacado` en el catálogo formages */}
+      {/* DESTACADOS — productos marcados como `destacado` en el catálogo fromages */}
       <section className="container-edit py-20 md:py-28">
         <SectionHeader eyebrow="Hoy en cámara" title={<>Algunos de nuestros <span className="pink-underline">imprescindibles</span>.</>} />
         {featured.length > 0 ? (
