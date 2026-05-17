@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Instagram, MapPin, MessageCircle } from "lucide-react";
+import { Instagram, MapPin, MessageCircle, ChevronDown } from "lucide-react";
 import { WHATSAPP_LINK, INSTAGRAM, GOOGLE_BUSINESS_URL } from "@/lib/contact";
 import { useI18n } from "@/lib/i18n";
 
@@ -41,6 +42,10 @@ export const Footer = () => {
       ],
     },
   ];
+
+  // Estado del acordeón (mobile): qué columna está abierta. null = todas cerradas.
+  const [openAccordion, setOpenAccordion] = useState<string | null>(null);
+
   return (
     <footer
       style={{
@@ -49,7 +54,6 @@ export const Footer = () => {
         fontFamily: "'Inter', sans-serif",
       }}
     >
-      {/* Contenedor centrado, pero footer full width */}
       <div
         style={{
           position: "relative",
@@ -69,8 +73,8 @@ export const Footer = () => {
           }}
           className="aurellano-footer-top"
         >
-          {/* Columna izquierda: tagline + socials */}
-          <div style={{ maxWidth: "380px" }}>
+          {/* Columna izquierda: naming + descripción + socials */}
+          <div className="aurellano-footer-brand">
             <p
               style={{
                 display: "flex",
@@ -109,11 +113,12 @@ export const Footer = () => {
                 marginBottom: "30px",
                 maxWidth: "340px",
               }}
+              className="aurellano-footer-desc"
             >
               {t("Especialistas en distribución de productos gourmet para restaurantes, hoteles y tiendas especializadas.")}
             </p>
 
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+            <div className="aurellano-footer-socials" style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
               {socials.map(({ href, label, icon: Icon }) => (
                 <a
                   key={label}
@@ -149,7 +154,7 @@ export const Footer = () => {
             </div>
           </div>
 
-          {/* Columnas de navegación */}
+          {/* Columnas de navegación: grid de 3 en desktop, acordeón vertical en mobile. */}
           <div
             style={{
               display: "grid",
@@ -159,72 +164,96 @@ export const Footer = () => {
             }}
             className="aurellano-footer-nav"
           >
-            {nav.map((col) => (
-              <div key={col.title}>
-                <p
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    fontFamily: "'Montserrat', sans-serif",
-                    fontWeight: 700,
-                    fontSize: "9px",
-                    letterSpacing: ".22em",
-                    textTransform: "uppercase",
-                    color: "#fa2ca2",
-                    marginBottom: "18px",
-                  }}
-                >
-                  <span
+            {nav.map((col) => {
+              const isOpen = openAccordion === col.title;
+              return (
+                <div key={col.title} className="aurellano-footer-col">
+                  <button
+                    type="button"
+                    onClick={() => setOpenAccordion(isOpen ? null : col.title)}
+                    aria-expanded={isOpen}
+                    className="aurellano-footer-col-title"
                     style={{
-                      display: "inline-block",
-                      width: "14px",
-                      height: "1px",
-                      background: "#fa2ca2",
-                      flexShrink: 0,
+                      // Comportamiento default (desktop): label estático con barrita rosa.
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "8px",
+                      fontFamily: "'Montserrat', sans-serif",
+                      fontWeight: 700,
+                      fontSize: "9px",
+                      letterSpacing: ".22em",
+                      textTransform: "uppercase",
+                      color: "#fa2ca2",
+                      marginBottom: "18px",
+                      width: "100%",
+                      background: "transparent",
+                      border: 0,
+                      padding: 0,
+                      cursor: "pointer",
+                      textAlign: "left",
                     }}
-                  />
-                  {col.title}
-                </p>
-                <ul
-                  style={{
-                    listStyle: "none",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "11px",
-                    padding: 0,
-                    margin: 0,
-                  }}
-                >
-                  {col.links.map((l) => (
-                    <li key={l.label}>
-                      <Link
-                        href={l.to}
+                  >
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                      <span
                         style={{
-                          fontSize: "13px",
-                          color: "rgba(255,255,255,0.42)",
-                          textDecoration: "none",
-                          transition: "color .15s",
+                          display: "inline-block",
+                          width: "14px",
+                          height: "1px",
+                          background: "#fa2ca2",
+                          flexShrink: 0,
                         }}
-                        onMouseEnter={(e) =>
-                          (e.currentTarget.style.color = "#ffffff")
-                        }
-                        onMouseLeave={(e) =>
-                          (e.currentTarget.style.color = "rgba(255,255,255,0.42)")
-                        }
-                      >
-                        {l.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+                      />
+                      {col.title}
+                    </span>
+                    <ChevronDown
+                      size={14}
+                      className="aurellano-footer-chevron"
+                      style={{
+                        transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+                        transition: "transform .25s",
+                      }}
+                    />
+                  </button>
+                  <ul
+                    className="aurellano-footer-links"
+                    data-open={isOpen ? "true" : "false"}
+                    style={{
+                      listStyle: "none",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "11px",
+                      padding: 0,
+                      margin: 0,
+                    }}
+                  >
+                    {col.links.map((l) => (
+                      <li key={l.label}>
+                        <Link
+                          href={l.to}
+                          style={{
+                            fontSize: "13px",
+                            color: "rgba(255,255,255,0.42)",
+                            textDecoration: "none",
+                            transition: "color .15s",
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.color = "#ffffff")}
+                          onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.42)")}
+                        >
+                          {l.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
           </div>
         </div>
 
         {/* BOTTOM */}
         <div
+          className="aurellano-footer-bottom"
           style={{
             display: "flex",
             flexWrap: "wrap",
@@ -249,9 +278,7 @@ export const Footer = () => {
                   transition: "color .15s",
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = "#ffffff")}
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.color = "rgba(255,255,255,0.3)")
-                }
+                onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}
               >
                 {label}
               </Link>
@@ -271,16 +298,60 @@ export const Footer = () => {
       />
 
       <style>{`
+        /* Desktop: la flecha del acordeón no aplica (las listas siempre visibles). */
+        .aurellano-footer-chevron { display: none; }
+        .aurellano-footer-col-title { cursor: default !important; }
+
         @media (max-width: 880px) {
           .aurellano-footer-top {
             grid-template-columns: 1fr !important;
             gap: 40px !important;
+            text-align: center;
           }
-        }
-        @media (max-width: 520px) {
+          .aurellano-footer-brand {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+          }
+          .aurellano-footer-desc {
+            max-width: 480px !important;
+          }
+          .aurellano-footer-socials {
+            justify-content: center;
+          }
           .aurellano-footer-nav {
-            grid-template-columns: repeat(2, 1fr) !important;
-            gap: 28px !important;
+            grid-template-columns: 1fr !important;
+            gap: 0 !important;
+          }
+          .aurellano-footer-col {
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding: 16px 0;
+          }
+          .aurellano-footer-col-title {
+            margin-bottom: 0 !important;
+            cursor: pointer !important;
+            justify-content: space-between !important;
+          }
+          .aurellano-footer-chevron {
+            display: inline-block !important;
+            color: rgba(255,255,255,0.4);
+          }
+          .aurellano-footer-links {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            margin: 0 !important;
+            transition: max-height .3s ease, opacity .2s ease, margin .3s ease;
+          }
+          .aurellano-footer-links[data-open="true"] {
+            max-height: 400px;
+            opacity: 1;
+            margin-top: 14px !important;
+          }
+          .aurellano-footer-bottom {
+            flex-direction: column;
+            text-align: center;
+            gap: 12px !important;
           }
         }
       `}</style>

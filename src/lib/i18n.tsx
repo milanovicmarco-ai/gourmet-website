@@ -34,6 +34,13 @@ const ca: Dict = {
   "Alérgenos": "Al·lèrgens",
   "Sin alérgenos declarados": "Sense al·lèrgens declarats",
   "Pedir información": "Demanar informació",
+  // CTA final ficha de producto
+  "+10.000 referencias": "+10.000 referències",
+  "¿Buscas más información o un producto concreto?": "Busques més informació o un producte concret?",
+  "Tenemos más de 10.000 referencias en catálogo y trabajamos con +200 proveedores. Si tienes dudas, buscas un producto específico o quieres realizar un pedido, habla con nuestro equipo comercial.":
+    "Tenim més de 10.000 referències al catàleg i treballem amb +200 proveïdors. Si tens dubtes, busques un producte específic o vols fer una comanda, parla amb el nostre equip comercial.",
+  "Hola Aurellano, querría hablar con comercial sobre": "Hola Aurellano, voldria parlar amb comercial sobre",
+  "Hablar con comercial": "Parlar amb comercial",
   "Hola Aurellano, me interesa": "Hola Aurellano, m'interessa",
   "Sobre el producto": "Sobre el producte",
   "El detalle": "El detall",

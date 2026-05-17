@@ -12,7 +12,7 @@ const Contacto = () => (
   >
     <section className="relative overflow-hidden">
       <Circle variant="blur" className="w-[500px] h-[500px] -top-40 -right-40" />
-      <div className="container-edit pt-12 md:pt-20 pb-16 md:pb-20 max-w-4xl space-y-6 relative">
+      <div className="container-edit pt-32 md:pt-40 pb-16 md:pb-20 max-w-4xl space-y-6 relative">
         <p className="eyebrow">Hablemos</p>
         <h1 className="display text-balance">Estamos al otro<br /><span className="italic font-light text-accent">lado del WhatsApp.</span></h1>
         <p className="text-lg text-muted-foreground max-w-2xl">El canal principal de Aurellano es WhatsApp. Te respondemos rápido, con propuesta y precios.</p>

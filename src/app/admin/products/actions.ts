@@ -379,6 +379,38 @@ function placeholderFor(field: string): { key: string; value: unknown } | null {
   return null;
 }
 
+// =============================================================
+// Helpers públicos: crear marca / familia desde el combobox del editor.
+// Devuelven { slug, name } como espera entity-combobox.tsx.
+// =============================================================
+
+export async function createBrand(name: string): Promise<{ slug: string; name: string }> {
+  await requireAdmin();
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error("El nombre de la marca está vacío.");
+  const check = await ensureBrandExists(trimmed);
+  if (check.ok !== true) {
+    throw new Error(`No se pudo crear la marca: ${check.reason}`);
+  }
+  // ensureBrandExists devuelve `brand` con el name canónico; el slug lo derivamos.
+  return { slug: slugify(check.brand), name: check.brand };
+}
+
+export async function createFamily(
+  slug: string,
+  displayName: string,
+): Promise<{ slug: string; name: string }> {
+  await requireAdmin();
+  const trimmedSlug = slug.trim();
+  const trimmedName = displayName.trim();
+  if (!trimmedSlug) throw new Error("El slug de la familia está vacío.");
+  const check = await ensureFamilyExists(trimmedSlug, trimmedName);
+  if (check.ok !== true) {
+    throw new Error(`No se pudo crear la familia: ${check.reason}`);
+  }
+  return { slug: check.family, name: trimmedName || check.family };
+}
+
 export async function updateProduct(
   ref: string,
   form: FormFields,

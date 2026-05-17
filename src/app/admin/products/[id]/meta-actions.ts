@@ -41,6 +41,11 @@ export async function saveProductMeta(meta: Omit<ProductMeta, never>): Promise<S
       ? Math.floor(meta.gama)
       : null;
 
+  // destacado_en: limpia espacios y filtra a slugs no vacíos.
+  const destacadoEn = Array.isArray(meta.destacado_en)
+    ? meta.destacado_en.map((s) => s.trim()).filter(Boolean)
+    : [];
+
   const payload = {
     product_ref: meta.product_ref,
     display_ref: displayRef,
@@ -53,7 +58,11 @@ export async function saveProductMeta(meta: Omit<ProductMeta, never>): Promise<S
     diet_other: meta.diet_other?.trim() || null,
     gama,
     momento_plato: momento,
-    destacado: !!meta.destacado,
+    // Mantenemos `destacado` legacy en sincronía: si hay al menos un catálogo
+    // marcado, el flag global queda en true. Útil para queries antiguas y para
+    // que el filtro "Especialidad → Destacado" del catálogo público siga funcionando.
+    destacado: destacadoEn.length > 0 || !!meta.destacado,
+    destacado_en: destacadoEn,
     primer_precio: !!meta.primer_precio,
   };
 
@@ -68,6 +77,7 @@ export async function saveProductMeta(meta: Omit<ProductMeta, never>): Promise<S
     "momento_plato",
     "destacado",
     "primer_precio",
+    "destacado_en",
   ] as const;
   type ConditionalCol = (typeof CONDITIONAL_COLUMNS)[number];
 

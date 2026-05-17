@@ -14,7 +14,7 @@ export function InspiracionView({ catalogs }: Props) {
   return (
     <Layout navTheme="light">
       {/* Hero ligero */}
-      <section className="container-edit pt-12 md:pt-20 pb-10 md:pb-14">
+      <section className="container-edit pt-32 md:pt-40 pb-10 md:pb-14">
         <div className="max-w-3xl space-y-6">
           <p className="eyebrow">{t("Inspiración")}</p>
           <h1 className="display text-balance">

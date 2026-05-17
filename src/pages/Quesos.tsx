@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, ArrowRight } from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { Circle } from "@/components/Circle";
 import { SectionHeader } from "@/components/SectionHeader";
@@ -35,10 +35,10 @@ const Quesos = ({ featured = [], featuredCatalogCount = 0 }: Props) => {
       seoTitle="Formages | Aurellano Productos Gastronómicos"
       seoDescription="Selección de quesos afinados por origen, intensidad y familia. DOP, artesanos y veganos. Maridajes y montaje de tabla a medida."
     >
-      {/* HERO */}
-      <section className="relative overflow-hidden">
+      {/* HERO — pt extra para que el contenido no se solape con el nav absoluto. */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-accent/10 to-transparent">
         <Circle variant="blur" className="w-[500px] h-[500px] top-0 -left-40" />
-        <div className="container-edit pt-12 md:pt-20 pb-12 md:pb-20 relative grid lg:grid-cols-12 gap-12 items-center">
+        <div className="container-edit pt-32 md:pt-40 pb-12 md:pb-20 relative grid lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-7 space-y-7">
             <p className="eyebrow">afinart · selección Aurellano</p>
             <h1 className="display text-balance">
@@ -137,15 +137,31 @@ const Quesos = ({ featured = [], featuredCatalogCount = 0 }: Props) => {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="container-edit py-20 md:py-28">
-        <div className="relative overflow-hidden rounded-3xl bg-secondary p-10 md:p-16 text-center">
-          <Circle variant="accent" className="w-72 h-72 -top-20 -right-20" />
-          <div className="relative max-w-2xl mx-auto space-y-6">
-            <h2 className="display-md text-balance">¿Montamos tu tabla?</h2>
-            <p className="text-muted-foreground">Te asesoramos por WhatsApp con cantidades, formatos y maridajes.</p>
-            <a href={waLink("Hola Aurellano, querría asesoramiento sobre quesos.")} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-primary text-primary-foreground rounded-full pl-6 pr-7 py-4 font-medium hover:bg-accent transition-colors">
+      {/* CTA FINAL — gradiente blanco → rosa, mismo formato que la home. */}
+      <section
+        className="relative overflow-hidden"
+        style={{
+          background:
+            "linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(322 100% 98%) 35%, hsl(322 85% 92%) 75%, hsl(322 80% 86%) 100%)",
+        }}
+      >
+        <div className="container-edit py-24 md:py-36 text-center relative">
+          <div className="relative max-w-3xl mx-auto space-y-8">
+            <p className="eyebrow justify-center inline-flex text-primary/70">Empecemos</p>
+            <h2 className="display text-balance text-primary">
+              ¿Montamos <span className="italic font-light">tu tabla</span>?
+            </h2>
+            <p className="text-lg text-primary/80 max-w-xl mx-auto">
+              Te asesoramos con cantidades, formatos y maridajes según tu carta. Selección curada por maestros afinadores.
+            </p>
+            <a
+              href={waLink("Hola Aurellano, querría asesoramiento sobre quesos.")}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-primary text-primary-foreground rounded-full pl-7 pr-8 py-5 font-medium hover:bg-accent transition-colors duration-300 group"
+            >
               <MessageCircle className="h-5 w-5" /> Hablemos de quesos
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </a>
           </div>
         </div>

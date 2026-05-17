@@ -13,9 +13,13 @@ import type { ApiProduct } from "@/lib/pim/api";
 
 interface ProductDetailProps {
   product: ApiProduct;
+  /** Slug crudo de la familia (para enlazar al catálogo filtrado). */
+  familySlug?: string | null;
+  /** Display name resuelto desde el overlay families_meta (con fallback humanizado). */
+  familyDisplay?: string | null;
 }
 
-const ProductDetail = ({ product }: ProductDetailProps) => {
+const ProductDetail = ({ product, familySlug, familyDisplay }: ProductDetailProps) => {
   const { t } = useI18n();
   const allergens = typeof product.alergenos === "string"
     ? product.alergenos.split(",").map((s) => s.trim()).filter(Boolean)
@@ -26,7 +30,26 @@ const ProductDetail = ({ product }: ProductDetailProps) => {
   const formato = product.formato_opciones?.[0]?.label ?? "";
   const unitsPerBox = product.units_per_box ?? null;
   const family = product.family ?? "";
-  const nutrition = product.info_nutricional as Record<string, unknown> | null;
+  const nutrition = product.info_nutricional;
+  // Texto libre escrito por el editor del PIM viaja como { texto: "..." } por
+  // exigencia de schema de la API. Lo desenvolvemos aquí para renderizarlo
+  // como párrafo y no como tabla key/value.
+  const nutritionText: string | null = (() => {
+    if (typeof nutrition === "string" && nutrition.trim().length > 0) return nutrition;
+    if (nutrition && typeof nutrition === "object" && !Array.isArray(nutrition)) {
+      const obj = nutrition as Record<string, unknown>;
+      if (typeof obj.texto === "string" && obj.texto.trim().length > 0) return obj.texto;
+    }
+    return null;
+  })();
+  const nutritionAsTable: Record<string, unknown> | null = (() => {
+    if (!nutrition || typeof nutrition !== "object" || Array.isArray(nutrition)) return null;
+    const obj = nutrition as Record<string, unknown>;
+    // Si la única clave es `texto`, ya está cubierto por nutritionText.
+    const keys = Object.keys(obj).filter((k) => k !== "texto");
+    if (keys.length === 0) return null;
+    return obj;
+  })();
 
   // Galería: usa la `gallery` real si llega, si no, sólo `image_url`. Deduplica por si acaso.
   const gallery: string[] = Array.from(
@@ -43,7 +66,7 @@ const ProductDetail = ({ product }: ProductDetailProps) => {
 
   return (
     <Layout>
-      <section className="container-edit pt-10 md:pt-16">
+      <section className="container-edit pt-28 md:pt-36">
         <nav aria-label="breadcrumb" className="text-sm text-muted-foreground">
           <ol className="flex flex-wrap items-center gap-1.5">
             <li><Link href="/" className="hover:text-foreground transition-colors">{t("Inicio")}</Link></li>
@@ -52,7 +75,18 @@ const ProductDetail = ({ product }: ProductDetailProps) => {
             {family && (
               <>
                 <li aria-hidden>/</li>
-                <li><span className="text-foreground/80">{family}</span></li>
+                <li>
+                  {familySlug ? (
+                    <Link
+                      href={`/catalogo?family=${encodeURIComponent(familySlug)}`}
+                      className="text-foreground/80 hover:text-accent transition-colors"
+                    >
+                      {familyDisplay ?? family}
+                    </Link>
+                  ) : (
+                    <span className="text-foreground/80">{familyDisplay ?? family}</span>
+                  )}
+                </li>
               </>
             )}
             <li aria-hidden>/</li>
@@ -119,7 +153,7 @@ const ProductDetail = ({ product }: ProductDetailProps) => {
 
         <div className="lg:col-span-5 space-y-7">
           <div className="space-y-3">
-            {family && <p className="eyebrow">{family}</p>}
+            {family && <p className="eyebrow">{familyDisplay ?? family}</p>}
             <h1 className="font-display font-light text-4xl md:text-5xl tracking-tight leading-[1.05] text-balance">
               {product.name}
             </h1>
@@ -192,7 +226,7 @@ const ProductDetail = ({ product }: ProductDetailProps) => {
         </div>
       </section>
 
-      {(product.description_rich || (pairings.length > 0) || nutrition) && (
+      {(product.description_rich || pairings.length > 0 || !!product.ingredientes || !!nutritionText || !!nutritionAsTable) && (
         <section className="border-t border-border">
           <div className="container-edit py-20 md:py-24 grid lg:grid-cols-12 gap-12 lg:gap-16">
             <div className="lg:col-span-7 space-y-12">
@@ -200,7 +234,7 @@ const ProductDetail = ({ product }: ProductDetailProps) => {
                 <div className="space-y-4">
                   <p className="eyebrow">{t("Sobre el producto")}</p>
                   <h2 className="font-display font-light text-3xl md:text-4xl tracking-tight">{t("El detalle")}</h2>
-                  <div className="prose prose-base max-w-none text-muted-foreground prose-p:my-4 prose-strong:text-foreground prose-headings:font-display prose-headings:font-light prose-li:my-1 prose-a:text-accent prose-a:no-underline hover:prose-a:underline">
+                  <div className="prose prose-base max-w-none text-muted-foreground prose-p:my-8 prose-p:leading-relaxed prose-strong:text-foreground prose-headings:font-display prose-headings:font-light prose-headings:mt-12 prose-headings:mb-6 prose-li:my-2 prose-ul:my-6 prose-a:text-accent prose-a:no-underline hover:prose-a:underline">
                     <ReactMarkdown>{product.description_rich}</ReactMarkdown>
                   </div>
                 </div>
@@ -218,33 +252,47 @@ const ProductDetail = ({ product }: ProductDetailProps) => {
                   </ul>
                 </div>
               )}
-
-              {product.ingredientes && (
-                <div className="space-y-4 border-t border-border pt-12">
-                  <p className="eyebrow">{t("Ingredientes")}</p>
-                  <p className="text-base md:text-lg leading-relaxed text-muted-foreground whitespace-pre-line">
-                    {product.ingredientes}
-                  </p>
-                </div>
-              )}
             </div>
 
-            {nutrition && typeof nutrition === "object" && (
+            {/* Sidebar con bloques apilados: Ingredientes arriba, Información nutricional debajo. */}
+            {(product.ingredientes || nutritionAsTable || nutritionText) && (
               <aside className="lg:col-span-5">
-                <div className="sticky top-28 rounded-3xl border border-border bg-secondary/40 p-8 space-y-5">
-                  <h3 className="font-display font-light text-2xl tracking-tight border-b border-border pb-4">
-                    {t("Información nutricional")}
-                  </h3>
-                  <dl className="divide-y divide-border text-sm">
-                    {Object.entries(nutrition)
-                      .filter(([, v]) => v !== null && v !== undefined && v !== "")
-                      .map(([k, v]) => (
-                        <div key={k} className="flex items-center justify-between py-3">
-                          <dt className="text-muted-foreground capitalize">{k.replace(/_/g, " ")}</dt>
-                          <dd className="font-medium">{String(v)}</dd>
-                        </div>
-                      ))}
-                  </dl>
+                <div className="sticky top-28 space-y-6">
+                  {product.ingredientes && (
+                    <div className="rounded-3xl border border-border bg-secondary/40 p-8 space-y-5">
+                      <h3 className="font-display font-light text-2xl tracking-tight border-b border-border pb-4">
+                        {t("Ingredientes")}
+                      </h3>
+                      <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-line">
+                        {product.ingredientes}
+                      </p>
+                    </div>
+                  )}
+
+                  {(nutritionAsTable || nutritionText) && (
+                    <div className="rounded-3xl border border-border bg-secondary/40 p-8 space-y-5">
+                      <h3 className="font-display font-light text-2xl tracking-tight border-b border-border pb-4">
+                        {t("Información nutricional")}
+                      </h3>
+                      {nutritionAsTable && (
+                        <dl className="divide-y divide-border text-sm">
+                          {Object.entries(nutritionAsTable)
+                            .filter(([k, v]) => k !== "texto" && v !== null && v !== undefined && v !== "")
+                            .map(([k, v]) => (
+                              <div key={k} className="flex items-center justify-between py-3">
+                                <dt className="text-muted-foreground capitalize">{k.replace(/_/g, " ")}</dt>
+                                <dd className="font-medium">{String(v)}</dd>
+                              </div>
+                            ))}
+                        </dl>
+                      )}
+                      {nutritionText && (
+                        <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-line">
+                          {nutritionText}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </aside>
             )}
@@ -252,22 +300,32 @@ const ProductDetail = ({ product }: ProductDetailProps) => {
         </section>
       )}
 
-      <section className="bg-secondary/40 border-t border-border">
-        <div className="container-edit py-20 md:py-24">
-          <div className="rounded-3xl bg-accent text-accent-foreground p-10 text-center relative overflow-hidden">
-            <Circle variant="outline" className="w-72 h-72 -top-20 -right-20 border-accent-foreground/20" />
-            <div className="relative space-y-4 max-w-xl mx-auto">
-              <h3 className="font-display font-light text-3xl">{t("Pedido mínimo 200€")}</h3>
-              <p className="text-sm text-accent-foreground/85">
-                {t("Portes incluidos según zona. Entrega en 24–48h en Cataluña.")}
-              </p>
-              <Link
-                href="/condiciones"
-                className="inline-flex items-center gap-2 underline underline-offset-4 text-sm font-medium"
-              >
-                {t("Ver condiciones de venta")}
-              </Link>
-            </div>
+      {/* CTA final — fondo blanco continuo con la sección anterior, enfocado a
+          comunicar el surtido (+10.000 referencias) y abrir conversación. */}
+      <section className="bg-background">
+        <div className="container-edit pb-20 md:pb-28 pt-4 text-center">
+          <div className="max-w-2xl mx-auto space-y-5">
+            <p className="eyebrow justify-center inline-flex text-accent">
+              {t("+10.000 referencias")}
+            </p>
+            <h3 className="font-display font-light text-3xl md:text-4xl text-balance">
+              {t("¿Buscas más información o un producto concreto?")}
+            </h3>
+            <p className="text-base text-muted-foreground">
+              {t(
+                "Tenemos más de 10.000 referencias en catálogo y trabajamos con +200 proveedores. Si tienes dudas, buscas un producto específico o quieres realizar un pedido, habla con nuestro equipo comercial.",
+              )}
+            </p>
+            <a
+              href={waLink(
+                `${t("Hola Aurellano, querría hablar con comercial sobre")} ${product.name} (${product.ref}).`,
+              )}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-primary text-primary-foreground rounded-full pl-6 pr-7 py-4 font-medium hover:bg-accent transition-colors"
+            >
+              <MessageCircle className="h-5 w-5" /> {t("Hablar con comercial")}
+            </a>
           </div>
         </div>
       </section>

@@ -41,6 +41,7 @@ export function ProductEditForm({ productRef, initial, meta, families = [] }: Pr
     badges: Array.isArray(initial.badges) ? initial.badges.join(", ") : (initial.badges ?? ""),
     pairings: Array.isArray(initial.pairings) ? initial.pairings.join(", ") : (initial.pairings ?? ""),
     ingredients: initial.ingredients ?? "",
+    info_nutricional: initial.info_nutricional ?? "",
     // 3 dietéticos que vienen de la API
     gluten_free: !!initial.gluten_free,
     lactose_free: !!initial.lactose_free,
@@ -56,6 +57,10 @@ export function ProductEditForm({ productRef, initial, meta, families = [] }: Pr
     gama: meta.gama != null ? String(meta.gama) : "",
     momento_plato: meta.momento_plato ?? "",
     destacado: !!meta.destacado,
+    // Catálogos donde está destacado (multi-select: horeca, retail, formages).
+    destacado_horeca: Array.isArray(meta.destacado_en) ? meta.destacado_en.includes("horeca") : false,
+    destacado_retail: Array.isArray(meta.destacado_en) ? meta.destacado_en.includes("retail") : false,
+    destacado_formages: Array.isArray(meta.destacado_en) ? meta.destacado_en.includes("formages") : false,
     primer_precio: !!meta.primer_precio,
   });
   const [saving, setSaving] = useState(false);
@@ -112,6 +117,11 @@ export function ProductEditForm({ productRef, initial, meta, families = [] }: Pr
       };
 
       // 2) Overlay (brand + diet extras + display_ref + clasificación) a Supabase.
+      const destacadoEn = [
+        form.destacado_horeca && "horeca",
+        form.destacado_retail && "retail",
+        form.destacado_formages && "formages",
+      ].filter((s): s is string => Boolean(s));
       const metaResult = await saveProductMeta({
         product_ref: productRef,
         display_ref: form.ref,
@@ -126,7 +136,8 @@ export function ProductEditForm({ productRef, initial, meta, families = [] }: Pr
         momento_plato: form.momento_plato === ""
           ? null
           : (form.momento_plato as "aperitivo" | "entrante" | "principal" | "guarnicion" | "postre"),
-        destacado: form.destacado,
+        destacado: destacadoEn.length > 0,
+        destacado_en: destacadoEn,
         primer_precio: form.primer_precio,
       });
 
@@ -292,6 +303,12 @@ export function ProductEditForm({ productRef, initial, meta, families = [] }: Pr
         onChange={(v) => set("ingredients", v)}
         rows={3}
       />
+      <Textarea
+        label="Información nutricional"
+        value={form.info_nutricional}
+        onChange={(v) => set("info_nutricional", v)}
+        rows={6}
+      />
 
       <div className="grid sm:grid-cols-2 gap-5">
         <Field
@@ -367,12 +384,19 @@ export function ProductEditForm({ productRef, initial, meta, families = [] }: Pr
             ]}
           />
         </div>
-        <div className="grid sm:grid-cols-2 gap-3 pt-3 border-t border-border">
-          <Toggle label="Destacado" checked={form.destacado} onChange={(v) => set("destacado", v)} />
+        <div className="pt-3 border-t border-border space-y-2">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Destacado en</p>
+          <div className="grid sm:grid-cols-3 gap-3">
+            <Toggle label="HORECA" checked={form.destacado_horeca} onChange={(v) => set("destacado_horeca", v)} />
+            <Toggle label="Retail" checked={form.destacado_retail} onChange={(v) => set("destacado_retail", v)} />
+            <Toggle label="Quesos" checked={form.destacado_formages} onChange={(v) => set("destacado_formages", v)} />
+          </div>
+        </div>
+        <div className="pt-3 border-t border-border">
           <Toggle label="Primer precio" checked={form.primer_precio} onChange={(v) => set("primer_precio", v)} />
         </div>
         <p className="text-[11px] text-muted-foreground leading-relaxed">
-          <strong>Destacado</strong>: marca visual independiente del catálogo &ldquo;Selección Aurellano&rdquo;.
+          <strong>Destacado en</strong>: marca el producto como destacado en cada catálogo donde aparezca destacado (aparece en la sección &ldquo;Selección&rdquo; del hub correspondiente: /secrets-du-xef, /colmado o /quesos).
           <strong className="ml-2">Primer precio</strong>: indica que es la opción entry-level de su familia, útil para filtros del comercial.
         </p>
       </fieldset>

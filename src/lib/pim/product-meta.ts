@@ -48,8 +48,12 @@ export type ProductMeta = {
   gama?: number | null;
   /** Momento del plato: aperitivo, entrante, principal, guarnicion, postre. */
   momento_plato?: MomentoPlato | null;
-  /** Destacado en home / listados (separado del catálogo "Selección Aurellano"). */
+  /** Legacy: flag global de destacado. Se mantiene por retrocompat pero la
+   *  forma nueva de destacar es por catálogo (`destacado_en`). */
   destacado: boolean;
+  /** Catálogos donde este producto aparece como destacado.
+   *  Slugs típicos: 'horeca', 'retail', 'formages'. */
+  destacado_en: string[];
   /** Línea de entry-level / "primer precio" para filtros y comunicación HORECA. */
   primer_precio: boolean;
 };
@@ -77,6 +81,7 @@ export const EMPTY_META = (ref: string): ProductMeta => ({
   gama: null,
   momento_plato: null,
   destacado: false,
+  destacado_en: [],
   primer_precio: false,
 });
 
@@ -122,5 +127,7 @@ export async function getMetasForProducts(refs: string[]): Promise<Record<string
     console.warn("[getMetasForProducts] error:", error.message);
     return {};
   }
-  return Object.fromEntries((data ?? []).map((m) => [m.product_ref as string, m as ProductMeta]));
+  return Object.fromEntries(
+    ((data ?? []) as unknown as ProductMeta[]).map((m) => [m.product_ref, m]),
+  );
 }

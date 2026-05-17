@@ -1,13 +1,12 @@
-// Helpers para los catálogos de publicación.
+// Helpers para los catálogos de publicación (viven en NUESTRO Supabase).
 //
-// FUENTE DE VERDAD: backend Aurellano (FastAPI + Neon), bloque 3 LIVE 2026-05-09.
-// Antes vivían en NUESTRO Supabase como workaround; ahora la API del socio los
-// gestiona como entidad propia (`/catalog/catalogs/*`). Schema idéntico — el
-// backend incluso devuelve los mismos campos (id UUID, slug, name, description,
-// color, sort_order, active, created_at, updated_at) + product_count extra.
+// IMPORTANTE: estos catálogos NO están en la API del socio. La API del socio
+// gestiona productos, marcas y familias; los "catálogos de publicación"
+// (HORECA, Retail, Formages, Selección Aurellano, etc.) son un concepto propio
+// del PIM que vive en la tabla `catalogs` de nuestro Supabase, con la tabla
+// `product_catalogs` para las asignaciones N:M.
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_AURELLANO_API ?? "https://aurellano-api.srv1124642.hstgr.cloud";
+import { createClient as createServerSupabase } from "@/integrations/supabase/server";
 
 export type Catalog = {
   id: string;
@@ -19,63 +18,69 @@ export type Catalog = {
   active: boolean;
   created_at: string;
   updated_at: string;
-  product_count?: number; // expuesto por la API; opcional para no romper consumers viejos
 };
 
-/** Lee todos los catálogos. Por defecto solo activos. */
+/** Lee todos los catálogos. Por defecto sólo activos. */
 export async function listCatalogs(includeInactive = false): Promise<Catalog[]> {
-  const qs = includeInactive ? "?include_inactive=true" : "";
-  const r = await fetch(`${API_BASE}/catalog/catalogs${qs}`, { cache: "no-store" });
-  if (!r.ok) throw new Error(`listCatalogs: ${r.status} ${await r.text()}`);
-  return (await r.json()) as Catalog[];
+  const supabase = await createServerSupabase();
+  let query = supabase.from("catalogs").select("*").order("sort_order").order("name");
+  if (!includeInactive) query = query.eq("active", true);
+  const { data, error } = await query;
+  if (error) throw error;
+  return ((data ?? []) as unknown) as Catalog[];
 }
 
 /** Devuelve la lista de slugs de catálogo asignados a un producto. */
 export async function getProductCatalogs(productRef: string): Promise<string[]> {
-  const r = await fetch(
-    `${API_BASE}/catalog/products/${encodeURIComponent(productRef)}`,
-    { cache: "no-store" },
-  );
-  if (!r.ok) {
-    if (r.status === 404) return [];
-    throw new Error(`getProductCatalogs(${productRef}): ${r.status} ${await r.text()}`);
-  }
-  const product = (await r.json()) as { catalogs?: { slug: string }[] };
-  return (product.catalogs ?? []).map((c) => c.slug);
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase
+    .from("product_catalogs")
+    .select("catalog_id, catalogs!inner(slug)")
+    .eq("product_ref", productRef);
+  if (error) throw error;
+  return ((data ?? []) as unknown as { catalogs: { slug: string } | { slug: string }[] }[])
+    .map((r) => {
+      const c = Array.isArray(r.catalogs) ? r.catalogs[0] : r.catalogs;
+      return c?.slug ?? "";
+    })
+    .filter(Boolean);
 }
 
-/** Devuelve un mapa product_ref → slugs[] para varios productos.
- *
- * Usa el endpoint batch `GET /catalog/products/catalogs-batch?refs=a,b,c` —
- * una sola request al backend en lugar de N en paralelo. Cubre hasta 500 refs
- * por petición; para más, fragmenta en chunks.
- */
+/** Mapa product_ref → slugs[] para varios productos. */
 export async function getCatalogsForProducts(refs: string[]): Promise<Record<string, string[]>> {
   if (refs.length === 0) return {};
-
-  // Chunk a 500 (límite del backend) por si el listado es enorme.
-  const CHUNK = 500;
-  const chunks: string[][] = [];
-  for (let i = 0; i < refs.length; i += CHUNK) chunks.push(refs.slice(i, i + CHUNK));
-
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase
+    .from("product_catalogs")
+    .select("product_ref, catalogs!inner(slug)")
+    .in("product_ref", refs);
+  if (error) throw error;
   const map: Record<string, string[]> = {};
-  for (const chunk of chunks) {
-    const qs = encodeURIComponent(chunk.join(","));
-    const r = await fetch(
-      `${API_BASE}/catalog/products/catalogs-batch?refs=${qs}`,
-      { cache: "no-store" },
-    );
-    if (!r.ok) {
-      // Si el batch falla, no rompemos toda la página: log y devolvemos lo que tengamos.
-      console.error(`getCatalogsForProducts batch: ${r.status} ${await r.text()}`);
-      continue;
-    }
-    const body = (await r.json()) as Record<string, { slug: string; name: string }[]>;
-    for (const [ref, catalogs] of Object.entries(body)) {
-      if (catalogs.length > 0) map[ref] = catalogs.map((c) => c.slug);
-    }
+  for (const row of ((data ?? []) as unknown as { product_ref: string; catalogs: { slug: string } | { slug: string }[] }[])) {
+    const c = Array.isArray(row.catalogs) ? row.catalogs[0] : row.catalogs;
+    if (!c?.slug) continue;
+    (map[row.product_ref] ??= []).push(c.slug);
   }
   return map;
+}
+
+/** Refs de productos asignados a un catálogo (por slug). */
+export async function getRefsByCatalogSlug(slug: string): Promise<string[]> {
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase
+    .from("product_catalogs")
+    .select("product_ref, catalogs!inner(slug)")
+    .eq("catalogs.slug", slug);
+  if (error) throw error;
+  return ((data ?? []) as unknown as { product_ref: string }[]).map((r) => r.product_ref);
+}
+
+/** Humaniza un slug de familia: "FOIE_GRAS" → "Foie gras", "QUESOS" → "Quesos".
+ *  Fallback usado cuando no hay display_name configurado en el overlay. */
+export function humanizeFamilySlug(slug: string): string {
+  if (!slug) return "";
+  const lower = slug.toLowerCase().replace(/_+/g, " ").trim();
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
 }
 
 export type FamilyMeta = {
@@ -86,8 +91,22 @@ export type FamilyMeta = {
   active: boolean;
 };
 
-/** Lista combinada de familias: API (auto-descubiertas) + overlay (creadas en settings).
- *  Ordenadas por sort_order del overlay → alfabético. Útil para dropdowns del editor. */
+/** Devuelve mapa slug → meta para todas las familias del overlay. */
+export async function getFamilyMetas(): Promise<Record<string, FamilyMeta>> {
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase.from("families_meta").select("*");
+  if (error) {
+    console.warn("[getFamilyMetas] error:", error.message);
+    return {};
+  }
+  return Object.fromEntries(
+    ((data ?? []) as unknown as FamilyMeta[]).map((m) => [m.slug, m]),
+  );
+}
+
+/** Lista combinada de familias: API (auto-descubiertas desde productos) + overlay
+ *  (familias creadas en settings, posiblemente sin productos aún).
+ *  Ordenadas por sort_order del overlay → alfabético. Útil para dropdowns. */
 export async function listAllFamilies(): Promise<
   { slug: string; display_name: string; active: boolean; count: number }[]
 > {
@@ -124,34 +143,4 @@ export async function listAllFamilies(): Promise<
   return Array.from(merged.values())
     .sort((a, b) => a.sort - b.sort || a.display_name.localeCompare(b.display_name))
     .map(({ slug, display_name, active, count }) => ({ slug, display_name, active, count }));
-}
-
-/** Devuelve mapa slug → meta para todas las familias del overlay. */
-export async function getFamilyMetas(): Promise<Record<string, FamilyMeta>> {
-  const supabase = await createServerSupabase();
-  const { data, error } = await supabase.from("families_meta").select("*");
-  if (error) {
-    console.warn("[getFamilyMetas] error:", error.message);
-    return {};
-  }
-  return Object.fromEntries(
-    ((data ?? []) as unknown as FamilyMeta[]).map((m) => [m.slug, m]),
-  );
-}
-
-/** Refs de productos asignados a un catálogo (por slug). */
-export async function getRefsByCatalogSlug(slug: string): Promise<string[]> {
-  // La API soporta `?catalog={slug}` directamente y devuelve hasta 200 productos
-  // por página. Para listas más largas habría que paginar; el admin actual no
-  // espera catálogos con miles de productos.
-  const r = await fetch(
-    `${API_BASE}/catalog/products?catalog=${encodeURIComponent(slug)}&limit=200`,
-    { cache: "no-store" },
-  );
-  if (!r.ok) {
-    if (r.status === 404) return []; // catálogo inexistente → lista vacía
-    throw new Error(`getRefsByCatalogSlug(${slug}): ${r.status} ${await r.text()}`);
-  }
-  const body = (await r.json()) as { results: { ref: string }[] };
-  return body.results.map((p) => p.ref);
 }

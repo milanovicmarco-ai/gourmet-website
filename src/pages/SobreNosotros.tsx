@@ -5,7 +5,7 @@ import { Layout } from "@/components/Layout";
 import { Circle } from "@/components/Circle";
 import { SectionHeader } from "@/components/SectionHeader";
 const empresa = "/images/empresa.jpg";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, ArrowRight } from "lucide-react";
 import { WHATSAPP_LINK } from "@/lib/contact";
 
 const milestones = [
@@ -40,20 +40,42 @@ const SobreNosotros = () => {
   >
     <section className="relative overflow-hidden">
       <Circle variant="accent" className="w-72 h-72 -top-10 -right-20" />
-      <div className="container-edit pt-12 md:pt-20 pb-12 md:pb-16 max-w-4xl space-y-6 relative">
+      <div className="container-edit pt-32 md:pt-40 pb-12 md:pb-16 max-w-4xl space-y-6 relative">
         <p className="eyebrow">Sobre nosotros</p>
         <h1 className="display text-balance">+50 años seleccionando<br /><span className="italic font-light text-accent">producto con criterio.</span></h1>
         <p className="text-lg md:text-xl text-muted-foreground max-w-2xl">Empresa familiar de Lleida. Nacimos como pequeño distribuidor y nos hemos convertido en partner gourmet de referencia para profesionales en toda España y Andorra.</p>
       </div>
     </section>
 
+    {/* Parallax: la imagen queda fija respecto al viewport (background-attachment: fixed
+        en desktop) mientras se hace scroll, dando la sensación de ir descubriendo
+        la imagen entera por partes. En mobile el fijado se desactiva (iOS Safari
+        no lo soporta bien) y caemos a un parallax suave con translateY proporcional. */}
     <section className="container-edit pb-20 md:pb-28">
-      <div ref={imgRef} className="rounded-3xl overflow-hidden bg-muted aspect-[16/9] md:aspect-[16/8]">
+      <div
+        ref={imgRef}
+        className="aurellano-parallax rounded-3xl overflow-hidden bg-muted h-[55vh] md:h-[70vh] min-h-[360px] relative"
+      >
+        {/* Desktop: bg-fixed funciona perfectamente y da el efecto exacto */}
+        <div
+          className="hidden md:block absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: `url(${empresa})`,
+            backgroundAttachment: "fixed",
+          }}
+          aria-hidden
+        />
+        {/* Mobile: parallax JS sobre <img>. Anclada en el centro vertical para que
+            si el JS falla por cualquier motivo, la imagen se vea centrada (no cortada
+            por arriba o por abajo). El translateY del scroll se suma al centrado. */}
         <img
           src={empresa}
           alt="Almacén histórico Aurellano"
-          className="w-full h-[115%] object-cover will-change-transform"
-          style={{ transform: `translateY(${offset}px)` }}
+          className="md:hidden absolute left-0 w-full h-[130%] object-cover object-center will-change-transform"
+          style={{
+            top: "50%",
+            transform: `translateY(calc(-50% + ${offset * 2}px))`,
+          }}
           loading="lazy"
         />
       </div>
@@ -95,13 +117,33 @@ const SobreNosotros = () => {
       </div>
     </section>
 
-    <section className="container-edit py-24 md:py-32 text-center relative">
-      <Circle variant="accent" className="w-[400px] h-[400px] left-1/2 -translate-x-1/2 -top-20" />
-      <div className="relative max-w-2xl mx-auto space-y-6">
-        <h2 className="display-md text-balance">¿Empezamos a trabajar juntos?</h2>
-        <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-primary text-primary-foreground rounded-full pl-6 pr-7 py-4 font-medium hover:bg-accent transition-colors">
-          <MessageCircle className="h-5 w-5" /> Hablemos
-        </a>
+    {/* CTA FINAL — gradiente blanco → rosa, mismo formato que la home. */}
+    <section
+      className="relative overflow-hidden"
+      style={{
+        background:
+          "linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(322 100% 98%) 35%, hsl(322 85% 92%) 75%, hsl(322 80% 86%) 100%)",
+      }}
+    >
+      <div className="container-edit py-24 md:py-36 text-center relative">
+        <div className="relative max-w-3xl mx-auto space-y-8">
+          <p className="eyebrow justify-center inline-flex text-primary/70">Empecemos</p>
+          <h2 className="display text-balance text-primary">
+            ¿Empezamos a <span className="italic font-light">trabajar juntos</span>?
+          </h2>
+          <p className="text-lg text-primary/80 max-w-xl mx-auto">
+            Cuéntanos qué necesitas para tu negocio. Te respondemos en horas con propuesta, precios y muestras si hace falta.
+          </p>
+          <a
+            href={WHATSAPP_LINK}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-primary text-primary-foreground rounded-full pl-7 pr-8 py-5 font-medium hover:bg-accent transition-colors duration-300 group"
+          >
+            <MessageCircle className="h-5 w-5" /> Escribir por WhatsApp
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </a>
+        </div>
       </div>
     </section>
   </Layout>

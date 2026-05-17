@@ -27,6 +27,9 @@ export type FormFields = {
   pairings?: string[] | string | null;
   allergens?: string[] | string | null;
   ingredients?: string | null;
+  /** Información nutricional como texto libre (Markdown / tabla manual).
+   *  La API la tipa como `unknown` así que aceptamos cualquier string. */
+  info_nutricional?: string | null;
   // Booleans dietéticos (los 3 que tiene la API canónica)
   vegan?: boolean;
   vegetarian?: boolean;
@@ -106,6 +109,13 @@ export function mapToApi(f: FormFields): Record<string, unknown> {
     pairings: pairings.length ? pairings : undefined,
     alergenos: allergensArr.length ? allergensArr.join(", ") : undefined,
     ingredientes: s(f.ingredients),
+    // La API exige un dict (no string). Si el editor escribió texto libre, lo
+    // envolvemos como { texto: "..." } para que pase la validación. mapFromApi
+    // lo desenvuelve al cargar para que el editor vea siempre el texto.
+    info_nutricional: (() => {
+      const v = s(f.info_nutricional);
+      return v ? { texto: v } : undefined;
+    })(),
     sin_gluten: f.gluten_free,
     sin_lactosa: f.lactose_free,
     vegetariano: f.vegetarian,
@@ -142,6 +152,20 @@ export function mapFromApi(p: ApiProduct): FormFields & { ref: string; image_url
       ? p.alergenos
       : Array.isArray(p.alergenos) ? p.alergenos.join(", ") : "",
     ingredients: p.ingredientes ?? "",
+    info_nutricional: (() => {
+      const raw = p.info_nutricional;
+      if (raw == null) return "";
+      if (typeof raw === "string") return raw;
+      // Forma envuelta { texto: "..." } — desenvolvemos para el editor.
+      if (typeof raw === "object" && !Array.isArray(raw)) {
+        const obj = raw as Record<string, unknown>;
+        if (typeof obj.texto === "string") return obj.texto;
+        // Cualquier otra forma de dict → la serializamos como JSON legible
+        // para que el editor pueda corregirla a mano si hace falta.
+        return JSON.stringify(obj, null, 2);
+      }
+      return "";
+    })(),
     vegan: false,
     gluten_free: !!p.sin_gluten,
     lactose_free: !!p.sin_lactosa,

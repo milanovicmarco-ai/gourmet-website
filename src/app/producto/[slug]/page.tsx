@@ -5,6 +5,7 @@ import ProductDetail from "@/pages/ProductDetail";
 import { getProductBySlug, getProductByRef, type ApiProduct } from "@/lib/pim/api";
 import { getTranslation, type Locale } from "@/lib/pim/translations";
 import { getProductMeta, effectiveRef } from "@/lib/pim/product-meta";
+import { getFamilyMetas, humanizeFamilySlug } from "@/lib/pim/catalogs";
 
 type Params = { slug: string };
 
@@ -102,9 +103,16 @@ export default async function ProductoPage({
   // Overlay de nuestro Supabase: la ref visible (display_ref) y la marca real
   // (brand_override). La API trata ambos como problemáticos (PK inmutable, FK estricta),
   // así que la fuente de verdad para el usuario final son estos campos.
-  const meta = await getProductMeta(product.ref).catch(() => null);
+  const [meta, familyMetas] = await Promise.all([
+    getProductMeta(product.ref).catch(() => null),
+    getFamilyMetas().catch(() => ({})),
+  ]);
   const displayRef = effectiveRef(meta, product.ref);
   const brandOverride = meta?.brand_override?.trim();
+  const familySlug = display.family ?? null;
+  const familyDisplay = familySlug
+    ? familyMetas[familySlug]?.display_name?.trim() || humanizeFamilySlug(familySlug)
+    : null;
   return (
     <ProductDetail
       product={{
@@ -112,6 +120,8 @@ export default async function ProductoPage({
         ref: displayRef,
         brand: brandOverride && brandOverride.length > 0 ? brandOverride : display.brand,
       }}
+      familySlug={familySlug}
+      familyDisplay={familyDisplay}
     />
   );
 }

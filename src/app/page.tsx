@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Index, { type FeaturedProduct } from "@/pages/Index";
 import { BRAND } from "@/lib/brand";
-import { getRefsByCatalogSlug } from "@/lib/pim/catalogs";
+import { getRefsByCatalogSlug, getFamilyMetas, humanizeFamilySlug } from "@/lib/pim/catalogs";
 import { getProductByRef } from "@/lib/pim/api";
 import { getMetasForProducts, effectiveRef } from "@/lib/pim/product-meta";
 
@@ -32,12 +32,19 @@ async function loadFeatured(): Promise<FeaturedProduct[]> {
     (p) => (p.status ?? (p.active === false ? "archived" : "published")) === "published",
   );
   if (published.length === 0) return [];
-  const metas = await getMetasForProducts(published.map((p) => p.ref)).catch(() => ({}));
+  const [metas, familyMetas] = await Promise.all([
+    getMetasForProducts(published.map((p) => p.ref)).catch(() => ({})),
+    getFamilyMetas().catch(() => ({})),
+  ]);
+  const familyLabel = (slug: string | null | undefined): string => {
+    if (!slug) return "";
+    return familyMetas[slug]?.display_name?.trim() || humanizeFamilySlug(slug);
+  };
   return published.slice(0, FEATURED_LIMIT).map((p) => ({
     ref: effectiveRef(metas[p.ref], p.ref),
     slug: p.slug ?? p.ref,
     name: p.name,
-    family: p.family ?? "",
+    family: familyLabel(p.family),
     image_url: p.image_url ?? null,
   }));
 }

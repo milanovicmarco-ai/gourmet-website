@@ -84,7 +84,10 @@ export const Nav = () => {
   return (
     <header
       className={cn(
-        isDark ? "absolute top-0 inset-x-0 z-40" : "relative z-40 border-b border-border bg-background",
+        // Siempre absolute para que el contenido empiece desde y=0 con su propio
+        // fondo (gradientes, imágenes, color). Las páginas deben reservar espacio
+        // con pt-24 md:pt-32 en su primera sección para que no se solape el contenido.
+        "absolute top-0 inset-x-0 z-40",
       )}
     >
       <div className="container-edit flex items-center justify-between h-16 md:h-20">

@@ -2,46 +2,24 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/integrations/supabase/server";
-import { listCatalogs as fetchCatalogs } from "@/lib/pim/catalogs";
-
-// FUENTE DE VERDAD para catálogos = backend Aurellano (FastAPI + Neon),
-// bloque 3 LIVE 2026-05-09. Las mutaciones llaman a `/catalog/catalogs/*`
-// con `Authorization: Bearer ADMIN_API_KEY`. La auth Supabase se mantiene
-// solo como gate del admin (gating del usuario humano que abre la UI).
-
-const API_BASE =
-  process.env.NEXT_PUBLIC_AURELLANO_API ?? "https://aurellano-api.srv1124642.hstgr.cloud";
-const API_KEY = process.env.ADMIN_API_KEY;
 
 async function requireAdmin() {
-  // En dev se puede saltar el gate Supabase con DEV_BYPASS_ADMIN_AUTH=1.
-  if (process.env.DEV_BYPASS_ADMIN_AUTH === "1") return;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
+  return { supabase, user };
 }
 
-function authHeaders(): HeadersInit {
-  if (!API_KEY) {
-    throw new Error("ADMIN_API_KEY no configurada en .env.local — necesaria para mutar catálogos.");
-  }
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${API_KEY}`,
-  };
-}
-
-/** Mapea UUID interno (que la UI usa) → slug (que la API espera en la URL). */
-async function slugForCatalogId(id: string): Promise<string> {
-  // listCatalogs incluye inactivos para que también se puedan reactivar/borrar.
-  const catalogs = await fetchCatalogs(true);
-  const found = catalogs.find((c) => c.id === id);
-  if (!found) throw new Error(`Catálogo con id ${id} no encontrado.`);
-  return found.slug;
-}
+const slugify = (s: string) =>
+  s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
 
 // ============================
-// CATÁLOGOS
+// CATÁLOGOS (Supabase)
 // ============================
 export async function createCatalog(input: {
   slug?: string;
@@ -50,22 +28,22 @@ export async function createCatalog(input: {
   color?: string;
   sort_order?: number;
 }) {
-  await requireAdmin();
-  const r = await fetch(`${API_BASE}/catalog/catalogs`, {
-    method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify({
-      // El backend normaliza el slug; si no se pasa, usa el name como base.
-      slug: (input.slug?.trim() || input.name).slice(0, 80),
+  const { supabase } = await requireAdmin();
+  const slug = (input.slug?.trim() || slugify(input.name)).slice(0, 64);
+  const { data, error } = await supabase
+    .from("catalogs")
+    .insert({
+      slug,
       name: input.name.trim(),
       description: input.description?.trim() || null,
       color: input.color || "#fa2ca2",
       sort_order: input.sort_order ?? 0,
-    }),
-  });
-  if (!r.ok) throw new Error(`createCatalog: ${r.status} ${await r.text()}`);
+    })
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
   revalidatePath("/admin/settings/catalogs");
-  return r.json();
+  return data;
 }
 
 export async function updateCatalog(id: string, input: {
@@ -76,35 +54,27 @@ export async function updateCatalog(id: string, input: {
   sort_order?: number;
   active?: boolean;
 }) {
-  await requireAdmin();
-  const slug = await slugForCatalogId(id);
-  const patch: Record<string, unknown> = {};
-  if (input.slug !== undefined) patch.slug = input.slug.trim();
-  if (input.name !== undefined) patch.name = input.name.trim();
-  if (input.description !== undefined) patch.description = input.description?.trim() || null;
-  if (input.color !== undefined) patch.color = input.color;
-  if (input.sort_order !== undefined) patch.sort_order = input.sort_order;
-  if (input.active !== undefined) patch.active = input.active;
-
-  const r = await fetch(`${API_BASE}/catalog/catalogs/${encodeURIComponent(slug)}`, {
-    method: "PUT",
-    headers: authHeaders(),
-    body: JSON.stringify(patch),
-  });
-  if (!r.ok) throw new Error(`updateCatalog: ${r.status} ${await r.text()}`);
+  const { supabase } = await requireAdmin();
+  const { error } = await supabase
+    .from("catalogs")
+    .update({
+      ...(input.slug !== undefined && { slug: input.slug.trim() }),
+      ...(input.name !== undefined && { name: input.name.trim() }),
+      ...(input.description !== undefined && { description: input.description?.trim() || null }),
+      ...(input.color !== undefined && { color: input.color }),
+      ...(input.sort_order !== undefined && { sort_order: input.sort_order }),
+      ...(input.active !== undefined && { active: input.active }),
+    })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
   revalidatePath("/admin/settings/catalogs");
   revalidatePath("/admin/products");
 }
 
 export async function deleteCatalog(id: string) {
-  await requireAdmin();
-  const slug = await slugForCatalogId(id);
-  // hard=true para liberar el slug y limpiar la pivote (CASCADE).
-  const r = await fetch(
-    `${API_BASE}/catalog/catalogs/${encodeURIComponent(slug)}?hard=true`,
-    { method: "DELETE", headers: authHeaders() },
-  );
-  if (!r.ok) throw new Error(`deleteCatalog: ${r.status} ${await r.text()}`);
+  const { supabase } = await requireAdmin();
+  const { error } = await supabase.from("catalogs").delete().eq("id", id);
+  if (error) throw new Error(error.message);
   revalidatePath("/admin/settings/catalogs");
   revalidatePath("/admin/products");
 }
@@ -112,11 +82,6 @@ export async function deleteCatalog(id: string) {
 // ============================
 // FAMILIAS · overlay families_meta
 // ============================
-//
-// Las familias se DESCUBREN automáticamente desde la API (listFamilies). El overlay
-// nos permite reetiquetar la familia para el público (display_name), reordenarla,
-// añadirle descripción o desactivarla en la web sin tocar la API del socio.
-
 export async function upsertFamilyMeta(input: {
   slug: string;
   display_name?: string | null;
@@ -127,14 +92,12 @@ export async function upsertFamilyMeta(input: {
   const { supabase } = await requireAdmin();
 
   // 1) Sincroniza con la API del socio: si la familia no existe en su backend,
-  // la creamos vía POST /catalog/families. Así, al crear la familia en settings
-  // queda disponible inmediatamente para asignarla a productos sin que el editor
-  // se choque con el 400 "La familia X no existe".
+  // la creamos vía POST /catalog/families.
   const { ensureFamilyExists } = await import("../products/actions");
   const check = await ensureFamilyExists(input.slug, input.display_name ?? null);
   if (check.ok !== true) {
     console.warn(
-      `[upsertFamilyMeta] no se pudo crear "${input.slug}" en la API del socio (${check.reason}). Guardo igual en el overlay; el editor de producto la encontrará si más adelante se crea allí.`,
+      `[upsertFamilyMeta] no se pudo crear "${input.slug}" en la API del socio (${check.reason}). Guardo igual en el overlay.`,
     );
   }
 
@@ -167,14 +130,6 @@ export async function deleteFamilyMeta(slug: string) {
 // ============================
 // MARCAS · gestión sobre product_meta.brand_override
 // ============================
-//
-// Las marcas viven como texto libre en product_meta.brand_override. Aquí ofrecemos
-// dos operaciones masivas:
-//   - renameBrand(from, to): cambia todas las filas con esa marca a la nueva.
-//     Match case-insensitive con normalización de espacios. Útil para limpiar
-//     "Comtesse du Barry" / "comtesse du barry" en una sola operación.
-//   - deleteBrand(name): vacía brand_override en todas las filas con esa marca.
-
 export async function renameBrand(fromName: string, toName: string): Promise<number> {
   const { supabase } = await requireAdmin();
   const from = fromName.trim();
@@ -183,16 +138,15 @@ export async function renameBrand(fromName: string, toName: string): Promise<num
   if (!to) throw new Error("El nombre destino está vacío.");
   if (from === to) return 0;
 
-  // Trae filas case-insensitive y normalizadas, sin depender de extensión `citext`.
   const { data: rows, error: selErr } = await supabase
     .from("product_meta")
     .select("product_ref, brand_override")
     .ilike("brand_override", from);
   if (selErr) throw new Error(selErr.message);
 
-  const refs = (rows ?? [])
+  const refs = (((rows ?? []) as unknown) as { product_ref: string; brand_override: string | null }[])
     .filter((r) => r.brand_override?.trim().toLowerCase() === from.toLowerCase())
-    .map((r) => r.product_ref as string);
+    .map((r) => r.product_ref);
 
   if (refs.length === 0) return 0;
 
@@ -219,9 +173,9 @@ export async function deleteBrand(name: string): Promise<number> {
     .ilike("brand_override", target);
   if (selErr) throw new Error(selErr.message);
 
-  const refs = (rows ?? [])
+  const refs = (((rows ?? []) as unknown) as { product_ref: string; brand_override: string | null }[])
     .filter((r) => r.brand_override?.trim().toLowerCase() === target.toLowerCase())
-    .map((r) => r.product_ref as string);
+    .map((r) => r.product_ref);
 
   if (refs.length === 0) return 0;
 
@@ -238,29 +192,23 @@ export async function deleteBrand(name: string): Promise<number> {
 }
 
 // ============================
-// ASIGNACIÓN PRODUCTO ↔ CATÁLOGOS
+// ASIGNACIÓN PRODUCTO ↔ CATÁLOGOS (Supabase, tabla product_catalogs)
 // ============================
 export async function setProductCatalogs(productRef: string, catalogIds: string[]) {
-  await requireAdmin();
+  const { supabase } = await requireAdmin();
 
-  // La UI sigue trabajando con UUIDs internos; los traducimos a slugs porque la
-  // API del backend acepta `catalogs: [slug, slug]` (no UUIDs). Reemplaza el set
-  // completo en una sola llamada PUT (atómico, equivalente al delete+reinsert
-  // anterior pero sin race conditions).
-  const all = await fetchCatalogs(true);
-  const slugs = catalogIds
-    .map((id) => all.find((c) => c.id === id)?.slug)
-    .filter((s): s is string => Boolean(s));
+  // Borra todos los actuales y reinserta. Más simple que diff y para volúmenes bajos es suficiente.
+  const { error: delErr } = await supabase
+    .from("product_catalogs")
+    .delete()
+    .eq("product_ref", productRef);
+  if (delErr) throw new Error(delErr.message);
 
-  const r = await fetch(
-    `${API_BASE}/catalog/products/${encodeURIComponent(productRef)}`,
-    {
-      method: "PUT",
-      headers: authHeaders(),
-      body: JSON.stringify({ catalogs: slugs }),
-    },
-  );
-  if (!r.ok) throw new Error(`setProductCatalogs: ${r.status} ${await r.text()}`);
+  if (catalogIds.length > 0) {
+    const rows = catalogIds.map((catalog_id) => ({ product_ref: productRef, catalog_id }));
+    const { error: insErr } = await supabase.from("product_catalogs").insert(rows);
+    if (insErr) throw new Error(insErr.message);
+  }
 
   revalidatePath(`/admin/products/${productRef}`);
   revalidatePath("/admin/products");

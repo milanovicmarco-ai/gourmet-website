@@ -4,7 +4,7 @@
 // el PIM, y marcados con los flags `destacado` o `primer_precio`, estas funciones
 // los traen filtrados, publicados, con overlay aplicado (display_ref, brand).
 
-import { getRefsByCatalogSlug } from "./catalogs";
+import { getRefsByCatalogSlug, getFamilyMetas, humanizeFamilySlug } from "./catalogs";
 import { getProductByRef } from "./api";
 import { getMetasForProducts, effectiveRef } from "./product-meta";
 
@@ -12,6 +12,7 @@ export type CuratedProduct = {
   ref: string;
   slug: string;
   name: string;
+  /** Display name resuelto (overlay families_meta → fallback humanizado). */
   family: string;
   image_url: string | null;
 };
@@ -65,15 +66,34 @@ export async function loadCuratedProducts(opts: LoadOpts): Promise<CuratedResult
   const matching = published.filter((p) => {
     const m = metas[p.ref];
     if (!m) return false;
-    return opts.filter === "destacado" ? !!m.destacado : !!m.primer_precio;
+    if (opts.filter === "primer_precio") return !!m.primer_precio;
+    // Para destacado: nuevo campo `destacado_en` (array de slugs) tiene prioridad.
+    // Si el catálogo actual está en el array → match. Si no, legacy fallback al
+    // boolean global (para productos antiguos no migrados).
+    const en = Array.isArray(m.destacado_en) ? m.destacado_en : [];
+    if (en.length > 0) return en.includes(opts.catalogSlug);
+    return !!m.destacado;
   });
+
+  // Orden por ref ascendente (numeric collation: "ref_2" antes que "ref_10").
+  matching.sort((a, b) =>
+    a.ref.localeCompare(b.ref, undefined, { numeric: true, sensitivity: "base" }),
+  );
   console.log(`${tag} matching: ${matching.length}`);
+
+  // Resuelve display names de familia desde el overlay (con humanizado de fallback).
+  const familyMetas = await getFamilyMetas().catch(() => ({}));
+  const familyLabel = (slug: string | null | undefined): string => {
+    if (!slug) return "";
+    const m = familyMetas[slug];
+    return m?.display_name?.trim() || humanizeFamilySlug(slug);
+  };
 
   const mapped = matching.slice(0, limit).map((p) => ({
     ref: effectiveRef(metas[p.ref], p.ref),
     slug: p.slug ?? p.ref,
     name: p.name,
-    family: p.family ?? "",
+    family: familyLabel(p.family),
     image_url: p.image_url ?? null,
   }));
 

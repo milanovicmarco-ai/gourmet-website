@@ -4,7 +4,7 @@ import { Layout } from "@/components/Layout";
 import { ProductCard } from "@/components/ProductCard";
 import { fetchAllProducts, listFamilies, type ApiProduct } from "@/lib/pim/api";
 import { getMetasForProducts, effectiveRef, effectiveBrand } from "@/lib/pim/product-meta";
-import { listCatalogs, listAllFamilies, getRefsByCatalogSlug } from "@/lib/pim/catalogs";
+import { listCatalogs, listAllFamilies, getRefsByCatalogSlug, humanizeFamilySlug } from "@/lib/pim/catalogs";
 import { MultiSelectFilter } from "./multi-select-filter";
 import { MessageCircle, X } from "lucide-react";
 import { waLink } from "@/lib/contact";
@@ -205,6 +205,15 @@ export default async function CatalogoPage({
   const brandSelSet = new Set(brandSel);
   const menuSelSet = new Set(menuSel);
   const gamaSelSet = new Set(gamaSel);
+
+  /** ¿El producto está destacado en algún catálogo (nuevo) o globalmente (legacy)? */
+  const isDestacado = (p: ApiProduct): boolean => {
+    const m = metas[p.ref];
+    if (!m) return false;
+    if (Array.isArray(m.destacado_en) && m.destacado_en.length > 0) return true;
+    return !!m.destacado;
+  };
+
   const filtered = products.filter((p) => {
     if (!isPublished(p)) return false;
     if (brandSelSet.size > 0) {
@@ -224,6 +233,15 @@ export default async function CatalogoPage({
     return true;
   });
 
+  // Orden: primero los destacados, luego por ref ascendente (numeric collation
+  // para que "ref_2" venga antes que "ref_10").
+  filtered.sort((a, b) => {
+    const aD = isDestacado(a) ? 1 : 0;
+    const bD = isDestacado(b) ? 1 : 0;
+    if (aD !== bD) return bD - aD; // destacados primero
+    return a.ref.localeCompare(b.ref, undefined, { numeric: true, sensitivity: "base" });
+  });
+
   const totalActive =
     [q, catalogSlug].filter(Boolean).length +
     familySel.length +
@@ -233,9 +251,20 @@ export default async function CatalogoPage({
     gamaSel.length +
     especialidadSel.length;
 
+  // Resuelve slug de familia → display name. Si no hay overlay, humaniza el slug
+  // ("FOIE_GRAS" → "Foie gras") para que las tarjetas nunca enseñen UPPER_SNAKE_CASE.
+  const familyDisplay = new Map<string, string>();
+  for (const f of allFamilies) {
+    familyDisplay.set(f.slug, f.display_name || humanizeFamilySlug(f.slug));
+  }
+  const familyLabel = (slug: string | null | undefined): string => {
+    if (!slug) return "—";
+    return familyDisplay.get(slug) ?? humanizeFamilySlug(slug);
+  };
+
   return (
     <Layout navTheme="light">
-      <section className="container-edit pt-12 md:pt-20 pb-10 md:pb-14">
+      <section className="container-edit pt-32 md:pt-40 pb-10 md:pb-14">
         <div className="max-w-4xl space-y-6">
           <p className="eyebrow">
             {activeCatalog ? `Catálogo · ${activeCatalog.name}` : "Catálogo"}
@@ -367,7 +396,7 @@ export default async function CatalogoPage({
                 key={p.ref}
                 image={p.image_url ?? "/images/placeholder.svg"}
                 title={p.name}
-                category={p.family ?? "—"}
+                category={familyLabel(p.family)}
                 // Debajo del nombre: la ref visible (display_ref si está, si no la canónica).
                 origin={`Ref. ${effectiveRef(metas[p.ref], p.ref)}`}
                 href={`/producto/${p.slug ?? p.ref}`}
