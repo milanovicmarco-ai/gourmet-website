@@ -89,6 +89,8 @@ const SecretsDelXef = ({
         catalogPublishedCount={featuredCatalogCount}
         catalogName="HORECA"
         flagLabel="Destacado"
+        viewAllHref="/catalogo?catalog=horeca"
+        viewAllLabel="Ver todos los productos HORECA"
       />
 
       {/* Primer precio — siempre visible, con mensaje si está vacío */}
@@ -144,6 +146,8 @@ function CuratedGrid({
   catalogPublishedCount,
   catalogName,
   flagLabel,
+  viewAllHref,
+  viewAllLabel,
 }: {
   eyebrow: string;
   title: string;
@@ -151,23 +155,37 @@ function CuratedGrid({
   catalogPublishedCount: number;
   catalogName: string;
   flagLabel: string;
+  viewAllHref?: string;
+  viewAllLabel?: string;
 }) {
   return (
     <section className="container-edit pb-24 md:pb-32">
       <SectionHeader eyebrow={eyebrow} title={title} />
       {products.length > 0 ? (
-        <div className="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-          {products.map((p) => (
-            <ProductCard
-              key={p.ref}
-              image={p.image_url ?? "/images/placeholder.svg"}
-              title={p.name}
-              category={p.family || "—"}
-              origin={`Ref. ${p.ref}`}
-              href={`/producto/${p.slug}`}
-            />
-          ))}
-        </div>
+        <>
+          <div className="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+            {products.map((p) => (
+              <ProductCard
+                key={p.ref}
+                image={p.image_url ?? "/images/placeholder.svg"}
+                title={p.name}
+                category={p.family || "—"}
+                origin={`Ref. ${p.ref}`}
+                href={`/producto/${p.slug}`}
+              />
+            ))}
+          </div>
+          {viewAllHref && viewAllLabel && (
+            <div className="mt-10 text-center">
+              <Link
+                href={viewAllHref}
+                className="inline-flex items-center gap-2 border border-foreground rounded-full pl-5 pr-6 py-3 text-sm font-medium"
+              >
+                {viewAllLabel} <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          )}
+        </>
       ) : (
         <EmptyHubMessage
           catalogPublishedCount={catalogPublishedCount}

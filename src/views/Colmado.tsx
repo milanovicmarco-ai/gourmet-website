@@ -104,18 +104,28 @@ const Colmado = ({
       <section className="container-edit pb-20 md:pb-28">
         <SectionHeader eyebrow="Selección retail" title="Lo que está volando del lineal." />
         {featured.length > 0 ? (
-          <div className="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-            {featured.map((p) => (
-              <ProductCard
-                key={p.ref}
-                image={p.image_url ?? "/images/placeholder.svg"}
-                title={p.name}
-                category={p.family || "—"}
-                origin={`Ref. ${p.ref}`}
-                href={`/producto/${p.slug}`}
-              />
-            ))}
-          </div>
+          <>
+            <div className="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+              {featured.map((p) => (
+                <ProductCard
+                  key={p.ref}
+                  image={p.image_url ?? "/images/placeholder.svg"}
+                  title={p.name}
+                  category={p.family || "—"}
+                  origin={`Ref. ${p.ref}`}
+                  href={`/producto/${p.slug}`}
+                />
+              ))}
+            </div>
+            <div className="mt-10 text-center">
+              <Link
+                href="/catalogo?catalog=retail"
+                className="inline-flex items-center gap-2 border border-foreground rounded-full pl-5 pr-6 py-3 text-sm font-medium"
+              >
+                Ver todos los productos Colmado <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </>
         ) : (
           <EmptyHubMessage
             catalogPublishedCount={featuredCatalogCount}
@@ -166,23 +176,6 @@ const Colmado = ({
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="container-edit pb-24 md:pb-32">
-        <div className="rounded-3xl bg-accent text-accent-foreground p-10 md:p-16 text-center relative overflow-hidden">
-          <Circle variant="outline" className="w-80 h-80 -top-20 -right-20 border-accent-foreground/20" />
-          <div className="relative max-w-2xl mx-auto space-y-6">
-            <h2 className="display-md text-balance">
-              Catálogo pensado<br /><em className="font-light">para tu tienda.</em>
-            </h2>
-            <Link
-              href="/catalogo?catalog=retail"
-              className="inline-flex items-center gap-2 bg-accent-foreground text-accent rounded-full pl-6 pr-7 py-4 font-medium hover:opacity-90 transition-opacity"
-            >
-              Ver catálogo para tiendas <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
     </Layout>
   );
 };
