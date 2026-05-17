@@ -101,22 +101,22 @@ export default async function CatalogoPage({
   let activeCatalog: (typeof catalogs)[number] | null = null;
   let allFamilies: Awaited<ReturnType<typeof listAllFamilies>> = [];
 
-  try {
-    const [pr, fa, ca, af] = await Promise.all([
-      // fetchAllProducts itera por familia para sortear el cap de 200/request,
-      // así el filtro por marca ve TODO el catálogo, no sólo 200.
-      fetchAllProducts({ q, revalidate: 300 }),
-      listFamilies(),
-      listCatalogs().catch(() => []),
-      listAllFamilies().catch(() => []),
-    ]);
-    products = pr;
-    families = fa;
-    catalogs = ca;
-    allFamilies = af;
-  } catch (e) {
-    error = (e as Error).message;
-  }
+  // Cada fuente con su propio catch para que la página renderice aunque alguna
+  // (típicamente la API del socio) falle por timeout o aborto.
+  const [pr, fa, ca, af] = await Promise.all([
+    fetchAllProducts({ q, revalidate: 300 }).catch((e) => {
+      console.warn("[catalogo] fetchAllProducts:", (e as Error).message);
+      error = (e as Error).message;
+      return [] as ApiProduct[];
+    }),
+    listFamilies().catch(() => [] as Awaited<ReturnType<typeof listFamilies>>),
+    listCatalogs().catch(() => []),
+    listAllFamilies().catch(() => []),
+  ]);
+  products = pr;
+  families = fa;
+  catalogs = ca;
+  allFamilies = af;
 
   // Aplica el filtro multi-opción por familia (OR dentro del filtro).
   if (familySel.length > 0) {

@@ -53,20 +53,26 @@ export default async function AdminProductsPage({
   let catalogs: Awaited<ReturnType<typeof listCatalogs>> = [];
   let error: string | null = null;
 
-  try {
-    const [pr, fa, ca] = await Promise.all([
-      // fetchAllProducts itera por familia para sortear el cap de 200/request,
-      // así el filtro por marca / score / catálogo ve TODO el catálogo, no sólo 200.
-      fetchAllProducts({ q }),
-      listFamilies(),
-      listCatalogs(true),
-    ]);
-    products = pr;
-    families = fa;
-    catalogs = ca;
-  } catch (e) {
-    error = (e as Error).message;
-  }
+  // Cada fuente con su propio catch — si la API del socio cae (timeout/abort),
+  // el admin sigue funcionando con lo que tenga (catálogos Supabase OK).
+  const [pr, fa, ca] = await Promise.all([
+    fetchAllProducts({ q }).catch((e) => {
+      console.warn("[admin/products] fetchAllProducts error:", (e as Error).message);
+      error = (e as Error).message;
+      return [] as ApiProduct[];
+    }),
+    listFamilies().catch((e) => {
+      console.warn("[admin/products] listFamilies error:", (e as Error).message);
+      return [] as Awaited<ReturnType<typeof listFamilies>>;
+    }),
+    listCatalogs(true).catch((e) => {
+      console.warn("[admin/products] listCatalogs error:", (e as Error).message);
+      return [] as Awaited<ReturnType<typeof listCatalogs>>;
+    }),
+  ]);
+  products = pr;
+  families = fa;
+  catalogs = ca;
 
   // Filtro por familia se aplica en memoria ahora (la API filtraba por query, pero
   // como cargamos todo igual, lo hacemos uniformemente con el resto de filtros).

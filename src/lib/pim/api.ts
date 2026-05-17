@@ -68,9 +68,10 @@ export type FamilyCount = { family: string; count: number };
 // =============================================================
 
 /** Timeout default para fetches a la API del socio. Vercel está en US-East y
- *  el VPS del socio en Europa; si no contesta en 8s, asumimos fallo y dejamos
- *  que la página renderice sin esos datos en vez de colgarse 5 minutos. */
-const FETCH_TIMEOUT_MS = 8_000;
+ *  el VPS del socio en Europa; si no contesta en X segundos, asumimos fallo y
+ *  dejamos que la página renderice sin esos datos en vez de colgarse 5 minutos.
+ *  20s es generoso pero ajustado al peor caso real observado. */
+const FETCH_TIMEOUT_MS = 20_000;
 
 async function timeoutFetch(input: string, init?: RequestInit & { next?: { revalidate?: number } }) {
   const controller = new AbortController();
