@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/quesos" },
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 600;
 
 export default async function QuesosPage() {
   const featured = await loadCuratedProducts({

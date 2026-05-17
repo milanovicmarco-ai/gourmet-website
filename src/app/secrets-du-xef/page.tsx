@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 // Lee del catálogo HORECA con los flags destacado / primer_precio. Dinámica
 // porque queremos que los cambios del PIM se reflejen sin redeploy.
-export const dynamic = "force-dynamic";
+export const revalidate = 600;
 
 export default async function SecretsPage() {
   const [featured, primerPrecio] = await Promise.all([

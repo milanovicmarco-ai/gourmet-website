@@ -12,10 +12,9 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-// La home es dinámica porque la sección "Selección curada" lee productos del
-// catálogo `seleccion-aurellano` (overlay Supabase + API del socio) y queremos
-// que los cambios del PIM se reflejen sin redeploy.
-export const dynamic = "force-dynamic";
+// Revalida cada 10 min. Los Server Actions del PIM hacen revalidatePath("/")
+// cuando editas algo crítico → los cambios se reflejan al momento sin redeploy.
+export const revalidate = 600;
 
 const FEATURED_CATALOG = "seleccion-aurellano";
 const FEATURED_LIMIT = 4;

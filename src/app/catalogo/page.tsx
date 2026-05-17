@@ -16,8 +16,9 @@ export const metadata: Metadata = {
   alternates: { canonical: "/catalogo" },
 };
 
+// Revalida cada 10 min. Tras editar productos en el PIM, los Server Actions
+// hacen revalidatePath("/catalogo") así que los cambios se reflejan al momento.
 export const revalidate = 600;
-export const dynamic = "force-dynamic";
 
 type SP = {
   q?: string;
@@ -34,7 +35,11 @@ type SP = {
   gama?: string;
   /** Múltiple. CSV de flags de especialidad (destacado, primer_precio, …). */
   especialidad?: string;
+  /** Página de paginación (1-indexada). */
+  page?: string;
 };
+
+const PAGE_SIZE = 20;
 
 const csvParse = (s: string | undefined): string[] =>
   s
@@ -92,6 +97,7 @@ export default async function CatalogoPage({
   const menuSel = csvParse(sp.menu);
   const gamaSel = csvParse(sp.gama).map(Number).filter((n) => Number.isFinite(n));
   const especialidadSel = csvParse(sp.especialidad);
+  const currentPage = Math.max(1, Number(sp.page) || 1);
 
   let products: ApiProduct[] = [];
   let families: Awaited<ReturnType<typeof listFamilies>> = [];
@@ -241,6 +247,30 @@ export default async function CatalogoPage({
     if (aD !== bD) return bD - aD; // destacados primero
     return a.ref.localeCompare(b.ref, undefined, { numeric: true, sensitivity: "base" });
   });
+
+  // Paginación: 20 productos por página. La página actual viene de ?page=N.
+  const totalCount = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages);
+  const pageStart = (safePage - 1) * PAGE_SIZE;
+  const pageEnd = pageStart + PAGE_SIZE;
+  const pageItems = filtered.slice(pageStart, pageEnd);
+
+  // Helper: construye href para navegar a otra página manteniendo todos los filtros.
+  const hrefForPage = (n: number): string => {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (catalogSlug) params.set("catalog", catalogSlug);
+    if (familySel.length) params.set("family", familySel.join(","));
+    if (brandSel.length) params.set("brand", brandSel.join(","));
+    if (dietaSel.length) params.set("dieta", dietaSel.join(","));
+    if (menuSel.length) params.set("menu", menuSel.join(","));
+    if (gamaSel.length) params.set("gama", gamaSel.join(","));
+    if (especialidadSel.length) params.set("especialidad", especialidadSel.join(","));
+    if (n > 1) params.set("page", String(n));
+    const qs = params.toString();
+    return `/catalogo${qs ? `?${qs}` : ""}`;
+  };
 
   const totalActive =
     [q, catalogSlug].filter(Boolean).length +

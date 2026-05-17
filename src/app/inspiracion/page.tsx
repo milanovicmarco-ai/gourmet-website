@@ -9,9 +9,9 @@ export const metadata: Metadata = {
   alternates: { canonical: "/inspiracion" },
 };
 
-// Pública dinámica: cuando Marco sube/edita un catálogo desde el PIM, se refleja
-// inmediatamente en la web. listActiveInspirationCatalogs ya filtra a active=true.
-export const dynamic = "force-dynamic";
+// Revalida cada 10 min; los Server Actions de inspiration hacen revalidatePath
+// al subir/editar/borrar catálogos PDF así que los cambios se reflejan al momento.
+export const revalidate = 600;
 
 export default async function InspiracionPage() {
   const catalogs = await listActiveInspirationCatalogs();

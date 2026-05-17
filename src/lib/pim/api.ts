@@ -95,13 +95,16 @@ export async function listProducts(params?: {
   if (params?.q) sp.set("q", params.q);
 
   const res = await timeoutFetch(`${AURELLANO_API}/catalog/products?${sp.toString()}`, {
-    next: { revalidate: params?.revalidate ?? 0 },
+    // Cache 10 min en el edge de Vercel. Reduce drásticamente latencia tras la
+    // primera carga. Cuando Marco edita en el PIM, las server actions hacen
+    // revalidatePath y refrescan en seguida.
+    next: { revalidate: params?.revalidate ?? 600 },
   });
   if (!res.ok) throw new Error(`listProducts ${res.status}: ${await res.text()}`);
   return res.json();
 }
 
-export async function getProductByRef(ref: string, revalidate = 0): Promise<ApiProduct | null> {
+export async function getProductByRef(ref: string, revalidate = 600): Promise<ApiProduct | null> {
   const res = await timeoutFetch(`${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}`, {
     next: { revalidate },
   });

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/colmado" },
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 600;
 
 export default async function ColmadoPage() {
   const [featured, primerPrecio] = await Promise.all([
