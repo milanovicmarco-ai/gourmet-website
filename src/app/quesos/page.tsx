@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Quesos from "@/pages/Quesos";
+import Quesos from "@/views/Quesos";
 import { loadCuratedProducts } from "@/lib/pim/featured";
 
 export const metadata: Metadata = {

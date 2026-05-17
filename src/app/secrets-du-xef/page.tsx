@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import SecretsDelXef from "@/pages/SecretsDelXef";
+import SecretsDelXef from "@/views/SecretsDelXef";
 import { loadCuratedProducts } from "@/lib/pim/featured";
 
 export const metadata: Metadata = {

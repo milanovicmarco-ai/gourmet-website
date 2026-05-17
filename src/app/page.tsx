@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Index, { type FeaturedProduct } from "@/pages/Index";
+import Index, { type FeaturedProduct } from "@/views/Index";
 import { BRAND } from "@/lib/brand";
 import { getRefsByCatalogSlug, getFamilyMetas, humanizeFamilySlug } from "@/lib/pim/catalogs";
 import { getProductByRef } from "@/lib/pim/api";

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Condiciones from "@/pages/Condiciones";
+import Condiciones from "@/views/Condiciones";
 
 export const metadata: Metadata = {
   title: "Condiciones de venta",

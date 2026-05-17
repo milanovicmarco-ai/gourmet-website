@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { listActiveInspirationCatalogs } from "@/lib/pim/inspiration";
-import { InspiracionView } from "@/pages/Inspiracion";
+import { InspiracionView } from "@/views/Inspiracion";
 
 export const metadata: Metadata = {
   title: "Inspiración",

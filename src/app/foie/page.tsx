@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Foie from "@/pages/Foie";
+import Foie from "@/views/Foie";
 
 export const metadata: Metadata = {
   title: "Foie y terrinas",

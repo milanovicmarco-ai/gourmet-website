@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Colmado from "@/pages/Colmado";
+import Colmado from "@/views/Colmado";
 import { loadCuratedProducts } from "@/lib/pim/featured";
 
 export const metadata: Metadata = {

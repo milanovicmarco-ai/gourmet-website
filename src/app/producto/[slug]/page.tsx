@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
-import ProductDetail from "@/pages/ProductDetail";
+import ProductDetail from "@/views/ProductDetail";
 import { getProductBySlug, getProductByRef, type ApiProduct } from "@/lib/pim/api";
 import { getTranslation, type Locale } from "@/lib/pim/translations";
 import { getProductMeta, effectiveRef } from "@/lib/pim/product-meta";

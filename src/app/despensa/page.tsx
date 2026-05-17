@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Despensa from "@/pages/Despensa";
+import Despensa from "@/views/Despensa";
 
 export const metadata: Metadata = {
   title: "Despensa gourmet",
