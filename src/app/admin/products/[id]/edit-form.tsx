@@ -356,20 +356,8 @@ export function ProductEditForm({ productRef, initial, meta, families = [] }: Pr
       <fieldset className="rounded-2xl border border-border p-5 space-y-4">
         <legend className="px-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">Clasificación gastronómica</legend>
         <div className="grid sm:grid-cols-2 gap-5">
-          <SelectField
-            label="Gama"
-            value={form.gama}
-            onChange={(v) => set("gama", v)}
-            options={[
-              { value: "", label: "— sin asignar —" },
-              { value: "1", label: "1ª gama · fresco sin procesar" },
-              { value: "2", label: "2ª gama · conserva" },
-              { value: "3", label: "3ª gama · congelado" },
-              { value: "4", label: "4ª gama · fresco listo para consumir" },
-              { value: "5", label: "5ª gama · cocinado refrigerado" },
-              { value: "6", label: "6ª gama · liofilizado / deshidratado" },
-            ]}
-          />
+          {/* Campo "Gama" oculto a petición de Marco. El valor sigue en form.gama
+              y se persiste a Supabase tal cual estaba — solo se quita del UI. */}
           <SelectField
             label="Momento del plato"
             value={form.momento_plato}

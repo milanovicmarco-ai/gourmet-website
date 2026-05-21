@@ -370,12 +370,8 @@ export default async function CatalogoPage({
               defaultValues={menuSel}
               options={MENU_OPTIONS}
             />
-            <MultiSelectFilter
-              label="Gama"
-              name="gama"
-              defaultValues={gamaSel.map(String)}
-              options={GAMA_OPTIONS}
-            />
+            {/* Filtro de Gama oculto a petición de Marco. La lógica server-side
+                sigue activa para no romper URLs con `?gama=N` existentes. */}
             <MultiSelectFilter
               label="Especialidad"
               name="especialidad"
