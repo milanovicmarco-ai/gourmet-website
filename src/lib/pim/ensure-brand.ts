@@ -48,6 +48,13 @@ async function listBrands(): Promise<ApiBrand[]> {
   }
 }
 
+/** Resultado canónico cuando una marca se asegura: name y slug. La FK de la
+ *  tabla `products` del socio puede usar el name O el slug — el caller decide
+ *  cuál enviar primero (y reintentar con el otro si falla). */
+export type EnsureBrandOk = { ok: true; brand: string; slug: string };
+export type EnsureBrandFail = { ok: false; reason: string };
+export type EnsureBrandResult = EnsureBrandOk | EnsureBrandFail;
+
 /** Busca un brand match en la lista (case-insensitive en name + slug). */
 function findBrand(brands: ApiBrand[], trimmed: string, slug: string): ApiBrand | undefined {
   const target = trimmed.toLowerCase();
@@ -59,27 +66,35 @@ function findBrand(brands: ApiBrand[], trimmed: string, slug: string): ApiBrand 
   );
 }
 
+/** Extrae el slug canónico del ApiBrand devuelto por el backend, o lo
+ *  recalcula si la respuesta no lo trae. */
+function brandSlug(b: ApiBrand, fallback: string): string {
+  return (b.slug && b.slug.trim().length > 0 ? b.slug : fallback).trim();
+}
+
 /**
  * Asegura que la marca exista en /catalog/brands. Si no existe, la crea y
  * VERIFICA con un re-GET que realmente quedó registrada (no nos fiamos del
  * 2xx del POST: hemos visto casos en que el backend responde OK pero la marca
  * no aparece luego en el listado, dejando la FK de products colgando).
  *
- * Devuelve el name canónico que la API acepta o un fallo con razón.
+ * Devuelve { brand: name, slug } para que el caller pueda probar primero con
+ * el name y, si la FK del endpoint /catalog/products es por slug, reintentar.
  */
 export async function ensureBrandExists(
   name: string | undefined | null,
-): Promise<{ ok: true; brand: string } | { ok: false; reason: string }> {
+): Promise<EnsureBrandResult> {
   if (!name || name.trim().length === 0) return { ok: false, reason: "empty" };
   const trimmed = name.trim();
   const slug = slugify(trimmed);
 
-  // 1) Si ya existe en el catálogo, devolvemos su name canónico.
+  // 1) Si ya existe en el catálogo, devolvemos su name + slug canónicos.
   const initialList = await listBrands();
   const existing = findBrand(initialList, trimmed, slug);
   if (existing) {
-    console.log(`[ensureBrandExists] '${trimmed}' YA EXISTE → name="${existing.name}", slug="${existing.slug}"`);
-    return { ok: true, brand: existing.name };
+    const existingSlug = brandSlug(existing, slug);
+    console.log(`[ensureBrandExists] '${trimmed}' YA EXISTE → name="${existing.name}", slug="${existingSlug}"`);
+    return { ok: true, brand: existing.name, slug: existingSlug };
   }
   console.log(`[ensureBrandExists] '${trimmed}' NO EXISTE en el listado (${initialList.length} marcas). Intentando crear.`);
 
@@ -107,8 +122,9 @@ export async function ensureBrandExists(
         const verifyList = await listBrands();
         const verified = findBrand(verifyList, trimmed, slug);
         if (verified) {
-          console.log(`[ensureBrandExists] '${trimmed}' creado y VERIFICADO → name="${verified.name}"`);
-          return { ok: true, brand: verified.name };
+          const verifiedSlug = brandSlug(verified, slug);
+          console.log(`[ensureBrandExists] '${trimmed}' creado y VERIFICADO → name="${verified.name}", slug="${verifiedSlug}"`);
+          return { ok: true, brand: verified.name, slug: verifiedSlug };
         }
         console.warn(
           `[ensureBrandExists] POST devolvió 2xx para '${trimmed}' pero el re-GET NO la encuentra. Probando siguiente shape.`,
@@ -123,7 +139,7 @@ export async function ensureBrandExists(
       if (createRes.status === 409) {
         const retryList = await listBrands();
         const match = findBrand(retryList, trimmed, slug);
-        if (match) return { ok: true, brand: match.name };
+        if (match) return { ok: true, brand: match.name, slug: brandSlug(match, slug) };
       }
     } catch (err) {
       lastReason = (err as Error).message;

@@ -206,42 +206,74 @@ type PublishOutcome =
   | { kind: "ok" }
   | { kind: "downgraded"; warning: string };
 
+type PrepareResult = {
+  outcome: PublishOutcome;
+  /** Slug canónico para reintentar si el FK del endpoint /catalog/products
+   *  rechaza el name. */
+  fallbackSlug?: string;
+};
+
 async function ensureBrandForPublish(
   body: Record<string, unknown>,
   brand: string | null | undefined,
-): Promise<PublishOutcome> {
-  if (body.status !== "published") return { kind: "ok" };
+): Promise<PrepareResult> {
+  if (body.status !== "published") return { outcome: { kind: "ok" } };
 
   if (!brand || brand.trim().length === 0) {
     body.status = "draft";
     return {
-      kind: "downgraded",
-      warning: "sin marca en la fila → guardado como draft",
+      outcome: {
+        kind: "downgraded",
+        warning: "sin marca en la fila → guardado como draft",
+      },
     };
   }
 
   const check = await ensureBrandExists(brand);
   if (check.ok) {
     body.brand = check.brand;
-    return { kind: "ok" };
+    return { outcome: { kind: "ok" }, fallbackSlug: check.slug };
   }
 
   body.status = "draft";
   delete body.brand;
   return {
-    kind: "downgraded",
-    warning: `marca "${brand}" no se pudo crear en el backend (${check.reason}) → guardado como draft`,
+    outcome: {
+      kind: "downgraded",
+      warning: `marca "${brand}" no se pudo crear en el backend (${check.reason}) → guardado como draft`,
+    },
   };
+}
+
+/** Detecta si la respuesta 400 viene del FK de marcas (la API dice que la marca
+ *  no existe). En ese caso vale la pena reintentar con el slug. */
+function isBrandFKError(text: string): boolean {
+  return /marca.*no\s+existe/i.test(text);
 }
 
 async function putProduct(ref: string, body: Record<string, unknown>, brand?: string | null) {
   await ensureFamilyInPayload(body);
-  const outcome = await ensureBrandForPublish(body, brand);
-  const res = await fetch(`${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}`, {
+  const { outcome, fallbackSlug } = await ensureBrandForPublish(body, brand);
+
+  let res = await fetch(`${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey()}` },
     body: JSON.stringify(body),
   });
+
+  if (!res.ok && res.status === 400 && fallbackSlug && body.brand !== fallbackSlug) {
+    const text = await res.clone().text().catch(() => "");
+    if (isBrandFKError(text)) {
+      console.log(`[bulk] PUT ${ref}: FK rechazó brand="${body.brand}", reintento con slug="${fallbackSlug}"`);
+      body.brand = fallbackSlug;
+      res = await fetch(`${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey()}` },
+        body: JSON.stringify(body),
+      });
+    }
+  }
+
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new Error(`PUT ${ref} ${res.status}: ${text.slice(0, 300)}`);
@@ -252,12 +284,27 @@ async function putProduct(ref: string, body: Record<string, unknown>, brand?: st
 
 async function postProduct(body: Record<string, unknown>, brand?: string | null) {
   await ensureFamilyInPayload(body);
-  const outcome = await ensureBrandForPublish(body, brand);
-  const res = await fetch(`${AURELLANO_API}/catalog/products`, {
+  const { outcome, fallbackSlug } = await ensureBrandForPublish(body, brand);
+
+  let res = await fetch(`${AURELLANO_API}/catalog/products`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey()}` },
     body: JSON.stringify(body),
   });
+
+  if (!res.ok && res.status === 400 && fallbackSlug && body.brand !== fallbackSlug) {
+    const text = await res.clone().text().catch(() => "");
+    if (isBrandFKError(text)) {
+      console.log(`[bulk] POST: FK rechazó brand="${body.brand}", reintento con slug="${fallbackSlug}"`);
+      body.brand = fallbackSlug;
+      res = await fetch(`${AURELLANO_API}/catalog/products`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey()}` },
+        body: JSON.stringify(body),
+      });
+    }
+  }
+
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new Error(`POST ${res.status}: ${text.slice(0, 300)}`);
