@@ -250,6 +250,33 @@ function isBrandFKError(text: string): boolean {
   return /marca.*no\s+existe/i.test(text);
 }
 
+/** ¿El publish-gate rechaza por imagen faltante? mapToApi no incluye image_url
+ *  en el payload, FastAPI lo interpreta como null y borra la imagen → gate falla. */
+function isMissingImageError(text: string): boolean {
+  return /faltan.*campos.*obligatorios.*imag/i.test(text);
+}
+
+/** Devuelve la imagen principal actual del producto. Mira primero
+ *  `image_url`; si está vacío, cae a `gallery[0]` (algunos productos antiguos
+ *  solo tienen la imagen en gallery). Si tampoco hay, devuelve null. */
+async function fetchCurrentImageUrl(ref: string): Promise<string | null> {
+  try {
+    const res = await fetch(`${API}/catalog/products/${encodeURIComponent(ref)}`, {
+      headers: apiHeaders(),
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      image_url?: string | null;
+      gallery?: string[] | null;
+    };
+    if (data.image_url && data.image_url.trim().length > 0) return data.image_url;
+    if (Array.isArray(data.gallery) && data.gallery[0]) return data.gallery[0];
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // Operaciones de producto — con reintento brand=slug si el FK rechaza el name
 // ──────────────────────────────────────────────────────────────────────────────
@@ -258,7 +285,9 @@ type ApiProductMin = { ref: string; slug?: string | null };
 
 async function putProduct(ref: string, body: Record<string, unknown>, brand?: string | null) {
   await ensureFamilyInPayload(body);
-  const { outcome, fallbackSlug } = await ensureBrandForPublish(body, brand);
+  const prep = await ensureBrandForPublish(body, brand);
+  let outcome: PublishOutcome = prep.outcome;
+  const fallbackSlug = prep.fallbackSlug;
 
   let res = await fetch(`${API}/catalog/products/${encodeURIComponent(ref)}`, {
     method: "PUT",
@@ -277,6 +306,42 @@ async function putProduct(ref: string, body: Record<string, unknown>, brand?: st
         headers: apiHeaders(),
         body: JSON.stringify(body),
       });
+    }
+  }
+
+  // Reintento preservando la imagen existente si el publish-gate la pide.
+  // mapToApi no envía image_url, FastAPI la interpreta como null y la borra.
+  if (!res.ok && res.status === 400) {
+    const text = await res.clone().text().catch(() => "");
+    const hasImageError = isMissingImageError(text);
+    console.log(`  [debug] PUT ${ref} 400: hasImageError=${hasImageError} payloadHasImage=${body.image_url !== undefined}`);
+    if (hasImageError && body.image_url === undefined) {
+      console.log(`  [retry-img] PUT ${ref}: buscando imagen actual en la API...`);
+      const existingImage = await fetchCurrentImageUrl(ref);
+      if (existingImage) {
+        console.log(`  [retry-img] PUT ${ref}: encontrada → ${existingImage.slice(0, 80)}`);
+        body.image_url = existingImage;
+        res = await fetch(`${API}/catalog/products/${encodeURIComponent(ref)}`, {
+          method: "PUT",
+          headers: apiHeaders(),
+          body: JSON.stringify(body),
+        });
+      } else {
+        // El producto no tiene imagen en la API → publish imposible. Degradamos a draft.
+        console.log(`  [retry-img] PUT ${ref}: SIN imagen en API → degradando a draft`);
+        body.status = "draft";
+        res = await fetch(`${API}/catalog/products/${encodeURIComponent(ref)}`, {
+          method: "PUT",
+          headers: apiHeaders(),
+          body: JSON.stringify(body),
+        });
+        if (res.ok && outcome.kind === "ok") {
+          outcome = {
+            kind: "downgraded",
+            warning: "sin imagen en la API → guardado como draft",
+          };
+        }
+      }
     }
   }
 
