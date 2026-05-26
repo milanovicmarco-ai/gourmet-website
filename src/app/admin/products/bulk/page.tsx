@@ -5,6 +5,11 @@ import { BulkImportClient } from "./bulk-import-client";
 
 export const dynamic = "force-dynamic";
 
+// Vercel Hobby permite hasta 60s en Server Actions. El bulk import puede
+// procesar varias decenas de filas y cada PUT al backend del socio tarda
+// 1-2s, así que con el default de 10s se queda corto. Subimos al máximo.
+export const maxDuration = 60;
+
 export default async function BulkPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
