@@ -24,6 +24,7 @@ import { listProducts, listFamilies, AURELLANO_API, type ApiProduct } from "@/li
 import { mapToApi, type FormFields } from "@/lib/pim/api-mapper";
 import { saveProductMeta } from "../[id]/meta-actions";
 import { ensureFamilyExists } from "../actions";
+import { ensureBrandExists } from "@/lib/pim/ensure-brand";
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Auth + util
@@ -186,8 +187,32 @@ async function ensureFamilyInPayload(body: Record<string, unknown>) {
   }
 }
 
-async function putProduct(ref: string, body: Record<string, unknown>) {
+/**
+ * Si la fila va a "published" y tiene marca, asegurar que la marca existe
+ * en /catalog/brands (FK estricta) e incluirla en el payload. `mapToApi`
+ * deliberadamente NO envía brand (queda en el overlay de Supabase para la web
+ * pública), pero el backend del socio exige marca para PUBLICAR. Por eso aquí
+ * la inyectamos justo antes del PUT/POST.
+ */
+async function ensureBrandInPayloadIfPublishing(
+  body: Record<string, unknown>,
+  brand: string | null | undefined,
+) {
+  if (body.status !== "published") return;
+  if (!brand || brand.trim().length === 0) return;
+  const check = await ensureBrandExists(brand);
+  if (check.ok) {
+    body.brand = check.brand;
+  } else {
+    console.warn(
+      `[bulk] no se pudo asegurar marca "${brand}" (${check.reason}). El PUT/POST probablemente fallará.`,
+    );
+  }
+}
+
+async function putProduct(ref: string, body: Record<string, unknown>, brand?: string | null) {
   await ensureFamilyInPayload(body);
+  await ensureBrandInPayloadIfPublishing(body, brand);
   const res = await fetch(`${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey()}` },
@@ -200,8 +225,9 @@ async function putProduct(ref: string, body: Record<string, unknown>) {
   return (await res.json()) as ApiProduct;
 }
 
-async function postProduct(body: Record<string, unknown>) {
+async function postProduct(body: Record<string, unknown>, brand?: string | null) {
   await ensureFamilyInPayload(body);
+  await ensureBrandInPayloadIfPublishing(body, brand);
   const res = await fetch(`${AURELLANO_API}/catalog/products`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey()}` },
@@ -310,7 +336,7 @@ export async function applyImport(formData: FormData): Promise<ApplyResult> {
         const payload = mapToApi(toFormFields(r));
         // Si el usuario puso una ref nueva, la incluimos como hint (algunas APIs la usan).
         if (r.ref) payload.ref = r.ref;
-        const created = await postProduct(payload);
+        const created = await postProduct(payload, r.brand);
         await applyOverlay(created.ref, r);
         await applyCatalogs(created.ref, r.catalogos);
         result.created.push({ ref: created.ref });
@@ -319,7 +345,7 @@ export async function applyImport(formData: FormData): Promise<ApplyResult> {
 
       // Update
       const payload = mapToApi(toFormFields(r));
-      await putProduct(r.ref, payload);
+      await putProduct(r.ref, payload, r.brand);
       await applyOverlay(r.ref, r);
       await applyCatalogs(r.ref, r.catalogos);
       result.updated.push({ ref: r.ref });

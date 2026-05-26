@@ -9,6 +9,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/integrations/supabase/server";
 import { mapToApi, type FormFields } from "@/lib/pim/api-mapper";
 import { AURELLANO_API } from "@/lib/pim/api";
+import { ensureBrandExists } from "@/lib/pim/ensure-brand";
 
 const apiKey = () => {
   const k = process.env.ADMIN_API_KEY;
@@ -86,122 +87,10 @@ export async function createProductAndRedirect(form: FormFields & { ref?: string
 }
 
 // =============================================================
-// Helpers de marcas — auto-crea si no existe
-// =============================================================
-
-type ApiBrand = {
-  id?: string;
-  slug?: string;
-  name: string;
-  story?: string | null;
-  origin?: string | null;
-};
-
-const slugify = (s: string) =>
-  s
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-
-/**
- * Asegura que la marca exista en /catalog/brands. Si no existe, la crea.
- * Devuelve el nombre/slug canónico que la API acepta. Si TODO falla, devuelve
- * un objeto que indica el fallo para que la capa superior decida qué hacer.
- */
-async function ensureBrandExists(
-  name: string | undefined,
-): Promise<{ ok: true; brand: string } | { ok: false; reason: string }> {
-  if (!name || name.trim().length === 0) return { ok: false, reason: "empty" };
-  const trimmed = name.trim();
-  const slug = slugify(trimmed);
-
-  // 1) Buscar entre las brands existentes
-  try {
-    const listRes = await fetch(`${AURELLANO_API}/catalog/brands`, {
-      headers: { Authorization: `Bearer ${apiKey()}` },
-      cache: "no-store",
-    });
-    if (listRes.ok) {
-      const list: ApiBrand[] | { results?: ApiBrand[] } = await listRes.json();
-      const brands: ApiBrand[] = Array.isArray(list) ? list : list.results ?? [];
-      const target = trimmed.toLowerCase();
-      const match = brands.find(
-        (b) =>
-          b.name?.toLowerCase() === target ||
-          b.slug?.toLowerCase() === target ||
-          b.slug === slug,
-      );
-      if (match) {
-        console.log(`[ensureBrandExists] match existente:`, { sent: trimmed, found: match.name, slug: match.slug });
-        return { ok: true, brand: match.name };
-      }
-      console.log(`[ensureBrandExists] no hay match para '${trimmed}', intentando crear (POST /catalog/brands)`);
-    } else {
-      const body = await listRes.text().catch(() => "");
-      console.warn(`[ensureBrandExists] GET /catalog/brands falló (${listRes.status}): ${body.slice(0, 200)}`);
-    }
-  } catch (err) {
-    console.warn(`[ensureBrandExists] GET error: ${(err as Error).message}`);
-  }
-
-  // 2) Intentar crear. Probamos varias shapes porque no sabemos exactamente lo
-  // que valida FastAPI (puede pedir sólo {name, slug}, o todos, o algún extra).
-  const shapes = [
-    { slug, name: trimmed, story: null, origin: null, sort_order: 0, active: true },
-    { slug, name: trimmed, active: true },
-    { name: trimmed, slug },
-    { name: trimmed },
-  ];
-  let lastReason = "";
-  for (const bodyCreate of shapes) {
-    try {
-      console.log(`[ensureBrandExists] POST /catalog/brands probando shape:`, JSON.stringify(bodyCreate));
-      const createRes = await fetch(`${AURELLANO_API}/catalog/brands`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey()}`,
-        },
-        body: JSON.stringify(bodyCreate),
-      });
-      if (createRes.ok) {
-        const created = (await createRes.json()) as ApiBrand;
-        console.log(`[ensureBrandExists] creada OK:`, { name: created.name, slug: created.slug });
-        return { ok: true, brand: created.name ?? trimmed };
-      }
-      const body = await createRes.text().catch(() => "");
-      lastReason = `POST /brands ${createRes.status}: ${body.slice(0, 200)}`;
-      console.warn(`[ensureBrandExists] shape rechazada (${createRes.status}): ${body.slice(0, 200)}`);
-      // 409 / conflict → ya existe (carrera con otro POST), búscala de nuevo.
-      if (createRes.status === 409) {
-        const retryList = await fetch(`${AURELLANO_API}/catalog/brands`, {
-          headers: { Authorization: `Bearer ${apiKey()}` },
-          cache: "no-store",
-        });
-        if (retryList.ok) {
-          const list = await retryList.json();
-          const brands: ApiBrand[] = Array.isArray(list) ? list : list.results ?? [];
-          const match = brands.find(
-            (b) =>
-              b.name?.toLowerCase() === trimmed.toLowerCase() ||
-              b.slug === slug,
-          );
-          if (match) return { ok: true, brand: match.name };
-        }
-      }
-    } catch (err) {
-      lastReason = (err as Error).message;
-      console.warn(`[ensureBrandExists] POST error: ${lastReason}`);
-    }
-  }
-  return { ok: false, reason: lastReason || "todas las shapes rechazadas" };
-}
-
-// =============================================================
 // Helpers de familias — auto-crea si no existe en la API del socio
 // =============================================================
+// ensureBrandExists vive ahora en @/lib/pim/ensure-brand para compartirlo con
+// el bulk import.
 //
 // Mismo patrón que ensureBrandExists: la API del socio tiene FK estricta a su
 // tabla `families`, así que si Marco crea una familia en nuestro overlay
@@ -393,7 +282,13 @@ export async function createBrand(name: string): Promise<{ slug: string; name: s
     throw new Error(`No se pudo crear la marca: ${check.reason}`);
   }
   // ensureBrandExists devuelve `brand` con el name canónico; el slug lo derivamos.
-  return { slug: slugify(check.brand), name: check.brand };
+  const slug = check.brand
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+  return { slug, name: check.brand };
 }
 
 export async function createFamily(
