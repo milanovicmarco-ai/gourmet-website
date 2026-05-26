@@ -150,6 +150,9 @@ export type ApplyResult = {
   updated: { ref: string }[];
   deleted: { ref: string }[];
   errors: { line: number; ref: string | null; message: string }[];
+  /** Filas que se guardaron OK pero con un compromiso (típicamente degradado
+   *  de published → draft porque la marca no se pudo asegurar en el backend). */
+  warnings: { line: number; ref: string | null; message: string }[];
 };
 
 /** Convierte un ImportRow al shape FormFields que entiende mapToApi. */
@@ -188,31 +191,52 @@ async function ensureFamilyInPayload(body: Record<string, unknown>) {
 }
 
 /**
- * Si la fila va a "published" y tiene marca, asegurar que la marca existe
- * en /catalog/brands (FK estricta) e incluirla en el payload. `mapToApi`
- * deliberadamente NO envía brand (queda en el overlay de Supabase para la web
- * pública), pero el backend del socio exige marca para PUBLICAR. Por eso aquí
- * la inyectamos justo antes del PUT/POST.
+ * Asegura la marca si la fila va a "published". Tres resultados posibles:
+ *
+ *  - "ok": la marca existe en el backend y se inyecta en body.brand.
+ *  - "no-brand": la fila NO trae marca; el publish-gate del socio rechazaría.
+ *    Devuelve un degradado a draft y un aviso para el reporte.
+ *  - "ensure-failed": la marca trae pero ensureBrandExists no la puede crear.
+ *    Mismo degradado a draft (no rompemos la fila) y aviso.
+ *
+ * El degradado a "draft" hace que el producto se cree/actualice sin fallar; el
+ * usuario lo arregla a mano más tarde y lo republica.
  */
-async function ensureBrandInPayloadIfPublishing(
+type PublishOutcome =
+  | { kind: "ok" }
+  | { kind: "downgraded"; warning: string };
+
+async function ensureBrandForPublish(
   body: Record<string, unknown>,
   brand: string | null | undefined,
-) {
-  if (body.status !== "published") return;
-  if (!brand || brand.trim().length === 0) return;
+): Promise<PublishOutcome> {
+  if (body.status !== "published") return { kind: "ok" };
+
+  if (!brand || brand.trim().length === 0) {
+    body.status = "draft";
+    return {
+      kind: "downgraded",
+      warning: "sin marca en la fila → guardado como draft",
+    };
+  }
+
   const check = await ensureBrandExists(brand);
   if (check.ok) {
     body.brand = check.brand;
-  } else {
-    console.warn(
-      `[bulk] no se pudo asegurar marca "${brand}" (${check.reason}). El PUT/POST probablemente fallará.`,
-    );
+    return { kind: "ok" };
   }
+
+  body.status = "draft";
+  delete body.brand;
+  return {
+    kind: "downgraded",
+    warning: `marca "${brand}" no se pudo crear en el backend (${check.reason}) → guardado como draft`,
+  };
 }
 
 async function putProduct(ref: string, body: Record<string, unknown>, brand?: string | null) {
   await ensureFamilyInPayload(body);
-  await ensureBrandInPayloadIfPublishing(body, brand);
+  const outcome = await ensureBrandForPublish(body, brand);
   const res = await fetch(`${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey()}` },
@@ -222,12 +246,13 @@ async function putProduct(ref: string, body: Record<string, unknown>, brand?: st
     const text = await res.text().catch(() => "");
     throw new Error(`PUT ${ref} ${res.status}: ${text.slice(0, 300)}`);
   }
-  return (await res.json()) as ApiProduct;
+  const data = (await res.json()) as ApiProduct;
+  return { product: data, outcome };
 }
 
 async function postProduct(body: Record<string, unknown>, brand?: string | null) {
   await ensureFamilyInPayload(body);
-  await ensureBrandInPayloadIfPublishing(body, brand);
+  const outcome = await ensureBrandForPublish(body, brand);
   const res = await fetch(`${AURELLANO_API}/catalog/products`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey()}` },
@@ -237,7 +262,8 @@ async function postProduct(body: Record<string, unknown>, brand?: string | null)
     const text = await res.text().catch(() => "");
     throw new Error(`POST ${res.status}: ${text.slice(0, 300)}`);
   }
-  return (await res.json()) as ApiProduct;
+  const data = (await res.json()) as ApiProduct;
+  return { product: data, outcome };
 }
 
 async function deleteProductApi(ref: string) {
@@ -315,7 +341,7 @@ export async function applyImport(formData: FormData): Promise<ApplyResult> {
   const rows = await parseXlsx(formData);
   const existing = await fetchAllProductRefs();
 
-  const result: ApplyResult = { created: [], updated: [], deleted: [], errors: [] };
+  const result: ApplyResult = { created: [], updated: [], deleted: [], errors: [], warnings: [] };
 
   for (let i = 0; i < rows.length; i++) {
     const r = rows[i];
@@ -336,19 +362,25 @@ export async function applyImport(formData: FormData): Promise<ApplyResult> {
         const payload = mapToApi(toFormFields(r));
         // Si el usuario puso una ref nueva, la incluimos como hint (algunas APIs la usan).
         if (r.ref) payload.ref = r.ref;
-        const created = await postProduct(payload, r.brand);
+        const { product: created, outcome } = await postProduct(payload, r.brand);
         await applyOverlay(created.ref, r);
         await applyCatalogs(created.ref, r.catalogos);
         result.created.push({ ref: created.ref });
+        if (outcome.kind === "downgraded") {
+          result.warnings.push({ line, ref: created.ref, message: outcome.warning });
+        }
         continue;
       }
 
       // Update
       const payload = mapToApi(toFormFields(r));
-      await putProduct(r.ref, payload, r.brand);
+      const { outcome } = await putProduct(r.ref, payload, r.brand);
       await applyOverlay(r.ref, r);
       await applyCatalogs(r.ref, r.catalogos);
       result.updated.push({ ref: r.ref });
+      if (outcome.kind === "downgraded") {
+        result.warnings.push({ line, ref: r.ref, message: outcome.warning });
+      }
     } catch (err) {
       result.errors.push({ line, ref: r.ref, message: (err as Error).message });
     }

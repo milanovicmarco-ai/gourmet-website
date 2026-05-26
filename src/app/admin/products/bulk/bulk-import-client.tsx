@@ -149,12 +149,27 @@ export function BulkImportClient() {
       {state.kind === "applied" && (
         <div className="space-y-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-5">
           <h3 className="font-medium">Cambios aplicados</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-sm">
             <Stat label="Creados" value={state.result.created.length} tone="emerald" />
             <Stat label="Modificados" value={state.result.updated.length} tone="sky" />
             <Stat label="Borrados" value={state.result.deleted.length} tone="amber" />
+            <Stat label="Avisos" value={state.result.warnings?.length ?? 0} tone="amber" />
             <Stat label="Errores" value={state.result.errors.length} tone="rose" />
           </div>
+          {state.result.warnings && state.result.warnings.length > 0 && (
+            <details className="text-sm" open>
+              <summary className="cursor-pointer text-amber-700 font-medium">
+                Ver avisos ({state.result.warnings.length}) — productos guardados como draft
+              </summary>
+              <ul className="mt-2 list-disc list-inside space-y-1 text-amber-700">
+                {state.result.warnings.slice(0, 100).map((w, i) => (
+                  <li key={i}>
+                    Fila {w.line}{w.ref ? ` (${w.ref})` : ""}: {w.message}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
           {state.result.errors.length > 0 && (
             <details className="text-sm">
               <summary className="cursor-pointer text-muted-foreground">
