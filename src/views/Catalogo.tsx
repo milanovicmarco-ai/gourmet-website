@@ -161,7 +161,7 @@ const Catalogo = () => {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar producto, marca u origen…"
+            placeholder="Buscar producto o marca…"
             className="w-full bg-secondary border border-border rounded-full pl-14 pr-12 py-4 text-base placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition"
           />
           {query && (

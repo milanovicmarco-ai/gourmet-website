@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Layout } from "@/components/Layout";
 import { ProductCard } from "@/components/ProductCard";
-import { listProducts, listFamilies, type ApiProduct } from "@/lib/pim/api";
+import { listFamilies, fetchAllProducts, type ApiProduct } from "@/lib/pim/api";
 import { getMetasForProducts, effectiveRef, effectiveBrand } from "@/lib/pim/product-meta";
 import { listCatalogs, listAllFamilies, getRefsByCatalogSlug, humanizeFamilySlug } from "@/lib/pim/catalogs";
 import { MultiSelectFilter } from "./multi-select-filter";
@@ -107,46 +107,23 @@ export default async function CatalogoPage({
   let activeCatalog: (typeof catalogs)[number] | null = null;
   let allFamilies: Awaited<ReturnType<typeof listAllFamilies>> = [];
 
-  // Listado completo del catálogo: el endpoint del socio limita cada GET a 200
-  // resultados, así que iteramos por familia para no perder productos cuando el
-  // total supera ese tope. Misma estrategia que el bulk export. Cada llamada va
-  // por su propia entrada de cache (revalidate 600s).
-  const [baseRes, fa, ca, af] = await Promise.all([
-    listProducts({ limit: 200, q, revalidate: 600 }).catch((e) => {
-      console.warn("[catalogo] listProducts:", (e as Error).message);
+  // Carga todos los productos del catálogo iterando por familia desde la API
+  // (no el overlay) — así no perdemos productos si el overlay de familias está
+  // desactualizado, y por tanto vemos TODAS las marcas en el filtro.
+  const [allProducts, fa, ca, af] = await Promise.all([
+    fetchAllProducts({ q, revalidate: 600 }).catch((e) => {
+      console.warn("[catalogo] fetchAllProducts:", (e as Error).message);
       error = (e as Error).message;
-      return { results: [] as ApiProduct[] };
+      return [] as ApiProduct[];
     }),
     listFamilies().catch(() => [] as Awaited<ReturnType<typeof listFamilies>>),
     listCatalogs().catch(() => []),
     listAllFamilies().catch(() => []),
   ]);
+  products = allProducts;
   families = fa;
   catalogs = ca;
   allFamilies = af;
-
-  // Mapeamos por ref para deduplicar (la base + cada familia pueden solaparse).
-  const productMap = new Map<string, ApiProduct>();
-  for (const p of baseRes.results) productMap.set(p.ref, p);
-
-  if (!error) {
-    // Si hay una búsqueda libre activa (?q=…) NO iteramos por familia: dejamos
-    // que la API filtre y devolvemos solo lo que ya vino en baseRes. Iterar por
-    // familia con `q` mezclaría resultados que no matchean la búsqueda.
-    if (!q) {
-      const familyResults = await Promise.all(
-        allFamilies.map((f) =>
-          listProducts({ limit: 200, family: f.slug, revalidate: 600 }).catch(() => ({
-            results: [] as ApiProduct[],
-          })),
-        ),
-      );
-      for (const r of familyResults) {
-        for (const p of r.results) productMap.set(p.ref, p);
-      }
-    }
-  }
-  products = Array.from(productMap.values());
 
   // Aplica el filtro multi-opción por familia (OR dentro del filtro).
   if (familySel.length > 0) {
@@ -263,13 +240,16 @@ export default async function CatalogoPage({
     return true;
   });
 
-  // Orden: primero los destacados, luego por ref ascendente (numeric collation
-  // para que "ref_2" venga antes que "ref_10").
+  // Orden: primero los destacados, luego alfabético por nombre (locale "es" para
+  // que ñ, acentos y dígitos se ordenen como espera un humano).
   filtered.sort((a, b) => {
     const aD = isDestacado(a) ? 1 : 0;
     const bD = isDestacado(b) ? 1 : 0;
     if (aD !== bD) return bD - aD; // destacados primero
-    return a.ref.localeCompare(b.ref, undefined, { numeric: true, sensitivity: "base" });
+    return (a.name ?? "").localeCompare(b.name ?? "", "es", {
+      sensitivity: "base",
+      numeric: true,
+    });
   });
 
   // Paginación: 20 productos por página. La página actual viene de ?page=N.
@@ -353,7 +333,7 @@ export default async function CatalogoPage({
                 type="search"
                 name="q"
                 defaultValue={q ?? ""}
-                placeholder="nombre, marca, origen…"
+                placeholder="nombre, marca…"
                 className="w-full bg-secondary border border-border rounded-full px-5 py-3 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition"
               />
             </label>
