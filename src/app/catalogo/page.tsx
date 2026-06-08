@@ -18,7 +18,12 @@ export const metadata: Metadata = {
 
 // Revalida cada 10 min. Tras editar productos en el PIM, los Server Actions
 // hacen revalidatePath("/catalogo") así que los cambios se reflejan al momento.
-export const revalidate = 600;
+// Cache 1 hora. La API del socio (Hostinger) procesa en serie y tarda; con
+// 3600s solo la PRIMERA carga después de una hora ve la latencia real, el
+// resto de visitas son instantáneas (servidas desde el edge cache de Vercel).
+// Los Server Actions del PIM hacen revalidatePath("/catalogo") al editar,
+// así que los cambios se reflejan al instante de todos modos.
+export const revalidate = 3600;
 
 type SP = {
   q?: string;
@@ -111,7 +116,7 @@ export default async function CatalogoPage({
   // (no el overlay) — así no perdemos productos si el overlay de familias está
   // desactualizado, y por tanto vemos TODAS las marcas en el filtro.
   const [allProducts, fa, ca, af] = await Promise.all([
-    fetchAllProducts({ q, revalidate: 600 }).catch((e) => {
+    fetchAllProducts({ q, revalidate: 3600 }).catch((e) => {
       console.warn("[catalogo] fetchAllProducts:", (e as Error).message);
       error = (e as Error).message;
       return [] as ApiProduct[];

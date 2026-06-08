@@ -95,16 +95,16 @@ export async function listProducts(params?: {
   if (params?.q) sp.set("q", params.q);
 
   const res = await timeoutFetch(`${AURELLANO_API}/catalog/products?${sp.toString()}`, {
-    // Cache 10 min en el edge de Vercel. Reduce drásticamente latencia tras la
+    // Cache 1 hora en el edge de Vercel. Reduce drásticamente latencia tras la
     // primera carga. Cuando Marco edita en el PIM, las server actions hacen
     // revalidatePath y refrescan en seguida.
-    next: { revalidate: params?.revalidate ?? 600 },
+    next: { revalidate: params?.revalidate ?? 3600 },
   });
   if (!res.ok) throw new Error(`listProducts ${res.status}: ${await res.text()}`);
   return res.json();
 }
 
-export async function getProductByRef(ref: string, revalidate = 600): Promise<ApiProduct | null> {
+export async function getProductByRef(ref: string, revalidate = 3600): Promise<ApiProduct | null> {
   const res = await timeoutFetch(`${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}`, {
     next: { revalidate },
   });
@@ -130,7 +130,7 @@ export async function fetchAllProducts(opts?: {
   q?: string;
   revalidate?: number;
 }): Promise<ApiProduct[]> {
-  const families = await listFamilies(opts?.revalidate ?? 600).catch(() => []);
+  const families = await listFamilies(opts?.revalidate ?? 3600).catch(() => []);
   const map = new Map<string, ApiProduct>();
 
   // Pasada base: cubre productos sin familia asignada y los primeros 200 globales.

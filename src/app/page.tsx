@@ -12,9 +12,9 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-// Revalida cada 10 min. Los Server Actions del PIM hacen revalidatePath("/")
+// Revalida cada 1 hora. Los Server Actions del PIM hacen revalidatePath("/")
 // cuando editas algo crítico → los cambios se reflejan al momento sin redeploy.
-export const revalidate = 600;
+export const revalidate = 3600;
 
 const FEATURED_CATALOG = "seleccion-aurellano";
 const FEATURED_LIMIT = 4;
