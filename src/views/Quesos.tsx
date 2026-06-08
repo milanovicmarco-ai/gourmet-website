@@ -49,7 +49,7 @@ const Quesos = ({ featured = [], featuredCatalogCount = 0 }: Props) => {
               Trabajamos con maestros afinadores. Te ayudamos a montar la tabla, calcular cantidades y maridar.
             </p>
             <a href={waLink("Hola Aurellano, me interesa vuestra selección de quesos.")} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-primary text-primary-foreground rounded-full pl-6 pr-7 py-4 font-medium hover:bg-accent transition-colors">
-              <MessageCircle className="h-5 w-5" /> Pedir muestrario
+              <MessageCircle className="h-5 w-5" /> Pedir más información
             </a>
           </div>
           <div className="lg:col-span-5 relative">
