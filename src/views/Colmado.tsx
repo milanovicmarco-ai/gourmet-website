@@ -45,7 +45,7 @@ const Colmado = ({
             <p className="eyebrow text-primary-foreground/60">Para tiendas y mercados</p>
             <h1 className="display text-balance">
               Colmado<br />
-              <span className="italic font-light text-accent">Aurellano.</span>
+              <span className="italic font-light text-accent">Gourmet.</span>
             </h1>
             <p className="text-lg text-primary-foreground/75 max-w-xl">
               Producto gourmet pensado para tiendas, supermercados especializados, paradas de mercado y
