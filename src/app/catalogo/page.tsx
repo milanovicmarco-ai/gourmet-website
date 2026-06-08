@@ -374,16 +374,23 @@ export default async function CatalogoPage({
               defaultValues={dietaSel}
               options={DIETA_OPTIONS}
             />
-            <MultiSelectFilter
-              label="Menú"
-              name="menu"
-              defaultValues={menuSel}
-              options={MENU_OPTIONS}
-            />
+            {/* "Menú" (momento del plato) solo tiene sentido para HORECA/chefs:
+                se muestra únicamente en Secrets du Xef (?catalog=horeca). En el
+                Colmado (retail) y el catálogo general queda oculto. La lógica
+                server-side del filtro `menu` sigue activa para no romper URLs
+                con `?menu=...` existentes (mismo patrón que "Gama"). */}
+            {catalogSlug === "horeca" && (
+              <MultiSelectFilter
+                label="Menú"
+                name="menu"
+                defaultValues={menuSel}
+                options={MENU_OPTIONS}
+              />
+            )}
             {/* Filtro de Gama oculto a petición de Marco. La lógica server-side
                 sigue activa para no romper URLs con `?gama=N` existentes. */}
             <MultiSelectFilter
-              label="Especialidad"
+              label="Destacados"
               name="especialidad"
               defaultValues={especialidadSel}
               options={ESPECIALIDAD_OPTIONS}
