@@ -91,16 +91,10 @@ export function effectiveRef(meta: Pick<ProductMeta, "display_ref"> | null | und
   return dr && dr.length > 0 ? dr : apiRef;
 }
 
-/** La marca visible: brand_override del overlay si existe, si no la de la API. */
-export function effectiveBrand(
-  meta: Pick<ProductMeta, "brand_override"> | null | undefined,
-  apiBrand: string | null | undefined,
-): string {
-  const bo = meta?.brand_override?.trim();
-  if (bo && bo.length > 0) return bo;
-  const api = apiBrand?.trim();
-  return api && api.length > 0 ? api : "";
-}
+// effectiveBrand (+ matchesSearch) viven en ./search — puros y testeables sin
+// dependencias de servidor. Se re-exportan aquí para no romper los imports
+// existentes (`from "@/lib/pim/product-meta"`).
+export { effectiveBrand, matchesSearch, SENTINEL_BRAND } from "./search";
 
 export async function getProductMeta(ref: string): Promise<ProductMeta> {
   const supabase = await createClient();

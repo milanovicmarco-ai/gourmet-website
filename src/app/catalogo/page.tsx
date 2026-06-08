@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Layout } from "@/components/Layout";
 import { ProductCard } from "@/components/ProductCard";
 import { listFamilies, fetchAllProducts, type ApiProduct } from "@/lib/pim/api";
-import { getMetasForProducts, effectiveRef, effectiveBrand } from "@/lib/pim/product-meta";
+import { getMetasForProducts, effectiveRef, effectiveBrand, matchesSearch } from "@/lib/pim/product-meta";
 import { listCatalogs, listAllFamilies, getRefsByCatalogSlug, humanizeFamilySlug } from "@/lib/pim/catalogs";
 import { MultiSelectFilter } from "./multi-select-filter";
 import { MessageCircle, X } from "lucide-react";
@@ -116,7 +116,9 @@ export default async function CatalogoPage({
   // (no el overlay) — así no perdemos productos si el overlay de familias está
   // desactualizado, y por tanto vemos TODAS las marcas en el filtro.
   const [allProducts, fa, ca, af] = await Promise.all([
-    fetchAllProducts({ q, revalidate: 3600 }).catch((e) => {
+    // No delegamos `q` a la API: la búsqueda se hace en memoria (abajo) para que
+    // también encuentre por marca REAL, que vive en el overlay y la API ignora.
+    fetchAllProducts({ revalidate: 3600 }).catch((e) => {
       console.warn("[catalogo] fetchAllProducts:", (e as Error).message);
       error = (e as Error).message;
       return [] as ApiProduct[];
@@ -220,6 +222,16 @@ export default async function CatalogoPage({
 
   const filtered = products.filter((p) => {
     if (!isPublished(p)) return false;
+    // Búsqueda libre en memoria: nombre + marca REAL (overlay) + referencia +
+    // descripción. La API no conoce las marcas, así que `q` se aplica aquí.
+    if (
+      q &&
+      !matchesSearch(
+        [p.name, effectiveBrand(metas[p.ref], p.brand), effectiveRef(metas[p.ref], p.ref), p.ref, p.descripcion_corta],
+        q,
+      )
+    )
+      return false;
     if (brandSelSet.size > 0) {
       const b = effectiveBrand(metas[p.ref], p.brand).toLowerCase().trim();
       if (!brandSelSet.has(b)) return false;
