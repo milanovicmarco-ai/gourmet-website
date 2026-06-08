@@ -218,14 +218,6 @@ export default async function CatalogoPage({
   const menuSelSet = new Set(menuSel);
   const gamaSelSet = new Set(gamaSel);
 
-  /** ¿El producto está destacado en algún catálogo (nuevo) o globalmente (legacy)? */
-  const isDestacado = (p: ApiProduct): boolean => {
-    const m = metas[p.ref];
-    if (!m) return false;
-    if (Array.isArray(m.destacado_en) && m.destacado_en.length > 0) return true;
-    return !!m.destacado;
-  };
-
   const filtered = products.filter((p) => {
     if (!isPublished(p)) return false;
     if (brandSelSet.size > 0) {
@@ -245,16 +237,18 @@ export default async function CatalogoPage({
     return true;
   });
 
-  // Orden: primero los destacados, luego alfabético por nombre (locale "es" para
-  // que ñ, acentos y dígitos se ordenen como espera un humano).
+  // Orden: alfabético por nombre (locale "es" para que ñ y acentos se ordenen como
+  // espera un humano). Los productos cuyo nombre empieza por número van al final.
+  // Los destacados ya NO se fuerzan arriba: siguen apareciendo en la sección
+  // "Selección" de cada hub y en el filtro "Destacados", pero la rejilla del
+  // catálogo sale 100% alfabética (petición de Aurellano).
   filtered.sort((a, b) => {
-    const aD = isDestacado(a) ? 1 : 0;
-    const bD = isDestacado(b) ? 1 : 0;
-    if (aD !== bD) return bD - aD; // destacados primero
-    return (a.name ?? "").localeCompare(b.name ?? "", "es", {
-      sensitivity: "base",
-      numeric: true,
-    });
+    const an = a.name ?? "";
+    const bn = b.name ?? "";
+    const aNum = /^\s*\d/.test(an) ? 1 : 0; // ¿el nombre empieza por dígito?
+    const bNum = /^\s*\d/.test(bn) ? 1 : 0;
+    if (aNum !== bNum) return aNum - bNum; // los que empiezan por número, al final
+    return an.localeCompare(bn, "es", { sensitivity: "base", numeric: true });
   });
 
   // Paginación: 20 productos por página. La página actual viene de ?page=N.
