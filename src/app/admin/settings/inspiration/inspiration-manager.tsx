@@ -19,6 +19,68 @@ import {
   toggleInspirationCatalogActive,
 } from "./actions";
 import type { InspirationCatalog } from "@/lib/pim/inspiration";
+import { supabase } from "@/integrations/supabase/client";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Subida directa navegador → Supabase Storage. Evita el límite de 4.5 MB que
+// Vercel impone al cuerpo de las Server Actions: el archivo nunca pasa por el
+// servidor. El cliente ya está autenticado con la sesión del admin y las policies
+// del bucket permiten escritura a usuarios `authenticated`. Las Server Actions
+// solo reciben las URLs públicas resultantes (texto).
+// ─────────────────────────────────────────────────────────────────────────────
+const BUCKET = "inspiration";
+
+const sanitizeFilename = (s: string) =>
+  s
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^a-zA-Z0-9._-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 80);
+
+async function uploadToBucket(file: File, folder: "pdfs" | "covers" | "logos"): Promise<string> {
+  const ts = Date.now();
+  const safeName = sanitizeFilename(file.name) || `file-${ts}`;
+  const path = `${folder}/${ts}-${safeName}`;
+  const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
+    contentType: file.type || undefined,
+    cacheControl: "31536000",
+    upsert: false,
+  });
+  if (error) throw new Error(`No se pudo subir ${file.name}: ${error.message}`);
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
+  if (!data?.publicUrl) throw new Error(`No se pudo generar la URL pública de ${file.name}`);
+  return data.publicUrl;
+}
+
+/**
+ * Sube los archivos del formulario (PDF/carátula/logo) directamente a Storage y
+ * devuelve un FormData con sus URLs (texto), listo para la Server Action.
+ * Mantiene title/sort_order/active y valida el tipo de PDF en cliente.
+ */
+async function buildPayload(fd: FormData): Promise<FormData> {
+  const out = new FormData();
+  out.set("title", String(fd.get("title") ?? "").trim());
+  out.set("sort_order", String(fd.get("sort_order") ?? "0"));
+  out.set("active", fd.get("active") === "1" ? "1" : "0");
+
+  const pdf = fd.get("pdf");
+  const cover = fd.get("cover");
+  const logo = fd.get("logo");
+
+  if (pdf instanceof File && pdf.size > 0) {
+    if (pdf.type && !pdf.type.includes("pdf")) throw new Error("El archivo PDF debe ser un .pdf");
+    out.set("pdf_url", await uploadToBucket(pdf, "pdfs"));
+  }
+  if (cover instanceof File && cover.size > 0) {
+    out.set("cover_url", await uploadToBucket(cover, "covers"));
+  }
+  if (logo instanceof File && logo.size > 0) {
+    out.set("logo_url", await uploadToBucket(logo, "logos"));
+  }
+  return out;
+}
 
 export function InspirationManager({ items }: { items: InspirationCatalog[] }) {
   const router = useRouter();
@@ -59,7 +121,7 @@ export function InspirationManager({ items }: { items: InspirationCatalog[] }) {
           onCancel={() => setShowCreate(false)}
           onSubmit={async (fd) => {
             try {
-              await createInspirationCatalog(fd);
+              await createInspirationCatalog(await buildPayload(fd));
               setMessage({ kind: "ok", text: "Catálogo creado." });
               setShowCreate(false);
               router.refresh();
@@ -94,7 +156,7 @@ export function InspirationManager({ items }: { items: InspirationCatalog[] }) {
                     onCancel={() => setEditingId(null)}
                     onSubmit={async (fd) => {
                       try {
-                        await updateInspirationCatalog(c.id, fd);
+                        await updateInspirationCatalog(c.id, await buildPayload(fd));
                         setMessage({ kind: "ok", text: "Catálogo actualizado." });
                         setEditingId(null);
                         router.refresh();
