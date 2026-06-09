@@ -7,7 +7,7 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { ProductCard } from "@/components/ProductCard";
 import { waLink } from "@/lib/contact";
 import type { CuratedProduct } from "@/lib/pim/featured";
-import { useI18n } from "@/lib/i18n";
+import { useT } from "@/lib/i18n";
 
 const cheeses = "/images/cheeses.jpg";
 
@@ -29,7 +29,7 @@ interface Props {
 }
 
 const Quesos = ({ featured = [], featuredCatalogCount = 0 }: Props) => {
-  useI18n(); // se mantiene importado para futuras strings traducibles
+  const t = useT();
   return (
     <Layout
       seoTitle="Quesos para enamorarse | Aurellano Productes Gastronòmics"
@@ -40,16 +40,16 @@ const Quesos = ({ featured = [], featuredCatalogCount = 0 }: Props) => {
         <Circle variant="blur" className="w-[500px] h-[500px] top-0 -left-40" />
         <div className="container-edit pt-32 md:pt-40 pb-12 md:pb-20 relative grid lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-7 space-y-7">
-            <p className="eyebrow">afinart · selección Aurellano</p>
+            <p className="eyebrow">afinart · {t("selección Aurellano")}</p>
             <h1 className="display text-balance">
-              Quesos afinados<br />
-              <span className="italic font-light text-accent">como deben ser.</span>
+              {t("Quesos afinados")}<br />
+              <span className="italic font-light text-accent">{t("como deben ser.")}</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-xl">
-              Trabajamos con maestros afinadores. Te ayudamos a montar la tabla, calcular cantidades y maridar.
+              {t("Trabajamos con maestros afinadores. Te ayudamos a montar la tabla, calcular cantidades y maridar.")}
             </p>
             <a href={waLink("Hola Aurellano, me interesa vuestra selección de quesos.")} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-primary text-primary-foreground rounded-full pl-6 pr-7 py-4 font-medium hover:bg-accent transition-colors">
-              <MessageCircle className="h-5 w-5" /> Pedir más información
+              <MessageCircle className="h-5 w-5" /> {t("Pedir más información")}
             </a>
           </div>
           <div className="lg:col-span-5 relative">
@@ -65,26 +65,26 @@ const Quesos = ({ featured = [], featuredCatalogCount = 0 }: Props) => {
       <section className="border-y border-border bg-secondary/40">
         <div className="container-edit py-14 md:py-20 grid md:grid-cols-3 gap-12">
           <div className="space-y-3">
-            <p className="eyebrow">Por origen</p>
+            <p className="eyebrow">{t("Por origen")}</p>
             <ul className="flex flex-wrap gap-2">
               {origins.map((o) => (
-                <li key={o} className="text-xs px-3 py-1.5 rounded-full border border-border bg-background hover:border-accent transition-colors cursor-default">{o}</li>
+                <li key={o} className="text-xs px-3 py-1.5 rounded-full border border-border bg-background hover:border-accent transition-colors cursor-default">{t(o)}</li>
               ))}
             </ul>
           </div>
           <div className="space-y-3">
-            <p className="eyebrow">Por intensidad</p>
+            <p className="eyebrow">{t("Por intensidad")}</p>
             <ul className="flex flex-wrap gap-2">
               {intensities.map((o) => (
-                <li key={o} className="text-xs px-3 py-1.5 rounded-full border border-border bg-background hover:border-accent transition-colors cursor-default">{o}</li>
+                <li key={o} className="text-xs px-3 py-1.5 rounded-full border border-border bg-background hover:border-accent transition-colors cursor-default">{t(o)}</li>
               ))}
             </ul>
           </div>
           <div className="space-y-3">
-            <p className="eyebrow">Por familia</p>
+            <p className="eyebrow">{t("Por familia")}</p>
             <ul className="flex flex-wrap gap-2">
               {families.map((o) => (
-                <li key={o} className="text-xs px-3 py-1.5 rounded-full border border-border bg-background hover:border-accent transition-colors cursor-default">{o}</li>
+                <li key={o} className="text-xs px-3 py-1.5 rounded-full border border-border bg-background hover:border-accent transition-colors cursor-default">{t(o)}</li>
               ))}
             </ul>
           </div>
@@ -93,7 +93,7 @@ const Quesos = ({ featured = [], featuredCatalogCount = 0 }: Props) => {
 
       {/* DESTACADOS — productos marcados como `destacado` en el catálogo fromages */}
       <section className="container-edit py-20 md:py-28">
-        <SectionHeader eyebrow="Hoy en cámara" title={<>Algunos de nuestros <span className="pink-underline">imprescindibles</span>.</>} />
+        <SectionHeader eyebrow={t("Hoy en cámara")} title={<>{t("Algunos de nuestros")} <span className="pink-underline">{t("imprescindibles")}</span>.</>} />
         {featured.length > 0 ? (
           <div className="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
             {featured.map((p, i) => (
@@ -122,15 +122,15 @@ const Quesos = ({ featured = [], featuredCatalogCount = 0 }: Props) => {
         <Circle variant="outline" className="w-[500px] h-[500px] -top-40 -right-40 border-primary-foreground/10" />
         <div className="container-edit py-20 md:py-28 relative grid lg:grid-cols-12 gap-12">
           <div className="lg:col-span-5 space-y-5">
-            <p className="eyebrow text-primary-foreground/60">Maridajes</p>
-            <h2 className="display-md text-balance">Lo que va<br /><span className="italic font-light text-accent">con cada queso.</span></h2>
-            <p className="text-primary-foreground/70 max-w-md">Combinaciones probadas en sala. Cuéntanos tu carta de vinos y te proponemos la tabla.</p>
+            <p className="eyebrow text-primary-foreground/60">{t("Maridajes")}</p>
+            <h2 className="display-md text-balance">{t("Lo que va")}<br /><span className="italic font-light text-accent">{t("con cada queso.")}</span></h2>
+            <p className="text-primary-foreground/70 max-w-md">{t("Combinaciones probadas en sala. Cuéntanos tu carta de vinos y te proponemos la tabla.")}</p>
           </div>
           <div className="lg:col-span-7 space-y-px">
             {pairings.map((p) => (
               <div key={p.cheese} className="grid grid-cols-2 gap-6 py-5 border-t border-primary-foreground/15">
                 <p className="font-display font-light text-xl md:text-2xl">{p.cheese}</p>
-                <p className="text-sm md:text-base text-primary-foreground/75 self-center">{p.with}</p>
+                <p className="text-sm md:text-base text-primary-foreground/75 self-center">{t(p.with)}</p>
               </div>
             ))}
           </div>
@@ -147,12 +147,12 @@ const Quesos = ({ featured = [], featuredCatalogCount = 0 }: Props) => {
       >
         <div className="container-edit py-24 md:py-36 text-center relative">
           <div className="relative max-w-3xl mx-auto space-y-8">
-            <p className="eyebrow justify-center inline-flex text-primary/70">Empecemos</p>
+            <p className="eyebrow justify-center inline-flex text-primary/70">{t("Empecemos")}</p>
             <h2 className="display text-balance text-primary">
-              ¿Montamos <span className="italic font-light">tu tabla</span>?
+              {t("¿Montamos")} <span className="italic font-light">{t("tu tabla")}</span>{t("?")}
             </h2>
             <p className="text-lg text-primary/80 max-w-xl mx-auto">
-              Te asesoramos con cantidades, formatos y maridajes según tu carta. Selección curada por maestros afinadores.
+              {t("Te asesoramos con cantidades, formatos y maridajes según tu carta. Selección curada por maestros afinadores.")}
             </p>
             <a
               href={waLink("Hola Aurellano, querría asesoramiento sobre quesos.")}
@@ -160,7 +160,7 @@ const Quesos = ({ featured = [], featuredCatalogCount = 0 }: Props) => {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground rounded-full pl-7 pr-8 py-5 font-medium hover:bg-accent transition-colors duration-300 group"
             >
-              <MessageCircle className="h-5 w-5" /> Hablemos de quesos
+              <MessageCircle className="h-5 w-5" /> {t("Hablemos de quesos")}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </a>
           </div>

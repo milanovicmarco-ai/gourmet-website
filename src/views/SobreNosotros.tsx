@@ -7,6 +7,7 @@ import { SectionHeader } from "@/components/SectionHeader";
 const empresa = "/images/empresa.jpg";
 import { MessageCircle, ArrowRight } from "lucide-react";
 import { WHATSAPP_LINK } from "@/lib/contact";
+import { useT } from "@/lib/i18n";
 
 const milestones = [
   { year: "1968", title: "Empieza la historia", desc: "Fundación en Lleida como pequeño distribuidor de producto local." },
@@ -16,6 +17,7 @@ const milestones = [
 ];
 
 const SobreNosotros = () => {
+  const t = useT();
   const imgRef = useRef<HTMLDivElement>(null);
   const [offset, setOffset] = useState(0);
 
@@ -41,9 +43,9 @@ const SobreNosotros = () => {
     <section className="relative overflow-hidden">
       <Circle variant="accent" className="w-72 h-72 -top-10 -right-20" />
       <div className="container-edit pt-32 md:pt-40 pb-12 md:pb-16 max-w-4xl space-y-6 relative">
-        <p className="eyebrow">Sobre nosotros</p>
-        <h1 className="display text-balance">+50 años seleccionando<br /><span className="italic font-light text-accent">producto con criterio.</span></h1>
-        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl">Empresa familiar de Lleida. Nacimos como pequeño distribuidor y nos hemos convertido en partner gourmet de referencia para profesionales en toda España y Andorra.</p>
+        <p className="eyebrow">{t("Sobre nosotros")}</p>
+        <h1 className="display text-balance">{t("+50 años seleccionando")}<br /><span className="italic font-light text-accent">{t("producto con criterio.")}</span></h1>
+        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl">{t("Empresa familiar de Lleida. Nacimos como pequeño distribuidor y nos hemos convertido en partner gourmet de referencia para profesionales en toda España y Andorra.")}</p>
       </div>
     </section>
 
@@ -82,13 +84,13 @@ const SobreNosotros = () => {
     </section>
 
     <section className="container-edit pb-20 md:pb-28">
-      <SectionHeader eyebrow="Nuestra historia" title={<>De pequeño distribuidor<br />a partner <span className="pink-underline">de referencia</span>.</>} />
+      <SectionHeader eyebrow={t("Nuestra historia")} title={<>{t("De pequeño distribuidor")}<br />{t("a partner")} <span className="pink-underline">{t("de referencia")}</span>.</>} />
       <div className="mt-14 grid md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
         {milestones.map((m) => (
           <div key={m.year} className="border-t border-border pt-6 space-y-2">
-            <p className="font-display font-light text-3xl text-accent">{m.year}</p>
-            <h3 className="font-display font-medium text-lg">{m.title}</h3>
-            <p className="text-sm text-muted-foreground">{m.desc}</p>
+            <p className="font-display font-light text-3xl text-accent">{m.year === "Hoy" ? t("Hoy") : m.year}</p>
+            <h3 className="font-display font-medium text-lg">{t(m.title)}</h3>
+            <p className="text-sm text-muted-foreground">{t(m.desc)}</p>
           </div>
         ))}
       </div>
@@ -98,8 +100,8 @@ const SobreNosotros = () => {
       <Circle variant="outline" className="w-[500px] h-[500px] -top-40 -right-40 border-primary-foreground/10" />
       <div className="container-edit py-20 md:py-28 relative grid lg:grid-cols-12 gap-12">
         <div className="lg:col-span-5 space-y-5">
-          <p className="eyebrow text-primary-foreground/60">Cómo trabajamos</p>
-          <h2 className="display-md text-balance">Cerca de cada<br /><span className="italic font-light text-accent">cliente.</span></h2>
+          <p className="eyebrow text-primary-foreground/60">{t("Cómo trabajamos")}</p>
+          <h2 className="display-md text-balance">{t("Cerca de cada")}<br /><span className="italic font-light text-accent">{t("cliente.")}</span></h2>
         </div>
         <div className="lg:col-span-7 grid sm:grid-cols-2 gap-8">
           {[
@@ -109,8 +111,8 @@ const SobreNosotros = () => {
             { t: "Innovación", d: "Apostamos por producto inclusivo, sin alérgenos y formatos pensados para tu negocio." },
           ].map((b) => (
             <div key={b.t} className="space-y-2 border-t border-primary-foreground/15 pt-6">
-              <h3 className="font-display font-medium text-lg">{b.t}</h3>
-              <p className="text-sm text-primary-foreground/70">{b.d}</p>
+              <h3 className="font-display font-medium text-lg">{t(b.t)}</h3>
+              <p className="text-sm text-primary-foreground/70">{t(b.d)}</p>
             </div>
           ))}
         </div>
@@ -127,12 +129,12 @@ const SobreNosotros = () => {
     >
       <div className="container-edit py-24 md:py-36 text-center relative">
         <div className="relative max-w-3xl mx-auto space-y-8">
-          <p className="eyebrow justify-center inline-flex text-primary/70">Empecemos</p>
+          <p className="eyebrow justify-center inline-flex text-primary/70">{t("Empecemos")}</p>
           <h2 className="display text-balance text-primary">
-            ¿Empezamos a <span className="italic font-light">trabajar juntos</span>?
+            {t("¿Empezamos a")} <span className="italic font-light">{t("trabajar juntos")}</span>?
           </h2>
           <p className="text-lg text-primary/80 max-w-xl mx-auto">
-            Cuéntanos qué necesitas para tu negocio. Te respondemos en horas con propuesta, precios y muestras si hace falta.
+            {t("Cuéntanos qué necesitas para tu negocio. Te respondemos en horas con propuesta, precios y muestras si hace falta.")}
           </p>
           <a
             href={WHATSAPP_LINK}
@@ -140,7 +142,7 @@ const SobreNosotros = () => {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 bg-primary text-primary-foreground rounded-full pl-7 pr-8 py-5 font-medium hover:bg-accent transition-colors duration-300 group"
           >
-            <MessageCircle className="h-5 w-5" /> Escribir por WhatsApp
+            <MessageCircle className="h-5 w-5" /> {t("Escribir por WhatsApp")}
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </a>
         </div>

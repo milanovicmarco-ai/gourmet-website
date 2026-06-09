@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Layout } from "@/components/Layout";
 import { Circle } from "@/components/Circle";
 import { BookOpen, ChefHat, Wine } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 const articles = [
   {
@@ -27,6 +28,7 @@ const articles = [
 ];
 
 const Consejos = () => {
+  const t = useT();
   return (
     <Layout
       seoTitle="Inspiración gourmet | Aurellano P. Gastronòmics"
@@ -35,12 +37,12 @@ const Consejos = () => {
       <section className="container-edit pt-32 md:pt-40 pb-16 relative">
         <Circle variant="accent" className="w-72 h-72 -top-10 -right-10 hidden lg:block" />
         <div className="max-w-3xl space-y-6 relative">
-          <p className="eyebrow">Consejos</p>
+          <p className="eyebrow">{t("Consejos")}</p>
           <h1 className="display">
-            <span className="pink-underline">Saber gourmet</span> para profesionales
+            <span className="pink-underline">{t("Saber gourmet")}</span> {t("para profesionales")}
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
-            Maridajes, técnicas, conservación y trucos de oficio. Compartimos lo que aprendemos cada día con nuestros proveedores y clientes.
+            {t("Maridajes, técnicas, conservación y trucos de oficio. Compartimos lo que aprendemos cada día con nuestros proveedores y clientes.")}
           </p>
         </div>
       </section>
@@ -52,11 +54,11 @@ const Consejos = () => {
             className="group rounded-3xl border border-border p-8 hover-lift bg-background"
           >
             <a.icon className="h-8 w-8 text-accent mb-6" />
-            <p className="eyebrow mb-3">{a.eyebrow}</p>
-            <h2 className="font-display font-light text-2xl tracking-tight mb-4">{a.title}</h2>
-            <p className="text-muted-foreground text-sm leading-relaxed">{a.excerpt}</p>
+            <p className="eyebrow mb-3">{t(a.eyebrow)}</p>
+            <h2 className="font-display font-light text-2xl tracking-tight mb-4">{t(a.title)}</h2>
+            <p className="text-muted-foreground text-sm leading-relaxed">{t(a.excerpt)}</p>
             <span className="mt-6 inline-block text-sm font-medium group-hover:text-accent transition-colors">
-              Próximamente →
+              {t("Próximamente")} →
             </span>
           </article>
         ))}
@@ -64,13 +66,13 @@ const Consejos = () => {
 
       <section className="bg-secondary/40 border-t border-border">
         <div className="container-edit py-20 md:py-24 text-center max-w-2xl mx-auto space-y-6">
-          <h2 className="font-display font-light text-3xl md:text-4xl tracking-tight">¿Tienes una duda concreta?</h2>
-          <p className="text-muted-foreground">Nuestro equipo lleva +50 años entre quesos, foies y despensas premium. Pregúntanos.</p>
+          <h2 className="font-display font-light text-3xl md:text-4xl tracking-tight">{t("¿Tienes una duda concreta?")}</h2>
+          <p className="text-muted-foreground">{t("Nuestro equipo lleva +50 años entre quesos, foies y despensas premium. Pregúntanos.")}</p>
           <Link
             href="/contacto"
             className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-full px-7 py-4 font-medium hover:bg-accent transition-colors"
           >
-            Contactar
+            {t("Contactar")}
           </Link>
         </div>
       </section>

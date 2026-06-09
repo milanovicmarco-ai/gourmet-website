@@ -7,9 +7,11 @@ import { ArrowRight, MessageCircle } from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { Circle } from "@/components/Circle";
 import { WHATSAPP_LINK } from "@/lib/contact";
+import { useT } from "@/lib/i18n";
 const cheeses = "/images/cheeses.jpg";
 
 const NotFound = () => {
+  const t = useT();
   const pathname = usePathname();
   useEffect(() => {
     if (typeof console !== "undefined") {
@@ -29,22 +31,15 @@ const NotFound = () => {
         <div className="container-edit pt-12 md:pt-20 pb-20 md:pb-28 grid lg:grid-cols-12 gap-10 lg:gap-16 items-center relative">
           {/* Texto */}
           <div className="lg:col-span-6 space-y-8">
-            <p className="eyebrow">Error 404</p>
+            <p className="eyebrow">{t("Error 404")}</p>
             <h1 className="display text-balance">
-              Esta página<br />
-              <span className="italic font-light text-accent">no la tenemos en cámara.</span>
+              {t("Esta página")}<br />
+              <span className="italic font-light text-accent">{t("no la tenemos en cámara.")}</span>
             </h1>
 
             <div className="space-y-5 text-base md:text-lg text-muted-foreground max-w-xl leading-relaxed">
               <p>
-                La URL que buscas no existe o ha cambiado de sitio. Pero seguro que hay algo
-                que sí te interesa en nuestro catálogo. Échale un vistazo o escríbenos por WhatsApp
-                y te orientamos.
-              </p>
-              <p lang="ca" className="italic text-foreground/70 border-l-2 border-accent/40 pl-4">
-                La pàgina que busques no existeix o ha canviat de lloc. Segur que hi ha alguna
-                cosa que sí t'interessa al nostre catàleg. Fes-hi un cop d'ull o escriu-nos per
-                WhatsApp i t'orientem.
+                {t("La URL que buscas no existe o ha cambiado de sitio. Pero seguro que hay algo que sí te interesa en nuestro catálogo. Échale un vistazo o escríbenos por WhatsApp y te orientamos.")}
               </p>
             </div>
 
@@ -53,14 +48,14 @@ const NotFound = () => {
                 href="/"
                 className="inline-flex items-center gap-2 bg-primary text-primary-foreground rounded-full pl-6 pr-7 py-4 font-medium hover:bg-accent transition-colors group"
               >
-                Volver a la home
+                {t("Volver a la home")}
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
               <Link
                 href="/catalogo"
                 className="inline-flex items-center gap-2 border border-border text-foreground rounded-full pl-6 pr-7 py-4 font-medium hover:border-foreground transition-colors"
               >
-                Ver catálogo
+                {t("Ver catálogo")}
               </Link>
               <a
                 href={WHATSAPP_LINK}
@@ -68,7 +63,7 @@ const NotFound = () => {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-accent transition-colors px-2 py-4"
               >
-                <MessageCircle className="h-4 w-4" /> Hablar por WhatsApp
+                <MessageCircle className="h-4 w-4" /> {t("Hablar por WhatsApp")}
               </a>
             </div>
           </div>
@@ -83,9 +78,9 @@ const NotFound = () => {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-primary/40 via-transparent to-transparent" />
               <div className="absolute bottom-6 left-6 right-6 text-primary-foreground">
-                <p className="text-xs uppercase tracking-[0.18em] text-accent">Mientras tanto</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-accent">{t("Mientras tanto")}</p>
                 <p className="font-display font-light text-2xl md:text-3xl mt-1 leading-tight">
-                  Tablas de queso<br />que sí encontrarás.
+                  {t("Tablas de queso")}<br />{t("que sí encontrarás.")}
                 </p>
               </div>
             </div>

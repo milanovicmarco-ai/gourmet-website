@@ -21,6 +21,7 @@ import {
 } from "@/lib/products";
 import { waLink } from "@/lib/contact";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 const PRICE_MIN = 0;
 const PRICE_MAX = 50;
@@ -71,6 +72,7 @@ const FilterGroup = <T extends string>({
 );
 
 const Catalogo = () => {
+  const t = useT();
   const params = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -142,13 +144,13 @@ const Catalogo = () => {
       {/* HERO */}
       <section className="container-edit pt-12 md:pt-20 pb-10 md:pb-14">
         <div className="max-w-4xl space-y-6">
-          <p className="eyebrow">Catálogo</p>
+          <p className="eyebrow">{t("Catálogo")}</p>
           <h1 className="display text-balance">
-            Encuentra el producto<br />
-            <span className="italic font-light text-accent">como tú trabajas.</span>
+            {t("Encuentra el producto")}<br />
+            <span className="italic font-light text-accent">{t("como tú trabajas.")}</span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl text-pretty">
-            Filtra por tipo de cliente, plato, categoría, especialidad o precio. Si no lo encuentras, lo conseguimos.
+            {t("Filtra por tipo de cliente, plato, categoría, especialidad o precio. Si no lo encuentras, lo conseguimos.")}
           </p>
         </div>
       </section>
@@ -161,7 +163,7 @@ const Catalogo = () => {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar producto o marca…"
+            placeholder={t("Buscar producto o marca…")}
             className="w-full bg-secondary border border-border rounded-full pl-14 pr-12 py-4 text-base placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition"
           />
           {query && (
@@ -192,7 +194,7 @@ const Catalogo = () => {
             aria-expanded={showFilters}
           >
             <SlidersHorizontal className="h-4 w-4" />
-            Filtros
+            {t("Filtros")}
             {totalActive > 0 && (
               <span className="ml-1 inline-flex items-center justify-center rounded-full bg-accent text-accent-foreground text-xs font-semibold h-5 min-w-5 px-1.5">
                 {totalActive}
@@ -201,7 +203,7 @@ const Catalogo = () => {
           </button>
           <p className="text-sm text-muted-foreground">
             <span className="font-semibold text-foreground">{filtered.length}</span>{" "}
-            {filtered.length === 1 ? "producto" : "productos"}
+            {filtered.length === 1 ? t("producto") : t("productos")}
           </p>
         </div>
 
@@ -214,38 +216,38 @@ const Catalogo = () => {
         >
           <div className="rounded-3xl border border-border bg-secondary/40 p-6 md:p-8 grid md:grid-cols-2 lg:grid-cols-3 gap-7">
             <FilterGroup
-              title="Tipo de cliente"
-              options={(Object.keys(CLIENT_LABELS) as ClientType[]).map((k) => ({ key: k, label: CLIENT_LABELS[k] }))}
+              title={t("Tipo de cliente")}
+              options={(Object.keys(CLIENT_LABELS) as ClientType[]).map((k) => ({ key: k, label: t(CLIENT_LABELS[k]) }))}
               selected={clients}
               onToggle={(k) => toggle(setClients, k)}
             />
             <FilterGroup
-              title="Tipo de producto"
-              options={(Object.keys(DISH_LABELS) as DishType[]).map((k) => ({ key: k, label: DISH_LABELS[k] }))}
+              title={t("Tipo de producto")}
+              options={(Object.keys(DISH_LABELS) as DishType[]).map((k) => ({ key: k, label: t(DISH_LABELS[k]) }))}
               selected={dishes}
               onToggle={(k) => toggle(setDishes, k)}
             />
             <FilterGroup
-              title="Categoría alimentaria"
-              options={(Object.keys(FOOD_LABELS) as FoodCategory[]).map((k) => ({ key: k, label: FOOD_LABELS[k] }))}
+              title={t("Categoría alimentaria")}
+              options={(Object.keys(FOOD_LABELS) as FoodCategory[]).map((k) => ({ key: k, label: t(FOOD_LABELS[k]) }))}
               selected={foods}
               onToggle={(k) => toggle(setFoods, k)}
             />
             <FilterGroup
-              title="Especialidades"
-              options={(Object.keys(SPECIALTY_LABELS) as Specialty[]).map((k) => ({ key: k, label: SPECIALTY_LABELS[k] }))}
+              title={t("Especialidades")}
+              options={(Object.keys(SPECIALTY_LABELS) as Specialty[]).map((k) => ({ key: k, label: t(SPECIALTY_LABELS[k]) }))}
               selected={specialties}
               onToggle={(k) => toggle(setSpecialties, k)}
             />
             <FilterGroup
-              title="Alérgenos"
-              options={ALLERGEN_FILTERS.map((a) => ({ key: a.key, label: a.label }))}
+              title={t("Alérgenos")}
+              options={ALLERGEN_FILTERS.map((a) => ({ key: a.key, label: t(a.label) }))}
               selected={allergens}
               onToggle={(k) => toggle(setAllergens, k)}
             />
             <div>
               <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-3">
-                Precio · hasta {priceMax}€
+                {t("Precio · hasta")} {priceMax}€
               </p>
               <input
                 type="range"
@@ -264,7 +266,7 @@ const Catalogo = () => {
             {totalActive > 0 && (
               <div className="md:col-span-2 lg:col-span-3 flex justify-end">
                 <button onClick={clear} className="text-sm text-accent hover:underline">
-                  Limpiar filtros ({totalActive})
+                  {t("Limpiar filtros")} ({totalActive})
                 </button>
               </div>
             )}
@@ -287,9 +289,9 @@ const Catalogo = () => {
           </div>
         ) : (
           <div className="rounded-3xl border border-dashed border-border p-12 md:p-16 text-center space-y-5">
-            <h3 className="font-display font-light text-3xl">No hay resultados</h3>
+            <h3 className="font-display font-light text-3xl">{t("No hay resultados")}</h3>
             <p className="text-muted-foreground max-w-md mx-auto">
-              Prueba ajustando los filtros o pídenos la referencia. Tenemos +200 proveedores y red de importación.
+              {t("Prueba ajustando los filtros o pídenos la referencia. Tenemos +200 proveedores y red de importación.")}
             </p>
             <a
               href={waLink("Hola Aurellano, busco una referencia concreta. ¿Podéis conseguirla?")}
@@ -297,13 +299,13 @@ const Catalogo = () => {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground rounded-full pl-5 pr-6 py-3 text-sm font-medium hover:bg-accent transition-colors"
             >
-              <MessageCircle className="h-4 w-4" /> Pedir referencia
+              <MessageCircle className="h-4 w-4" /> {t("Pedir referencia")}
             </a>
           </div>
         )}
       </section>
 
-      <Link href="/contacto" className="sr-only">Contacto</Link>
+      <Link href="/contacto" className="sr-only">{t("Contacto")}</Link>
     </Layout>
   );
 };

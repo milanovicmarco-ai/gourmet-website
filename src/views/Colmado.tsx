@@ -8,7 +8,7 @@ import { ArrowRight, MessageCircle, Store } from "lucide-react";
 import Link from "next/link";
 import { waLink } from "@/lib/contact";
 import type { CuratedProduct } from "@/lib/pim/featured";
-import { useI18n } from "@/lib/i18n";
+import { useT } from "@/lib/i18n";
 
 const colmadoImg = "/images/colmado.jpg";
 
@@ -27,8 +27,7 @@ const Colmado = ({
   primerPrecio = [],
   primerPrecioCatalogCount = 0,
 }: Props) => {
-  // useI18n se importa pero ya no se usa con texto inline — se queda por si añadimos copy traducido.
-  useI18n();
+  const t = useT();
   return (
     <Layout
       navTheme="dark"
@@ -42,21 +41,20 @@ const Colmado = ({
         <Circle variant="blur" className="w-96 h-96 -bottom-20 right-0" />
         <div className="container-edit pt-28 md:pt-36 pb-20 md:pb-28 relative grid lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-6 space-y-6">
-            <p className="eyebrow text-primary-foreground/60">Para tiendas y mercados</p>
+            <p className="eyebrow text-primary-foreground/60">{t("Para tiendas y mercados")}</p>
             <h1 className="display text-balance">
               Colmado<br />
-              <span className="italic font-light text-accent">Gourmet.</span>
+              <span className="italic font-light text-accent">{t("Gourmet.")}</span>
             </h1>
             <p className="text-lg text-primary-foreground/75 max-w-xl">
-              Producto gourmet pensado para tiendas, supermercados especializados, paradas de mercado y
-              ultramarinos. Alta rotación, márgenes saneados y un surtido que diferencia tu lineal.
+              {t("Producto gourmet pensado para tiendas, supermercados especializados, paradas de mercado y ultramarinos. Alta rotación, márgenes saneados y un surtido que diferencia tu lineal.")}
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
                 href="/catalogo?catalog=retail"
                 className="inline-flex items-center gap-2 bg-accent text-accent-foreground rounded-full pl-6 pr-7 py-4 font-medium hover:opacity-90 transition-opacity"
               >
-                <Store className="h-5 w-5" /> Ver catálogo para tu tienda
+                <Store className="h-5 w-5" /> {t("Ver catálogo para tu tienda")}
               </Link>
               <a
                 href={waLink("Hola, me interesa la gama Colmado para mi tienda.")}
@@ -64,7 +62,7 @@ const Colmado = ({
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 border border-primary-foreground/40 text-primary-foreground rounded-full pl-6 pr-7 py-4 font-medium hover:bg-primary-foreground hover:text-primary transition-colors"
               >
-                <MessageCircle className="h-5 w-5" /> Hablar con comercial
+                <MessageCircle className="h-5 w-5" /> {t("Hablar con comercial")}
               </a>
             </div>
           </div>
@@ -79,8 +77,8 @@ const Colmado = ({
       {/* BENEFICIOS */}
       <section className="container-edit py-20 md:py-28">
         <SectionHeader
-          eyebrow="Beneficios para tu tienda"
-          title={<>Margen, rotación y <span className="pink-underline">diferenciación</span>.</>}
+          eyebrow={t("Beneficios para tu tienda")}
+          title={<>{t("Margen, rotación y")} <span className="pink-underline">{t("diferenciación")}</span>{t(".")}</>}
         />
         <div className="mt-12 grid md:grid-cols-3 gap-8">
           {[
@@ -90,8 +88,8 @@ const Colmado = ({
           ].map((b, i) => (
             <div key={b.t} className="border-t border-border pt-8 space-y-3">
               <span className="text-xs text-muted-foreground">0{i + 1}</span>
-              <h3 className="font-display font-light text-2xl">{b.t}</h3>
-              <p className="text-sm text-muted-foreground">{b.d}</p>
+              <h3 className="font-display font-light text-2xl">{t(b.t)}</h3>
+              <p className="text-sm text-muted-foreground">{t(b.d)}</p>
             </div>
           ))}
         </div>
@@ -99,7 +97,7 @@ const Colmado = ({
 
       {/* SELECCIÓN destacada del catálogo retail */}
       <section className="container-edit pb-20 md:pb-28">
-        <SectionHeader eyebrow="Selección retail" title="Lo que está volando del lineal." />
+        <SectionHeader eyebrow={t("Selección retail")} title={t("Lo que está volando del lineal.")} />
         {featured.length > 0 ? (
           <>
             <div className="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
@@ -119,7 +117,7 @@ const Colmado = ({
                 href="/catalogo?catalog=retail"
                 className="inline-flex items-center gap-2 border border-foreground rounded-full pl-5 pr-6 py-3 text-sm font-medium"
               >
-                Ver todos los productos Colmado <ArrowRight className="h-4 w-4" />
+                {t("Ver todos los productos Colmado")} <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
           </>
@@ -136,9 +134,9 @@ const Colmado = ({
       <section className="bg-accent/5 border-y border-border">
         <div className="container-edit py-20 md:py-28">
           <SectionHeader
-            eyebrow="Primer precio"
-            title={<>Económicos para tu lineal, <span className="pink-underline">margen para tu tienda</span>.</>}
-            subtitle="Productos de alta rotación con precio entry-level y buen margen para escalar volumen."
+            eyebrow={t("Primer precio")}
+            title={<>{t("Económicos para tu lineal,")} <span className="pink-underline">{t("margen para tu tienda")}</span>{t(".")}</>}
+            subtitle={t("Productos de alta rotación con precio entry-level y buen margen para escalar volumen.")}
           />
           {primerPrecio.length > 0 ? (
             <>
@@ -159,7 +157,7 @@ const Colmado = ({
                   href="/catalogo?catalog=retail&especialidad=primer_precio"
                   className="inline-flex items-center gap-2 border border-foreground rounded-full pl-5 pr-6 py-3 text-sm font-medium"
                 >
-                  Ver todos los primer precio Retail <ArrowRight className="h-4 w-4" />
+                  {t("Ver todos los primer precio Retail")} <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
             </>
