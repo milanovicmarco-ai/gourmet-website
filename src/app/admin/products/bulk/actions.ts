@@ -425,13 +425,19 @@ export async function applyImport(formData: FormData): Promise<ApplyResult> {
 
       // Update
       const payload = mapToApi(toFormFields(r));
-      const { outcome } = await putProduct(r.ref, payload, r.brand);
+      // Si solo cambian campos de overlay (p.ej. ref_visible→display_ref, marca,
+      // flags dietéticos), no hay nada que mandar a la API del socio: su PUT
+      // devolvería 400 "payload vacío". Saltamos el PUT y aplicamos solo el overlay.
+      const hasApiChanges = Object.values(payload).some((v) => v !== undefined);
+      if (hasApiChanges) {
+        const { outcome } = await putProduct(r.ref, payload, r.brand);
+        if (outcome.kind === "downgraded") {
+          result.warnings.push({ line, ref: r.ref, message: outcome.warning });
+        }
+      }
       await applyOverlay(r.ref, r);
       await applyCatalogs(r.ref, r.catalogos);
       result.updated.push({ ref: r.ref });
-      if (outcome.kind === "downgraded") {
-        result.warnings.push({ line, ref: r.ref, message: outcome.warning });
-      }
     } catch (err) {
       result.errors.push({ line, ref: r.ref, message: (err as Error).message });
     }
