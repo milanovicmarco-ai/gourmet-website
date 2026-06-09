@@ -1,7 +1,7 @@
 // Overlay de metadatos de producto en nuestro Supabase.
 // Brand y diet extras se gestionan aquí, NO en la API del socio.
 
-import { createClient } from "@/integrations/supabase/server";
+import { createPublicClient } from "@/integrations/supabase/server";
 
 /** Momento del plato — slugs estables que guardamos en la BD.
  *  Para mostrar al usuario, ver MOMENTO_LABELS. */
@@ -97,7 +97,7 @@ export function effectiveRef(meta: Pick<ProductMeta, "display_ref"> | null | und
 export { effectiveBrand, matchesSearch, SENTINEL_BRAND } from "./search";
 
 export async function getProductMeta(ref: string): Promise<ProductMeta> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("product_meta")
     .select("*")
@@ -112,7 +112,7 @@ export async function getProductMeta(ref: string): Promise<ProductMeta> {
 
 export async function getMetasForProducts(refs: string[]): Promise<Record<string, ProductMeta>> {
   if (refs.length === 0) return {};
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("product_meta")
     .select("*")
