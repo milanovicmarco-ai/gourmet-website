@@ -68,10 +68,13 @@ export type FamilyCount = { family: string; count: number };
 // =============================================================
 
 /** Timeout default para fetches a la API del socio. Vercel está en US-East y
- *  el VPS del socio en Europa; si no contesta en X segundos, asumimos fallo y
- *  dejamos que la página renderice sin esos datos en vez de colgarse 5 minutos.
- *  20s es generoso pero ajustado al peor caso real observado. */
-const FETCH_TIMEOUT_MS = 20_000;
+ *  el VPS del socio en Europa. El backend sano responde ~0,6s por producto y
+ *  aguanta 50 peticiones concurrentes en ~3s, así que 6s deja amplio margen
+ *  para el peor caso legítimo y a la vez CORTA los productos que se cuelgan:
+ *  antes, con 20s, un único ref que no respondía arrastraba la página entera
+ *  hasta el timeout porque loadCatalogContext espera con Promise.all. Si un
+ *  fetch lo excede, .catch() lo descarta y la página renderiza sin ese dato. */
+const FETCH_TIMEOUT_MS = 6_000;
 
 async function timeoutFetch(input: string, init?: RequestInit & { next?: { revalidate?: number } }) {
   const controller = new AbortController();

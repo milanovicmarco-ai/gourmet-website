@@ -6,7 +6,7 @@
 // del PIM que vive en la tabla `catalogs` de nuestro Supabase, con la tabla
 // `product_catalogs` para las asignaciones N:M.
 
-import { createClient as createServerSupabase } from "@/integrations/supabase/server";
+import { createClient as createServerSupabase, createPublicClient } from "@/integrations/supabase/server";
 
 export type Catalog = {
   id: string;
@@ -66,7 +66,7 @@ export async function getCatalogsForProducts(refs: string[]): Promise<Record<str
 
 /** Refs de productos asignados a un catálogo (por slug). */
 export async function getRefsByCatalogSlug(slug: string): Promise<string[]> {
-  const supabase = await createServerSupabase();
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("product_catalogs")
     .select("product_ref, catalogs!inner(slug)")
@@ -93,7 +93,7 @@ export type FamilyMeta = {
 
 /** Devuelve mapa slug → meta para todas las familias del overlay. */
 export async function getFamilyMetas(): Promise<Record<string, FamilyMeta>> {
-  const supabase = await createServerSupabase();
+  const supabase = createPublicClient();
   const { data, error } = await supabase.from("families_meta").select("*");
   if (error) {
     console.warn("[getFamilyMetas] error:", error.message);
