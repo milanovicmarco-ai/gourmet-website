@@ -158,7 +158,11 @@ export type ApplyResult = {
 /** Convierte un ImportRow al shape FormFields que entiende mapToApi. */
 function toFormFields(r: ImportRow): FormFields {
   return {
-    ref: r.refVisible ?? r.ref ?? undefined,
+    // La ref canónica de la API es INMUTABLE: el alias (ref_visible) NO debe ir aquí,
+    // porque hacía que el PUT intentara renombrar la canónica → colisión con otra ref
+    // existente y fallaba toda la fila. El alias se persiste aparte en
+    // product_meta.display_ref vía applyOverlay(). Aquí va solo la ref canónica.
+    ref: r.ref ?? undefined,
     name: r.name ?? undefined,
     family: r.family ?? undefined,
     brand: r.brand ?? undefined,
