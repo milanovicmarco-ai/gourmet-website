@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/integrations/supabase/server";
-import { listProducts, listFamilies, type ApiProduct } from "@/lib/pim/api";
+import { listProducts, fetchAllProducts, listFamilies, type ApiProduct } from "@/lib/pim/api";
 import { listCatalogs, getRefsByCatalogSlug, getCatalogsForProducts } from "@/lib/pim/catalogs";
 import { getMetasForProducts, effectiveRef, effectiveBrand } from "@/lib/pim/product-meta";
 import { computeOptimizationScore, adaptApiProduct } from "@/lib/pim/score";
@@ -53,11 +53,16 @@ export default async function AdminProductsPage({
   let catalogs: Awaited<ReturnType<typeof listCatalogs>> = [];
   let error: string | null = null;
 
-  // Una sola llamada cacheable (limit 200) en vez de iterar por familia.
-  // Cada combinación de filtros se sirve desde cache de Vercel tras la 1ª visita.
+  // Sin filtro de familia: traemos TODO el catálogo. fetchAllProducts pagina por
+  // familia para sortear el cap de 200/req de la API (si no, el admin solo veía
+  // los primeros 200 de >600 productos). Con familia: una sola llamada filtrada
+  // (≤200) que sigue siendo rápida.
+  const loadProducts = family
+    ? listProducts({ limit: 200, q, family })
+    : fetchAllProducts({ q }).then((results) => ({ results }));
   const [pr, fa, ca] = await Promise.all([
-    listProducts({ limit: 200, q, family }).catch((e) => {
-      console.warn("[admin/products] listProducts error:", (e as Error).message);
+    loadProducts.catch((e) => {
+      console.warn("[admin/products] carga de productos error:", (e as Error).message);
       error = (e as Error).message;
       return { results: [] as ApiProduct[] };
     }),
