@@ -9,6 +9,7 @@ import {
   Star,
   ArrowLeft,
   ArrowRight,
+  Download,
 } from "lucide-react";
 import {
   addProductImage,
@@ -24,6 +25,21 @@ interface ImagesEditorProps {
   gallery?: string[];
 }
 
+function downloadName(productRef: string, idx: number, blobType: string, url: string) {
+  const extByType: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/avif": "avif",
+  };
+  const fromUrl = url.split("?")[0].split(".").pop()?.toLowerCase() ?? "";
+  const ext =
+    extByType[blobType] ??
+    (/^(jpe?g|png|webp|avif)$/.test(fromUrl) ? fromUrl.replace("jpeg", "jpg") : "jpg");
+  const base = productRef.replace(/[^a-zA-Z0-9._-]+/g, "-");
+  return `${base}-${idx + 1}.${ext}`;
+}
+
 export function ImagesEditor({ productRef, imageUrl, gallery }: ImagesEditorProps) {
   const router = useRouter();
   // Estado: lista ordenada de URLs (la primera es la principal).
@@ -36,6 +52,7 @@ export function ImagesEditor({ productRef, imageUrl, gallery }: ImagesEditorProp
         : [];
   const [items, setItems] = useState<string[]>(initial);
   const [busy, setBusy] = useState<null | "upload" | string>(null);
+  const [downloading, setDownloading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -87,6 +104,34 @@ export function ImagesEditor({ productRef, imageUrl, gallery }: ImagesEditorProp
       setError((e as Error).message);
     } finally {
       setBusy(null);
+    }
+  }
+
+  async function download(url: string, idx: number) {
+    setDownloading(url);
+    setError(null);
+    try {
+      const res = await fetch(url, { mode: "cors" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = downloadName(productRef, idx, blob.type, url);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 1_000);
+    } catch {
+      // Si el host no permite leer la imagen vía fetch (CORS), no podemos forzar
+      // la descarga con nombre: en Cloudinary fl_attachment la fuerza igualmente;
+      // en otros hosts abrimos la imagen en una pestaña nueva.
+      const forced = url.includes("res.cloudinary.com")
+        ? url.replace("/upload/", "/upload/fl_attachment/")
+        : url;
+      window.open(forced, "_blank", "noopener");
+    } finally {
+      setDownloading(null);
     }
   }
 
@@ -224,15 +269,30 @@ export function ImagesEditor({ productRef, imageUrl, gallery }: ImagesEditorProp
                         <Star className="h-3 w-3" /> Principal
                       </button>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => remove(url)}
-                      disabled={!!busy}
-                      title="Eliminar"
-                      className="h-7 w-7 grid place-items-center rounded-full bg-destructive/90 text-destructive-foreground hover:bg-destructive transition-colors ml-auto"
-                    >
-                      {isBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-                    </button>
+                    <div className="ml-auto flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => download(url, idx)}
+                        disabled={downloading === url}
+                        title="Descargar imagen"
+                        className="h-7 w-7 grid place-items-center rounded-full bg-background/90 hover:bg-background transition-colors disabled:opacity-60"
+                      >
+                        {downloading === url ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Download className="h-3.5 w-3.5" />
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => remove(url)}
+                        disabled={!!busy}
+                        title="Eliminar"
+                        className="h-7 w-7 grid place-items-center rounded-full bg-destructive/90 text-destructive-foreground hover:bg-destructive transition-colors"
+                      >
+                        {isBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </li>
@@ -243,7 +303,8 @@ export function ImagesEditor({ productRef, imageUrl, gallery }: ImagesEditorProp
 
       <p className="text-xs text-muted-foreground">
         Formatos: JPEG, PNG, WebP, AVIF (≤ 10 MB). Pasa el ratón sobre cada imagen
-        para verla en grande y acceder a las acciones (reordenar, marcar como principal, eliminar).
+        para verla en grande y acceder a las acciones (reordenar, marcar como principal,
+        descargar, eliminar).
       </p>
     </div>
   );
