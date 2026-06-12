@@ -234,6 +234,7 @@ const ca: Dict = {
   "Sobre nosotros": "Sobre nosaltres",
   "Nuestra historia": "La nostra història",
 
+<<<<<<< HEAD
   // ── Foie ──
   "Tradición e innovación": "Tradició i innovació",
   "en todas sus formas.": "en totes les seves formes.",
@@ -423,6 +424,14 @@ const ca: Dict = {
   "como deben ser.": "com han de ser.",
   "Trabajamos con maestros afinadores. Te ayudamos a montar la tabla, calcular cantidades y maridar.": "Treballem amb mestres afinadors. T'ajudem a muntar la taula, calcular quantitats i maridar.",
   "Pedir más información": "Demanar més informació",
+=======
+  // Quesos / Cheese lovers
+  "afinart · selección Aurellano": "afinart · selecció Aurellano",
+  "como deben ser.": "com han de ser.",
+  "Trabajamos con maestros afinadores. Te ayudamos a montar la tabla, calcular cantidades y maridar.":
+    "Treballem amb mestres afinadors. T'ajudem a muntar la taula, calcular quantitats i maridar.",
+  "Pedir muestrario": "Demanar mostrari",
+>>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
   "Por origen": "Per origen",
   "Por intensidad": "Per intensitat",
   "Por familia": "Per família",
@@ -438,18 +447,29 @@ const ca: Dict = {
   "Intenso": "Intens",
   "Muy intenso": "Molt intens",
   "Pasta dura": "Pasta dura",
+<<<<<<< HEAD
+=======
+  "Vegano": "Vegà",
+>>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
   "Hoy en cámara": "Avui a la cambra",
   "Algunos de nuestros": "Alguns dels nostres",
   "imprescindibles": "imprescindibles",
   "Lo que va": "El que va",
   "con cada queso.": "amb cada formatge.",
+<<<<<<< HEAD
   "Combinaciones probadas en sala. Cuéntanos tu carta de vinos y te proponemos la tabla.": "Combinacions provades a sala. Explica'ns la teva carta de vins i et proposem la taula.",
   "Membrillo + tinto reserva": "Codony + negre reserva",
+=======
+  "Combinaciones probadas en sala. Cuéntanos tu carta de vinos y te proponemos la tabla.":
+    "Combinacions provades en sala. Explica'ns la teva carta de vins i et proposem la taula.",
+  "Membrillo + tinto reserva": "Codonyat + negre reserva",
+>>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
   "Mermelada de higo + cava": "Melmelada de figa + cava",
   "Miel + Pedro Ximénez": "Mel + Pedro Ximénez",
   "Pera + sidra natural": "Pera + sidra natural",
   "¿Montamos": "Muntem",
   "tu tabla": "la teva taula",
+<<<<<<< HEAD
   "Te asesoramos con cantidades, formatos y maridajes según tu carta. Selección curada por maestros afinadores.": "T'assessorem amb quantitats, formats i maridatges segons la teva carta. Selecció curada per mestres afinadors.",
   "Hablemos de quesos": "Parlem de formatges",
 
@@ -458,22 +478,198 @@ const ca: Dict = {
   "Producto pensado para servicio. 4ª y 5ª gama, platos preparados de autor, ingredientes diferenciales que ahorran tiempo sin renunciar al criterio.": "Producte pensat per a servei. 4a i 5a gamma, plats preparats d'autor, ingredients diferencials que estalvien temps sense renunciar al criteri.",
   "Catálogo para tu negocio": "Catàleg per al teu negoci",
   "listo para": "a punt per",
+=======
+  "Te asesoramos con cantidades, formatos y maridajes según tu carta. Selección curada por maestros afinadores.":
+    "T'assessorem amb quantitats, formats i maridatges segons la teva carta. Selecció curada per mestres afinadors.",
+  "Hablemos de quesos": "Parlem de formatges",
+
+  // Colmado
+  "Para tiendas y mercados": "Per a botigues i mercats",
+  "Colmado": "Colmado",
+  "Gourmet.": "Gourmet.",
+  "Producto gourmet pensado para tiendas, supermercados especializados, paradas de mercado y ultramarinos. Alta rotación, márgenes saneados y un surtido que diferencia tu lineal.":
+    "Producte gourmet pensat per a botigues, supermercats especialitzats, parades de mercat i ultramarins. Alta rotació, marges sanejats i un assortit que diferencia el teu lineal.",
+  "Ver catálogo para tu tienda": "Veure catàleg per a la teva botiga",
+  "surtido": "assortit",
+  "para vender": "per vendre",
+  "Beneficios para tu tienda": "Beneficis per a la teva botiga",
+  "Margen, rotación y": "Marge, rotació i",
+  "diferenciación": "diferenciació",
+  "Surtido curado": "Assortit curat",
+  "Selección que escapa del lineal genérico. Tu clientela viene a buscarte por lo que solo tienes tú.":
+    "Selecció que s'escapa del lineal genèric. La teva clientela ve a buscar-te pel que només tens tu.",
+  "Formato retail": "Format retail",
+  "Etiquetado preparado para tienda, formatos que rotan y precio cerrado por unidad.":
+    "Etiquetatge preparat per a botiga, formats que roten i preu tancat per unitat.",
+  "Reposición ágil": "Reposició àgil",
+  "Pedidos pequeños sin penalización. Repones cuando lo necesitas, no cuando toca.":
+    "Comandes petites sense penalització. Reposes quan ho necessites, no quan toca.",
+  "Selección retail": "Selecció retail",
+  "Lo que está volando del lineal.": "El que està volant del lineal.",
+  "Ver todos los productos Colmado": "Veure tots els productes Colmado",
+  "Primer precio": "Primer preu",
+  "Económicos para tu lineal,": "Econòmics per al teu lineal,",
+  "margen para tu tienda": "marge per a la teva botiga",
+  "Productos de alta rotación con precio entry-level y buen margen para escalar volumen.":
+    "Productes d'alta rotació amb preu entry-level i bon marge per escalar volum.",
+  "Ver todos los primer precio Retail": "Veure tots els primer preu Retail",
+
+  // Secrets du Xef
+  "Para hostelería": "Per a l'hostaleria",
+  "Secrets": "Secrets",
+  "du Xef.": "du Xef.",
+  "Producto pensado para servicio. 4ª y 5ª gama, platos preparados de autor, ingredientes diferenciales que ahorran tiempo sin renunciar al criterio.":
+    "Producte pensat per al servei. 4a i 5a gamma, plats preparats d'autor, ingredients diferencials que estalvien temps sense renunciar al criteri.",
+  "Catálogo para tu negocio": "Catàleg per al teu negoci",
+  "listo para": "llest per",
+>>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
   "emplatar": "emplatar",
   "Beneficios para tu cocina": "Beneficis per a la teva cuina",
   "Tiempo, criterio y": "Temps, criteri i",
   "consistencia": "consistència",
+<<<<<<< HEAD
   "Sin merma": "Sense pèrdua",
   "Porcionado y formato pensado para servicio. Aprovecha el 100%.": "Porcionat i format pensat per a servei. Aprofita el 100%.",
   "Calidad uniforme": "Qualitat uniforme",
   "Misma receta plato a plato. Tu cliente repite porque sabe a lo de siempre.": "Mateixa recepta plat a plat. El teu client repeteix perquè sap com sempre.",
   "Tu carta, tu autoría": "La teva carta, la teva autoria",
   "Te damos la base. Tú añades la firma. Nadie sabrá que no es 100% de la casa.": "Et donem la base. Tu hi afegeixes la firma. Ningú sabrà que no és 100% de la casa.",
+=======
+  "Sin merma": "Sense minva",
+  "Porcionado y formato pensado para servicio. Aprovecha el 100%.":
+    "Porcionat i format pensat per al servei. Aprofita el 100%.",
+  "Calidad uniforme": "Qualitat uniforme",
+  "Misma receta plato a plato. Tu cliente repite porque sabe a lo de siempre.":
+    "Mateixa recepta plat a plat. El teu client repeteix perquè té el gust de sempre.",
+  "Tu carta, tu autoría": "La teva carta, la teva autoria",
+  "Te damos la base. Tú añades la firma. Nadie sabrá que no es 100% de la casa.":
+    "Et donem la base. Tu hi afegeixes la firma. Ningú sabrà que no és 100% de la casa.",
+  "Selección": "Selecció",
+>>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
   "Lo que está saliendo de cocina.": "El que està sortint de cuina.",
   "Ver todos los productos HORECA": "Veure tots els productes HORECA",
   "Margen para tu negocio,": "Marge per al teu negoci,",
   "precio para tu carta": "preu per a la teva carta",
+<<<<<<< HEAD
   "Una selección de productos económicos y de alta rotación para escalar márgenes sin perder criterio.": "Una selecció de productes econòmics i d'alta rotació per escalar marges sense perdre criteri.",
   "Ver todos los primer precio HORECA": "Veure tots els primer preu HORECA",
+=======
+  "Una selección de productos económicos y de alta rotación para escalar márgenes sin perder criterio.":
+    "Una selecció de productes econòmics i d'alta rotació per escalar marges sense perdre criteri.",
+  "Ver todos los primer precio HORECA": "Veure tots els primer preu HORECA",
+
+  // Sobre Nosotros
+  "+50 años seleccionando": "+50 anys seleccionant",
+  "producto con criterio.": "producte amb criteri.",
+  "Empresa familiar de Lleida. Nacimos como pequeño distribuidor y nos hemos convertido en partner gourmet de referencia para profesionales en toda España y Andorra.":
+    "Empresa familiar de Lleida. Vam néixer com a petit distribuïdor i ens hem convertit en partner gourmet de referència per a professionals a tot Espanya i Andorra.",
+  "De pequeño distribuidor": "De petit distribuïdor",
+  "a partner": "a partner",
+  "de referencia": "de referència",
+  "1968": "1968",
+  "Empieza la historia": "Comença la història",
+  "Fundación en Lleida como pequeño distribuidor de producto local.":
+    "Fundació a Lleida com a petit distribuïdor de producte local.",
+  "1985": "1985",
+  "El salto al gourmet": "El salt al gourmet",
+  "Apuesta por producto de importación y denominaciones de origen.":
+    "Aposta per producte d'importació i denominacions d'origen.",
+  "2005": "2005",
+  "Profesionalización": "Professionalització",
+  "Logística propia, almacén refrigerado y red de transporte.":
+    "Logística pròpia, magatzem refrigerat i xarxa de transport.",
+  "Hoy": "Avui",
+  "Empresa familiar profesionalizada, +200 proveedores y servicio en toda España y Andorra.":
+    "Empresa familiar professionalitzada, +200 proveïdors i servei a tot Espanya i Andorra.",
+  "Cómo trabajamos": "Com treballem",
+  "Cerca de cada": "A prop de cada",
+  "cliente.": "client.",
+  "Empresa familiar": "Empresa familiar",
+  "Tres generaciones. Conocemos por su nombre a los clientes que llevan décadas con nosotros.":
+    "Tres generacions. Coneixem pel seu nom els clients que fa dècades que són amb nosaltres.",
+  "Profesionalizada": "Professionalitzada",
+  "Procesos, trazabilidad y logística propia. Te servimos como una multinacional, te tratamos como vecinos.":
+    "Processos, traçabilitat i logística pròpia. Et servim com una multinacional, et tractem com veïns.",
+  "Visión gourmet": "Visió gourmet",
+  "Buscamos lo que aún no se conoce. Visitamos productores. Probamos antes que nadie.":
+    "Busquem el que encara no es coneix. Visitem productors. Tastem abans que ningú.",
+  "Innovación": "Innovació",
+  "Apostamos por producto inclusivo, sin alérgenos y formatos pensados para tu negocio.":
+    "Apostem per producte inclusiu, sense al·lèrgens i formats pensats per al teu negoci.",
+  "¿Empezamos a": "Comencem a",
+  "trabajar juntos": "treballar junts",
+
+  // Contacto
+  "Hablemos": "Parlem",
+  "Estamos al otro": "Som a l'altre",
+  "lado del WhatsApp.": "costat del WhatsApp.",
+  "El canal principal de Aurellano es WhatsApp. Te respondemos rápido, con propuesta y precios.":
+    "El canal principal d'Aurellano és WhatsApp. Et responem ràpid, amb proposta i preus.",
+  "Respondemos en horas en horario laboral. Cuéntanos qué buscas.":
+    "Responem en hores en horari laboral. Explica'ns què busques.",
+  "Teléfono": "Telèfon",
+  "Email": "Correu",
+  "Instagram": "Instagram",
+  "Dirección": "Adreça",
+  "Horario": "Horari",
+  "Lunes a Viernes": "De dilluns a divendres",
+  "Zona de servicio": "Zona de servei",
+  "España peninsular y Andorra.": "Espanya peninsular i Andorra.",
+  "24–48h en Cataluña.": "24–48h a Catalunya.",
+  "Desde 200€ portes incluidos.": "Des de 200€ ports inclosos.",
+  "Pedidos en cajas completas.": "Comandes en caixes completes.",
+
+  // Foie
+  "Tradición e innovación": "Tradició i innovació",
+  "Foie": "Foie",
+  "en todas sus formas.": "en totes les seves formes.",
+  "Mi-cuit tradicional, mi-cuit con trufa, bloc, escalopa para plancha. Y nuestra apuesta inclusiva: foie vegano de anacardo, premium e indistinguible.":
+    "Mi-cuit tradicional, mi-cuit amb tòfona, bloc, escalopa per a planxa. I la nostra aposta inclusiva: foie vegà d'anacard, premium i indistingible.",
+  "Hablar de foie": "Parlar de foie",
+  "Tradicional + vegano.": "Tradicional + vegà.",
+
+  // Despensa
+  "La despensa": "El rebost",
+  "Despensa": "Rebost",
+  "gourmet.": "gourmet.",
+  "Conservas, aceites, vinagres, panes, pasta y dulces. La base de cualquier cocina con criterio.":
+    "Conserves, olis, vinagres, pans, pasta i dolços. La base de qualsevol cuina amb criteri.",
+  "Hablar con nosotros": "Parlar amb nosaltres",
+
+  // EspecialSin
+  "Inclusivo y delicioso": "Inclusiu i deliciós",
+  "Especial": "Especial",
+  "\"Sin\".": "\"Sense\".",
+  "Sin gluten, sin lactosa, sin huevo, vegano. Para que tu carta no excluya a nadie y tu mesa healthy no renuncie al sabor.":
+    "Sense gluten, sense lactosa, sense ou, vegà. Perquè la teva carta no exclogui ningú i la teva taula healthy no renunciï al sabor.",
+  "Sin gluten": "Sense gluten",
+  "Sin lactosa": "Sense lactosa",
+  "Sin huevo": "Sense ou",
+  "Sin frutos secos": "Sense fruits secs",
+  "Asesoramiento": "Assessorament",
+  "Producto inclusivo, criterio gourmet.": "Producte inclusiu, criteri gourmet.",
+
+  // Consejos
+  "Saber gourmet": "Saber gourmet",
+  "para profesionales": "per a professionals",
+  "Maridajes, técnicas, conservación y trucos de oficio. Compartimos lo que aprendemos cada día con nuestros proveedores y clientes.":
+    "Maridatges, tècniques, conservació i trucs d'ofici. Compartim el que aprenem cada dia amb els nostres proveïdors i clients.",
+  "Tabla de quesos": "Taula de formatges",
+  "Cómo montar una tabla de quesos memorable": "Com muntar una taula de formatges memorable",
+  "Variedad de leches, intensidades y maridajes. Cantidades, orden de cata y acompañamientos imprescindibles.":
+    "Varietat de llets, intensitats i maridatges. Quantitats, ordre de tast i acompanyaments imprescindibles.",
+  "Foie y vinos dulces: el matrimonio perfecto": "Foie i vins dolços: el matrimoni perfecte",
+  "De Sauternes a Pedro Ximénez. Por qué funcionan y cómo elegir según el tipo de foie.":
+    "De Sauternes a Pedro Ximénez. Per què funcionen i com triar segons el tipus de foie.",
+  "Conservación": "Conservació",
+  "Conservar quesos curados sin perder cualidades": "Conservar formatges curats sense perdre qualitats",
+  "Temperatura, humedad y atemperado. Errores frecuentes en cocinas profesionales.":
+    "Temperatura, humitat i atemperat. Errors freqüents a cuines professionals.",
+  "¿Tienes una duda concreta?": "Tens un dubte concret?",
+  "Nuestro equipo lleva +50 años entre quesos, foies y despensas premium. Pregúntanos.":
+    "El nostre equip porta +50 anys entre formatges, foies i rebosts premium. Pregunta'ns.",
+  "Contactar": "Contactar",
+>>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
 };
 
 const dictionaries: Record<Lang, Dict> = { es: {}, ca };

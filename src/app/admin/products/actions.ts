@@ -68,6 +68,12 @@ export async function createProduct(form: FormFields & { ref?: string }) {
     }
   }
 
+  // Política Marco: solo nombre, ref e imagen son obligatorios. Si se publica
+  // directamente, rellenamos el resto con placeholders antes del POST.
+  if (payload.status === "published") {
+    await enrichForPublish(payload, form.brand);
+  }
+
   const res = await fetch(`${AURELLANO_API}/catalog/products`, {
     method: "POST",
     headers: {
@@ -254,6 +260,70 @@ function normalize(s: string): string {
     .trim();
 }
 
+/**
+ * Política de Marco: los ÚNICOS campos obligatorios al publicar son
+ * nombre, ref e imagen. Esta función rellena PROACTIVAMENTE el resto de
+ * campos que el publish-gate del socio exige (marca, familia, alérgenos,
+ * origen, descripción corta, ingredientes) con placeholders neutros si
+ * el usuario los dejó vacíos.
+ *
+ * Solo rellena los que estén VACÍOS — no pisa nada que el usuario haya escrito.
+ * La imagen NO se puede rellenar con texto: si el producto no tiene image_url
+ * en el payload ni en la BD, el publish fallará y habrá que subirla a mano.
+ */
+async function enrichForPublish(
+  payload: Record<string, unknown>,
+  userBrand?: string | null,
+): Promise<string[]> {
+  const filled: string[] = [];
+
+  // Marca con FK estricta → ensureBrandExists con sentinel "Aurellano".
+  // OJO: mapToApi NUNCA envía brand a la API (vive en overlay Supabase),
+  // así que payload.brand SIEMPRE es undefined aquí. Solo reportamos "marca"
+  // como auto-filled si el usuario tampoco había puesto una marca en su form,
+  // para no confundirlo (el placeholder "Aurellano" es solo para FK del socio).
+  const currentBrand = payload.brand;
+  if (
+    currentBrand == null ||
+    (typeof currentBrand === "string" && currentBrand.trim().length === 0)
+  ) {
+    const ensure = await ensureBrandExists("Aurellano").catch(() => null);
+    if (ensure && ensure.ok) {
+      payload.brand = ensure.brand;
+      const userHasBrand = userBrand && userBrand.trim().length > 0;
+      if (!userHasBrand) filled.push("marca");
+    }
+  }
+
+  // Familia con FK estricta → ensureFamilyExists con sentinel "VARIOS".
+  const currentFamily = payload.family;
+  if (
+    currentFamily == null ||
+    (typeof currentFamily === "string" && currentFamily.trim().length === 0)
+  ) {
+    const ensure = await ensureFamilyExists("VARIOS").catch(() => null);
+    if (ensure && ensure.ok) {
+      payload.family = ensure.family;
+      filled.push("familia");
+    }
+  }
+
+  // Campos de texto libre: placeholders neutros si están vacíos.
+  const setIfEmpty = (key: string, value: string, label: string) => {
+    const v = payload[key];
+    if (v == null || (typeof v === "string" && v.trim().length === 0)) {
+      payload[key] = value;
+      filled.push(label);
+    }
+  };
+  setIfEmpty("alergenos", "Consultar etiqueta", "alérgenos");
+  setIfEmpty("origen", "—", "origen");
+  setIfEmpty("descripcion_corta", "—", "descripción corta");
+  setIfEmpty("ingredientes", "Consultar etiqueta", "ingredientes");
+
+  return filled;
+}
+
 function placeholderFor(field: string): { key: string; value: unknown } | null {
   const f = normalize(field);
   // Brand: sentinel "Aurellano" — se crea (si no existe) vía ensureBrandExists en el retry,
@@ -329,9 +399,17 @@ export async function updateProduct(
     }
   }
 
-  let res = await doProductPut(ref, payload);
-
   const autoFilled: string[] = [];
+
+  // Política de Marco: los únicos campos OBLIGATORIOS para publicar son
+  // nombre, ref e imagen. Todo lo demás se rellena con placeholders neutros
+  // ANTES del PUT para que el publish-gate del socio no nos rechace.
+  if (payload.status === "published") {
+    const filled = await enrichForPublish(payload, form.brand);
+    autoFilled.push(...filled);
+  }
+
+  let res = await doProductPut(ref, payload);
   // Bucle defensivo: hasta 3 reintentos por si la API revela campos faltantes
   // en cascada (devuelve sólo el primero, lo rellenamos, vuelve a fallar con otro).
   const working: Record<string, unknown> = { ...payload };

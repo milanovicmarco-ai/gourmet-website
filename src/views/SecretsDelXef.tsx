@@ -42,7 +42,11 @@ const SecretsDelXef = ({
         <div className="container-edit pt-28 md:pt-36 pb-20 md:pb-28 relative grid lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-6 space-y-6">
             <p className="eyebrow text-primary-foreground/60">{t("Para hostelería")}</p>
+<<<<<<< HEAD
             <h1 className="display text-balance">Secrets<br /><span className="italic font-light text-accent">du Xef.</span></h1>
+=======
+            <h1 className="display text-balance">{t("Secrets")}<br /><span className="italic font-light text-accent">{t("du Xef.")}</span></h1>
+>>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
             <p className="text-lg text-primary-foreground/75 max-w-xl">{t("Producto pensado para servicio. 4ª y 5ª gama, platos preparados de autor, ingredientes diferenciales que ahorran tiempo sin renunciar al criterio.")}</p>
             <div className="flex flex-wrap gap-3">
               <Link href="/catalogo?catalog=horeca" className="inline-flex items-center gap-2 bg-accent text-accent-foreground rounded-full pl-6 pr-7 py-4 font-medium hover:opacity-90 transition-opacity">
@@ -68,6 +72,7 @@ const SecretsDelXef = ({
         <SectionHeader eyebrow={t("Beneficios para tu cocina")} title={<>{t("Tiempo, criterio y")} <span className="pink-underline">{t("consistencia")}</span>.</>} />
         <div className="mt-12 grid md:grid-cols-3 gap-8">
           {[
+<<<<<<< HEAD
             { label: t("Sin merma"), desc: t("Porcionado y formato pensado para servicio. Aprovecha el 100%.") },
             { label: t("Calidad uniforme"), desc: t("Misma receta plato a plato. Tu cliente repite porque sabe a lo de siempre.") },
             { label: t("Tu carta, tu autoría"), desc: t("Te damos la base. Tú añades la firma. Nadie sabrá que no es 100% de la casa.") },
@@ -76,6 +81,16 @@ const SecretsDelXef = ({
               <span className="text-xs text-muted-foreground">0{i + 1}</span>
               <h3 className="font-display font-light text-2xl">{b.label}</h3>
               <p className="text-sm text-muted-foreground">{b.desc}</p>
+=======
+            { title: "Sin merma", desc: "Porcionado y formato pensado para servicio. Aprovecha el 100%." },
+            { title: "Calidad uniforme", desc: "Misma receta plato a plato. Tu cliente repite porque sabe a lo de siempre." },
+            { title: "Tu carta, tu autoría", desc: "Te damos la base. Tú añades la firma. Nadie sabrá que no es 100% de la casa." },
+          ].map((b, i) => (
+            <div key={b.title} className="border-t border-border pt-8 space-y-3">
+              <span className="text-xs text-muted-foreground">0{i + 1}</span>
+              <h3 className="font-display font-light text-2xl">{t(b.title)}</h3>
+              <p className="text-sm text-muted-foreground">{t(b.desc)}</p>
+>>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
             </div>
           ))}
         </div>

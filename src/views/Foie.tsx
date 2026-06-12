@@ -7,11 +7,19 @@ import { ProductCard } from "@/components/ProductCard";
 import { products } from "@/lib/products";
 import { MessageCircle } from "lucide-react";
 import { waLink } from "@/lib/contact";
+<<<<<<< HEAD
 import { useT } from "@/lib/i18n";
 const foie = "/images/foie-vegano.jpg";
 
 const Foie = () => {
   const t = useT();
+=======
+import { useI18n } from "@/lib/i18n";
+const foie = "/images/foie-vegano.jpg";
+
+const Foie = () => {
+  const { t } = useI18n();
+>>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
   const items = products.filter((p) => p.category === "Foie");
   return (
     <Layout
@@ -23,7 +31,11 @@ const Foie = () => {
         <div className="container-edit pt-16 md:pt-24 pb-16 md:pb-20 grid lg:grid-cols-12 gap-12 items-center relative">
           <div className="lg:col-span-6 space-y-6">
             <p className="eyebrow">{t("Tradición e innovación")}</p>
+<<<<<<< HEAD
             <h1 className="display text-balance">Foie<br /><span className="italic font-light text-accent">{t("en todas sus formas.")}</span></h1>
+=======
+            <h1 className="display text-balance">{t("Foie")}<br /><span className="italic font-light text-accent">{t("en todas sus formas.")}</span></h1>
+>>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
             <p className="text-lg text-muted-foreground max-w-xl">{t("Mi-cuit tradicional, mi-cuit con trufa, bloc, escalopa para plancha. Y nuestra apuesta inclusiva: foie vegano de anacardo, premium e indistinguible.")}</p>
             <a href={waLink("Hola, me interesa vuestra gama de foie.")} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-primary text-primary-foreground rounded-full pl-6 pr-7 py-4 font-medium hover:bg-accent transition-colors">
               <MessageCircle className="h-5 w-5" /> {t("Hablar de foie")}

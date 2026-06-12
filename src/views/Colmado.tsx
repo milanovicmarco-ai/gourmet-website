@@ -27,7 +27,11 @@ const Colmado = ({
   primerPrecio = [],
   primerPrecioCatalogCount = 0,
 }: Props) => {
+<<<<<<< HEAD
   const t = useT();
+=======
+  const { t } = useI18n();
+>>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
   return (
     <Layout
       navTheme="dark"
@@ -43,7 +47,11 @@ const Colmado = ({
           <div className="lg:col-span-6 space-y-6">
             <p className="eyebrow text-primary-foreground/60">{t("Para tiendas y mercados")}</p>
             <h1 className="display text-balance">
+<<<<<<< HEAD
               Colmado<br />
+=======
+              {t("Colmado")}<br />
+>>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
               <span className="italic font-light text-accent">{t("Gourmet.")}</span>
             </h1>
             <p className="text-lg text-primary-foreground/75 max-w-xl">
@@ -70,6 +78,12 @@ const Colmado = ({
             <div className="aspect-[4/5] rounded-3xl overflow-hidden">
               <img src={colmadoImg} alt="Mostrador de tienda gourmet" className="h-full w-full object-cover" loading="lazy" />
             </div>
+<<<<<<< HEAD
+=======
+            <div className="absolute -bottom-6 -left-6 h-32 w-32 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-center p-4 shadow-glow">
+              <span className="text-xs font-medium leading-tight">{t("surtido")}<br />{t("para vender")}</span>
+            </div>
+>>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
           </div>
         </div>
       </section>
@@ -78,18 +92,27 @@ const Colmado = ({
       <section className="container-edit py-20 md:py-28">
         <SectionHeader
           eyebrow={t("Beneficios para tu tienda")}
+<<<<<<< HEAD
           title={<>{t("Margen, rotación y")} <span className="pink-underline">{t("diferenciación")}</span>{t(".")}</>}
+=======
+          title={<>{t("Margen, rotación y")} <span className="pink-underline">{t("diferenciación")}</span>.</>}
+>>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
         />
         <div className="mt-12 grid md:grid-cols-3 gap-8">
           {[
-            { t: "Surtido curado", d: "Selección que escapa del lineal genérico. Tu clientela viene a buscarte por lo que solo tienes tú." },
-            { t: "Formato retail", d: "Etiquetado preparado para tienda, formatos que rotan y precio cerrado por unidad." },
-            { t: "Reposición ágil", d: "Pedidos pequeños sin penalización. Repones cuando lo necesitas, no cuando toca." },
+            { title: "Surtido curado", desc: "Selección que escapa del lineal genérico. Tu clientela viene a buscarte por lo que solo tienes tú." },
+            { title: "Formato retail", desc: "Etiquetado preparado para tienda, formatos que rotan y precio cerrado por unidad." },
+            { title: "Reposición ágil", desc: "Pedidos pequeños sin penalización. Repones cuando lo necesitas, no cuando toca." },
           ].map((b, i) => (
-            <div key={b.t} className="border-t border-border pt-8 space-y-3">
+            <div key={b.title} className="border-t border-border pt-8 space-y-3">
               <span className="text-xs text-muted-foreground">0{i + 1}</span>
+<<<<<<< HEAD
               <h3 className="font-display font-light text-2xl">{t(b.t)}</h3>
               <p className="text-sm text-muted-foreground">{t(b.d)}</p>
+=======
+              <h3 className="font-display font-light text-2xl">{t(b.title)}</h3>
+              <p className="text-sm text-muted-foreground">{t(b.desc)}</p>
+>>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
             </div>
           ))}
         </div>
@@ -135,7 +158,11 @@ const Colmado = ({
         <div className="container-edit py-20 md:py-28">
           <SectionHeader
             eyebrow={t("Primer precio")}
+<<<<<<< HEAD
             title={<>{t("Económicos para tu lineal,")} <span className="pink-underline">{t("margen para tu tienda")}</span>{t(".")}</>}
+=======
+            title={<>{t("Económicos para tu lineal,")} <span className="pink-underline">{t("margen para tu tienda")}</span>.</>}
+>>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
             subtitle={t("Productos de alta rotación con precio entry-level y buen margen para escalar volumen.")}
           />
           {primerPrecio.length > 0 ? (
