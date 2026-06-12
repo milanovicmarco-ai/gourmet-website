@@ -4,11 +4,7 @@ import Link from "next/link";
 import { Layout } from "@/components/Layout";
 import { Circle } from "@/components/Circle";
 import { BookOpen, ChefHat, Wine } from "lucide-react";
-<<<<<<< HEAD
-import { useT } from "@/lib/i18n";
-=======
 import { useI18n } from "@/lib/i18n";
->>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
 
 const articles = [
   {
@@ -32,11 +28,7 @@ const articles = [
 ];
 
 const Consejos = () => {
-<<<<<<< HEAD
-  const t = useT();
-=======
   const { t } = useI18n();
->>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
   return (
     <Layout
       seoTitle="Inspiración gourmet | Aurellano P. Gastronòmics"

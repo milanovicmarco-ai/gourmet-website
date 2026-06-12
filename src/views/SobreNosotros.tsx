@@ -7,11 +7,7 @@ import { SectionHeader } from "@/components/SectionHeader";
 const empresa = "/images/empresa.jpg";
 import { MessageCircle, ArrowRight } from "lucide-react";
 import { WHATSAPP_LINK } from "@/lib/contact";
-<<<<<<< HEAD
-import { useT } from "@/lib/i18n";
-=======
 import { useI18n } from "@/lib/i18n";
->>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
 
 const milestones = [
   { year: "1968", title: "Empieza la historia", desc: "Fundación en Lleida como pequeño distribuidor de producto local." },
@@ -21,11 +17,7 @@ const milestones = [
 ];
 
 const SobreNosotros = () => {
-<<<<<<< HEAD
-  const t = useT();
-=======
   const { t } = useI18n();
->>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
   const imgRef = useRef<HTMLDivElement>(null);
   const [offset, setOffset] = useState(0);
 
@@ -96,11 +88,7 @@ const SobreNosotros = () => {
       <div className="mt-14 grid md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
         {milestones.map((m) => (
           <div key={m.year} className="border-t border-border pt-6 space-y-2">
-<<<<<<< HEAD
-            <p className="font-display font-light text-3xl text-accent">{m.year === "Hoy" ? t("Hoy") : m.year}</p>
-=======
             <p className="font-display font-light text-3xl text-accent">{t(m.year)}</p>
->>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
             <h3 className="font-display font-medium text-lg">{t(m.title)}</h3>
             <p className="text-sm text-muted-foreground">{t(m.desc)}</p>
           </div>
@@ -122,15 +110,9 @@ const SobreNosotros = () => {
             { title: "Visión gourmet", desc: "Buscamos lo que aún no se conoce. Visitamos productores. Probamos antes que nadie." },
             { title: "Innovación", desc: "Apostamos por producto inclusivo, sin alérgenos y formatos pensados para tu negocio." },
           ].map((b) => (
-<<<<<<< HEAD
-            <div key={b.t} className="space-y-2 border-t border-primary-foreground/15 pt-6">
-              <h3 className="font-display font-medium text-lg">{t(b.t)}</h3>
-              <p className="text-sm text-primary-foreground/70">{t(b.d)}</p>
-=======
             <div key={b.title} className="space-y-2 border-t border-primary-foreground/15 pt-6">
               <h3 className="font-display font-medium text-lg">{t(b.title)}</h3>
               <p className="text-sm text-primary-foreground/70">{t(b.desc)}</p>
->>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
             </div>
           ))}
         </div>

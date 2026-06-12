@@ -7,19 +7,11 @@ import { ProductCard } from "@/components/ProductCard";
 import { products } from "@/lib/products";
 import { MessageCircle } from "lucide-react";
 import { waLink } from "@/lib/contact";
-<<<<<<< HEAD
-import { useT } from "@/lib/i18n";
-const sin = "/images/sin-alergenos.jpg";
-
-const EspecialSin = () => {
-  const t = useT();
-=======
 import { useI18n } from "@/lib/i18n";
 const sin = "/images/sin-alergenos.jpg";
 
 const EspecialSin = () => {
   const { t } = useI18n();
->>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
   const items = products.filter((p) => p.category === "Especial Sin" || p.allergens.length === 0);
   return (
     <Layout

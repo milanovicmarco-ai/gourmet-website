@@ -7,19 +7,11 @@ import { ProductCard } from "@/components/ProductCard";
 import { products } from "@/lib/products";
 import { MessageCircle } from "lucide-react";
 import { waLink } from "@/lib/contact";
-<<<<<<< HEAD
-import { useT } from "@/lib/i18n";
-const despensa = "/images/despensa.jpg";
-
-const Despensa = () => {
-  const t = useT();
-=======
 import { useI18n } from "@/lib/i18n";
 const despensa = "/images/despensa.jpg";
 
 const Despensa = () => {
   const { t } = useI18n();
->>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
   const items = products.filter((p) => p.category === "Conservas" || p.category === "Despensa");
   return (
     <Layout
