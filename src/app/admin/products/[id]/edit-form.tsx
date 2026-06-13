@@ -413,18 +413,18 @@ export function ProductEditForm({ productRef, initial, meta, families = [], bran
       <fieldset className="rounded-2xl border border-border p-5 space-y-4">
         <legend className="px-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">SEO</legend>
         <Field
-          label="Title (≤ 60)"
+          label="Title (≤ 80)"
           value={form.seo_title}
           onChange={(v) => set("seo_title", v)}
-          max={60}
+          max={80}
           action={aiButton("seo_title", "Sugerir title SEO", "seo_title")}
         />
         <Textarea
-          label="Description (≤ 160)"
+          label="Description (≤ 200)"
           value={form.seo_description}
           onChange={(v) => set("seo_description", v)}
           rows={2}
-          max={160}
+          max={200}
           action={aiButton("seo_description", "Sugerir description SEO", "seo_description")}
         />
       </fieldset>

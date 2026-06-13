@@ -36,14 +36,14 @@ const FIELD_PROMPTS: Record<AIField, { task: string; max_tokens: number; tempera
   },
   seo_title: {
     task:
-      "Genera un SEO TITLE en español. EXACTAMENTE el formato: '{producto} | Aurellano Productes Gastronòmics'. Máximo 60 caracteres TOTALES. Si excede, abrevia el nombre del producto. Devuelve SOLO el title, sin comillas.",
-    max_tokens: 80,
+      "Genera un SEO TITLE en español. EXACTAMENTE el formato: '{producto} | Aurellano Productes Gastronòmics'. Máximo 80 caracteres TOTALES. Si excede, abrevia el nombre del producto. Devuelve SOLO el title, sin comillas.",
+    max_tokens: 100,
     temperature: 0.4,
   },
   seo_description: {
     task:
-      "Genera una SEO DESCRIPTION en español. Máximo 155 caracteres. Que incluya: tipo de producto, propuesta de valor, una llamada a la acción suave (descúbrelo, pídelo, etc). Sin signos de exclamación. Devuelve SOLO el texto.",
-    max_tokens: 100,
+      "Genera una SEO DESCRIPTION en español. Máximo 200 caracteres. Que incluya: tipo de producto, propuesta de valor, una llamada a la acción suave (descúbrelo, pídelo, etc). Sin signos de exclamación. Devuelve SOLO el texto.",
+    max_tokens: 130,
     temperature: 0.5,
   },
   pairings: {
