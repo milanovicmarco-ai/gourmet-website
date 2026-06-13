@@ -18,7 +18,7 @@ export type FeaturedProduct = {
   family: string;
   image_url: string | null;
 };
-const heroFoie = "/images/hero-foie.jpg";
+const heroFoie = "/images/Restaurant_productes_gastronomics_aurellano.jpg";
 const cheeses = "/images/cheeses.jpg";
 const quesoDetalle = "/images/queso-detalle.jpg";
 const xef = "/images/xef.jpg";

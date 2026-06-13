@@ -51,10 +51,7 @@ export const metadata: Metadata = {
     images: ["/og/aurellano-cover.jpg"],
   },
   icons: {
-    icon: [
-      { url: "/favicon.png", type: "image/png" },
-      { url: "/favicon.ico", sizes: "any" },
-    ],
+    icon: [{ url: "/favicon.png", type: "image/png" }],
     apple: "/favicon.png",
   },
   robots: { index: true, follow: true },

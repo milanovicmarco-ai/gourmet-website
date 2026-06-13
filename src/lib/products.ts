@@ -8,7 +8,7 @@ const foieVegano = "/images/foie-vegano.jpg";
 const croquetas = "/images/croquetas.jpg";
 const despensa = "/images/despensa.jpg";
 const sinAlergenos = "/images/sin-alergenos.jpg";
-const heroFoie = "/images/hero-foie.jpg";
+const heroFoie = "/images/Restaurant_productes_gastronomics_aurellano.jpg";
 
 export type NutritionFacts = {
   serving?: string;
