@@ -5,7 +5,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { listFamilies, fetchAllProducts, type ApiProduct } from "@/lib/pim/api";
 import { getMetasForProducts, effectiveRef, effectiveBrand, matchesSearch } from "@/lib/pim/product-meta";
 import { listCatalogs, listAllFamilies, getRefsByCatalogSlug, humanizeFamilySlug } from "@/lib/pim/catalogs";
-import { MultiSelectFilter } from "./multi-select-filter";
+import { MultiSelectFilter } from "@/components/MultiSelectFilter";
 import { MessageCircle, X } from "lucide-react";
 import { waLink } from "@/lib/contact";
 

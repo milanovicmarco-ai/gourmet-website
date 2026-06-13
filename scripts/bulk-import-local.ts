@@ -224,7 +224,12 @@ async function ensureBrandForPublish(
 
   if (!brand || brand.trim().length === 0) {
     body.status = "draft";
-    return { outcome: { kind: "downgraded", warning: "sin marca en la fila → guardado como draft" } };
+    return {
+      outcome: {
+        kind: "downgraded",
+        warning: "sin marca → guardado como draft (la API del socio exige marca para publicar)",
+      },
+    };
   }
 
   const check = await ensureBrandExists(brand);
