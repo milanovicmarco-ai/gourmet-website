@@ -4,17 +4,10 @@ import { Layout } from "@/components/Layout";
 import { Circle } from "@/components/Circle";
 import { MessageCircle, Phone, Mail, MapPin, Instagram } from "lucide-react";
 import { WHATSAPP_LINK, WHATSAPP_DISPLAY, PHONE_FIXED, EMAIL, INSTAGRAM, INSTAGRAM_HANDLE, ADDRESS, GOOGLE_BUSINESS_URL } from "@/lib/contact";
-<<<<<<< HEAD
 import { useT } from "@/lib/i18n";
 
 const Contacto = () => {
   const t = useT();
-=======
-import { useI18n } from "@/lib/i18n";
-
-const Contacto = () => {
-  const { t } = useI18n();
->>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
   return (
   <Layout
     seoTitle="Contacto | Aurellano Productes Gastronòmics"
@@ -58,13 +51,8 @@ const Contacto = () => {
               <item.icon className="h-5 w-5" strokeWidth={1.5} />
             </div>
             <div>
-<<<<<<< HEAD
               <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t(item.label)}</p>
               <p className="font-medium mt-0.5">{item.value}</p>
-=======
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t(c.label)}</p>
-              <p className="font-medium mt-0.5">{c.value}</p>
->>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
             </div>
           </a>
         ))}

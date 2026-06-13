@@ -29,11 +29,7 @@ interface Props {
 }
 
 const Quesos = ({ featured = [], featuredCatalogCount = 0 }: Props) => {
-<<<<<<< HEAD
   const t = useT();
-=======
-  const { t } = useI18n();
->>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
   return (
     <Layout
       seoTitle="Quesos para enamorarse | Aurellano Productes Gastronòmics"
@@ -44,11 +40,7 @@ const Quesos = ({ featured = [], featuredCatalogCount = 0 }: Props) => {
         <Circle variant="blur" className="w-[500px] h-[500px] top-0 -left-40" />
         <div className="container-edit pt-32 md:pt-40 pb-12 md:pb-20 relative grid lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-7 space-y-7">
-<<<<<<< HEAD
             <p className="eyebrow">afinart · {t("selección Aurellano")}</p>
-=======
-            <p className="eyebrow">{t("afinart · selección Aurellano")}</p>
->>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
             <h1 className="display text-balance">
               {t("Quesos afinados")}<br />
               <span className="italic font-light text-accent">{t("como deben ser.")}</span>
@@ -57,11 +49,7 @@ const Quesos = ({ featured = [], featuredCatalogCount = 0 }: Props) => {
               {t("Trabajamos con maestros afinadores. Te ayudamos a montar la tabla, calcular cantidades y maridar.")}
             </p>
             <a href={waLink("Hola Aurellano, me interesa vuestra selección de quesos.")} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-primary text-primary-foreground rounded-full pl-6 pr-7 py-4 font-medium hover:bg-accent transition-colors">
-<<<<<<< HEAD
               <MessageCircle className="h-5 w-5" /> {t("Pedir más información")}
-=======
-              <MessageCircle className="h-5 w-5" /> {t("Pedir muestrario")}
->>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
             </a>
           </div>
           <div className="lg:col-span-5 relative">
@@ -161,11 +149,7 @@ const Quesos = ({ featured = [], featuredCatalogCount = 0 }: Props) => {
           <div className="relative max-w-3xl mx-auto space-y-8">
             <p className="eyebrow justify-center inline-flex text-primary/70">{t("Empecemos")}</p>
             <h2 className="display text-balance text-primary">
-<<<<<<< HEAD
               {t("¿Montamos")} <span className="italic font-light">{t("tu tabla")}</span>{t("?")}
-=======
-              {t("¿Montamos")} <span className="italic font-light">{t("tu tabla")}</span>?
->>>>>>> f1b77cf (Publish-gate: solo nombre + ref + imagen obligatorios)
             </h2>
             <p className="text-lg text-primary/80 max-w-xl mx-auto">
               {t("Te asesoramos con cantidades, formatos y maridajes según tu carta. Selección curada por maestros afinadores.")}
