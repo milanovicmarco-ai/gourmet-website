@@ -7,7 +7,7 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { ProductCard } from "@/components/ProductCard";
 import { waLink } from "@/lib/contact";
 import type { CuratedProduct } from "@/lib/pim/featured";
-import { useT } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n";
 
 const cheeses = "/images/cheeses.jpg";
 
