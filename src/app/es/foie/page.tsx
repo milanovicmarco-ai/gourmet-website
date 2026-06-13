@@ -1,0 +1,18 @@
+import type { Metadata } from "next";
+import Foie from "@/views/Foie";
+
+export const metadata: Metadata = {
+  title: "Foie y terrinas",
+  description: "Foie mi-cuit, bloc, escalopa y nuestra apuesta inclusiva: foie vegano de anacardo. Producto premium para restauración y tienda.",
+  alternates: {
+    canonical: "/es/foie",
+    languages: {
+      "es-ES": "/es/foie",
+      "ca-ES": "/ca/foie",
+    },
+  },
+};
+
+export default function FoiePage() {
+  return <Foie />;
+}

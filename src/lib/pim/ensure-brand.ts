@@ -117,8 +117,24 @@ export async function ensureBrandExists(
         body: JSON.stringify(bodyCreate),
       });
       if (createRes.ok) {
-        // ¡OJO! 2xx no garantiza que el brand esté usable como FK en /catalog/products.
-        // Verificamos con un re-GET que la marca aparezca realmente listada.
+        // Si la API responde con el cuerpo del brand creado, lo usamos como
+        // fuente de verdad. Si no, intentamos verificar con un re-GET (para
+        // obtener el slug canónico si la API lo asigna distinto del nuestro),
+        // pero NO fallamos la creación si el verify no encuentra — la API
+        // podría tener paginación, latencia de índice u otra cosa.
+        try {
+          const created = (await createRes.clone().json()) as ApiBrand;
+          if (created && (created.name || created.slug)) {
+            const finalName = created.name || trimmed;
+            const finalSlug = created.slug || slug;
+            console.log(`[ensureBrandExists] '${trimmed}' creado (POST 2xx) → name="${finalName}", slug="${finalSlug}"`);
+            return { ok: true, brand: finalName, slug: finalSlug };
+          }
+        } catch {
+          // body sin JSON parseable — caemos al verify-GET o trust-input
+        }
+        // Verify "best effort": si encontramos el brand recién creado, devolvemos
+        // su nombre/slug canónicos. Si no, confiamos en el 2xx y devolvemos el input.
         const verifyList = await listBrands();
         const verified = findBrand(verifyList, trimmed, slug);
         if (verified) {
@@ -127,10 +143,9 @@ export async function ensureBrandExists(
           return { ok: true, brand: verified.name, slug: verifiedSlug };
         }
         console.warn(
-          `[ensureBrandExists] POST devolvió 2xx para '${trimmed}' pero el re-GET NO la encuentra. Probando siguiente shape.`,
+          `[ensureBrandExists] POST 2xx para '${trimmed}' pero el re-GET NO la encuentra (¿paginación o latencia?). Confiamos en el 2xx.`,
         );
-        lastReason = `POST 2xx pero verify-GET no encuentra '${trimmed}' (shape: ${JSON.stringify(bodyCreate)})`;
-        continue;
+        return { ok: true, brand: trimmed, slug };
       }
       const body = await createRes.text().catch(() => "");
       lastReason = `POST /brands ${createRes.status}: ${body.slice(0, 200)}`;

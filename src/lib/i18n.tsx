@@ -1,8 +1,10 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, ReactNode } from "react";
+import { usePathname } from "next/navigation";
+import { getLangFromPath, type Lang as RoutesLang } from "@/lib/i18n/routes";
 
-export type Lang = "es" | "ca";
+export type Lang = RoutesLang;
 
 type Dict = Record<string, string>;
 
@@ -520,41 +522,26 @@ interface I18nCtx {
 const I18nContext = createContext<I18nCtx | null>(null);
 
 export const I18nProvider = ({ children }: { children: ReactNode }) => {
-  // IMPORTANTE: arrancamos siempre con "es" para evitar hydration mismatch.
-  const [lang, setLangState] = useState<Lang>("es");
+  // El idioma SE DEDUCE del pathname (/es/... o /ca/...). Next re-renderiza
+  // este componente en cada navegación, así que `lang` se mantiene en sync con
+  // la URL automáticamente. Sin cookies, sin localStorage, sin reload.
+  const pathname = usePathname() ?? "/";
+  const lang: Lang = getLangFromPath(pathname);
 
-  // Lectura inicial post-mount (sólo cliente)
+  // Actualiza el atributo <html lang="…"> cuando cambia la URL, para a11y/SEO.
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const cookieMatch = document.cookie.match(/(?:^|; )aurellano_lang=(es|ca)/);
-    if (cookieMatch) {
-      const v = cookieMatch[1] as Lang;
-      if (v !== lang) setLangState(v);
-      return;
-    }
-    const saved = window.localStorage.getItem("aurellano.lang");
-    if (saved === "ca" && lang !== "ca") setLangState("ca");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Persistencia + refresh del servidor cuando cambia el idioma
-  const setLang = (next: Lang) => {
-    // Escribimos cookie SINCRÓNICAMENTE antes de refrescar para que el server la lea bien
     if (typeof document !== "undefined") {
-      document.documentElement.lang = next;
-      document.cookie = `aurellano_lang=${next}; path=/; max-age=31536000; samesite=lax`;
+      document.documentElement.lang = lang;
     }
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("aurellano.lang", next);
-    }
-    setLangState(next);
-    // Refrescamos el árbol de Server Components con el nuevo cookie set
-    // (Next.js detecta el cookie y vuelve a renderizar páginas dinámicas)
-    if (typeof window !== "undefined") {
-      // Pequeño microtask para que la cookie esté realmente set antes del fetch
-      setTimeout(() => {
-        if (typeof window !== "undefined") window.location.reload();
-      }, 30);
+  }, [lang]);
+
+  // setLang queda como no-op: el cambio de idioma ahora ocurre vía navegación
+  // del LangSwitcher (router.push a la URL equivalente del otro idioma).
+  const setLang = (_next: Lang) => {
+    if (process.env.NODE_ENV === "development") {
+      console.warn(
+        "[i18n] setLang() ya no cambia el idioma — usa el LangSwitcher que navega a la URL equivalente.",
+      );
     }
   };
 

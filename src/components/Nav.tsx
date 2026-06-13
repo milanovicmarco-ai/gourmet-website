@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Menu, X, MessageCircle, ChevronDown, Globe } from "lucide-react";
 import { Logo } from "./Logo";
 import { cn } from "@/lib/utils";
 import { WHATSAPP_LINK } from "@/lib/contact";
 import { useNavTheme } from "@/lib/nav-theme";
 import { useI18n } from "@/lib/i18n";
+import { getEquivalentPath, ROUTES } from "@/lib/i18n/routes";
 
 type LinkItem = {
   to: string;
@@ -16,20 +17,29 @@ type LinkItem = {
   children?: { to: string; label: string }[];
 };
 
-const buildLinks = (t: (k: string) => string): LinkItem[] => [
-  { to: "/catalogo", label: t("Catálogo") },
-  { to: "/secrets-du-xef", label: t("Secrets du Xef") },
-  { to: "/colmado", label: t("Colmado") },
+const buildLinks = (t: (k: string) => string, lang: "es" | "ca"): LinkItem[] => [
+  { to: ROUTES.catalogo[lang], label: t("Catálogo") },
+  { to: ROUTES.secrets[lang], label: t("Secrets du Xef") },
+  { to: ROUTES.colmado[lang], label: t("Colmado") },
   // "Cheese lovers" es la única especialidad enlazada en el menú principal.
   // El resto (delicatessen, healthy, limited-edition) siguen accesibles vía /catalogo?catalog=…
   // pero no aparecen como dropdown porque Marco lo prefiere así.
-  { to: "/quesos", label: t("Cheese lovers") },
-  { to: "/inspiracion", label: t("Inspírate") },
-  { to: "/sobre-nosotros", label: t("Aurellano") },
+  { to: ROUTES.quesos[lang], label: t("Cheese lovers") },
+  { to: ROUTES.inspirate[lang], label: t("Inspírate") },
+  { to: ROUTES.sobre[lang], label: t("Aurellano") },
 ];
 
 const LangSwitcher = ({ isDark }: { isDark: boolean }) => {
-  const { lang, setLang } = useI18n();
+  const { lang } = useI18n();
+  const pathname = usePathname() ?? "/";
+  const router = useRouter();
+
+  const switchTo = (target: "es" | "ca") => {
+    if (target === lang) return;
+    const next = getEquivalentPath(pathname, target);
+    router.push(next);
+  };
+
   return (
     <div
       className={cn(
@@ -42,7 +52,7 @@ const LangSwitcher = ({ isDark }: { isDark: boolean }) => {
       <Globe className="h-3 w-3 mx-1 opacity-70" />
       <button
         type="button"
-        onClick={() => setLang("es")}
+        onClick={() => switchTo("es")}
         className={cn(
           "px-2 py-0.5 rounded-full transition-colors",
           lang === "es" ? "bg-accent text-accent-foreground" : "hover:text-accent",
@@ -53,7 +63,7 @@ const LangSwitcher = ({ isDark }: { isDark: boolean }) => {
       </button>
       <button
         type="button"
-        onClick={() => setLang("ca")}
+        onClick={() => switchTo("ca")}
         className={cn(
           "px-2 py-0.5 rounded-full transition-colors",
           lang === "ca" ? "bg-accent text-accent-foreground" : "hover:text-accent",
@@ -72,8 +82,8 @@ export const Nav = () => {
   const theme = useNavTheme();
   const isDark = theme === "dark";
   const pathname = usePathname();
-  const { t } = useI18n();
-  const links = buildLinks(t);
+  const { t, lang } = useI18n();
+  const links = buildLinks(t, lang);
 
   const isActive = (to: string) => {
     const target = to.split("?")[0];
