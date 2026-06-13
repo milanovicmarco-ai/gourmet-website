@@ -5,6 +5,7 @@ import { computeOptimizationScore, adaptApiProduct } from "@/lib/pim/score";
 import { getProductByRef } from "@/lib/pim/api";
 import { mapFromApi } from "@/lib/pim/api-mapper";
 import { listCatalogs, getProductCatalogs, listAllFamilies } from "@/lib/pim/catalogs";
+import { loadBrandOptions } from "@/lib/pim/brands";
 import { getTranslation } from "@/lib/pim/translations";
 import { getProductMeta, effectiveRef } from "@/lib/pim/product-meta";
 import { ImagesEditor } from "./images-editor";
@@ -26,13 +27,14 @@ export default async function AdminProductDetailPage({
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/admin/login");
 
-  const [product, allCatalogs, assignedSlugs, caTranslation, meta, allFamilies] = await Promise.all([
+  const [product, allCatalogs, assignedSlugs, caTranslation, meta, allFamilies, brandOptions] = await Promise.all([
     getProductByRef(ref).catch(() => null),
     listCatalogs(true).catch(() => []),
     getProductCatalogs(ref).catch(() => []),
     getTranslation(ref, "ca").catch(() => null),
     getProductMeta(ref),
     listAllFamilies().catch(() => []),
+    loadBrandOptions(),
   ]);
   if (!product) notFound();
 
@@ -118,6 +120,7 @@ export default async function AdminProductDetailPage({
             caInitial={caTranslation}
             meta={meta}
             families={allFamilies}
+            brandOptions={brandOptions}
           />
 
           {/* Danger zone — siempre al final, separado del resto. */}

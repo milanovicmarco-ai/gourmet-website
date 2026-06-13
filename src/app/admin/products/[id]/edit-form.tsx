@@ -9,6 +9,7 @@ import type { ProductMeta } from "@/lib/pim/product-meta";
 import { AIAssistButton } from "./ai-assist-button";
 import type { AIField } from "../ai-actions";
 import { computeOptimizationScore } from "@/lib/pim/score";
+import { EntityCombobox, type EntityOption } from "./entity-combobox";
 
 interface ProductEditFormProps {
   productRef: string;
@@ -16,9 +17,14 @@ interface ProductEditFormProps {
   meta: ProductMeta;
   /** Familias disponibles para autocomplete (combinación API + overlay settings). */
   families?: { slug: string; display_name: string; active: boolean; count: number }[];
+  /** Marcas existentes en la API del socio para el combobox de marca. */
+  brandOptions?: EntityOption[];
 }
 
-export function ProductEditForm({ productRef, initial, meta, families = [] }: ProductEditFormProps) {
+export function ProductEditForm({ productRef, initial, meta, families = [], brandOptions: initialBrandOptions = [] }: ProductEditFormProps) {
+  // Opciones mutables: cuando el usuario crea una marca nueva desde el combobox,
+  // la añadimos aquí para que aparezca inmediatamente sin recargar.
+  const [brandOptions, setBrandOptions] = useState<EntityOption[]>(initialBrandOptions);
   const router = useRouter();
   const [form, setForm] = useState({
     // La ref del form es la "ref visible al usuario": display_ref si existe, si no la canónica de la API.
@@ -229,7 +235,22 @@ export function ProductEditForm({ productRef, initial, meta, families = [] }: Pr
           placeholder={`canónica: ${productRef}`}
         />
         <Field label="Nombre" value={form.name} onChange={(v) => set("name", v)} />
-        <Field label="Marca" value={form.brand} onChange={(v) => set("brand", v)} placeholder="ej. Maison Lafleur" />
+        {/* Combobox de marca con autocompletar + crear-si-no-existe. Guardamos
+            siempre el NAME canónico en form.brand (es lo que va a brand_override
+            de Supabase y lo que se muestra como overlay en la web pública). */}
+        <FieldWrap label="Marca">
+          <EntityCombobox
+            kind="brand"
+            value={brandOptions.find((b) => b.name.toLowerCase() === form.brand.toLowerCase().trim())?.slug ?? null}
+            options={brandOptions}
+            onChange={(slug) => {
+              const name = slug ? (brandOptions.find((b) => b.slug === slug)?.name ?? "") : "";
+              set("brand", name);
+            }}
+            onOptionsChange={setBrandOptions}
+            placeholder="ej. Maison Lafleur"
+          />
+        </FieldWrap>
         <Field
           label="Familia"
           value={form.family}
@@ -423,6 +444,17 @@ export function ProductEditForm({ productRef, initial, meta, families = [] }: Pr
         )}
       </div>
     </form>
+  );
+}
+
+/** Wrapper que aplica el mismo label que `Field` pero deja al componente hijo
+ *  ocuparse del input (útil para combobox, custom controls, etc.). */
+function FieldWrap({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <label className="block space-y-1.5">
+      <span className="text-xs uppercase tracking-wider text-muted-foreground">{label}</span>
+      {children}
+    </label>
   );
 }
 

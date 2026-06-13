@@ -2,31 +2,11 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/integrations/supabase/server";
 import { listAllFamilies } from "@/lib/pim/catalogs";
-import { AURELLANO_API } from "@/lib/pim/api";
+import { loadBrandOptions } from "@/lib/pim/brands";
 import { ProductCreateForm } from "./create-form";
 import type { EntityOption } from "../[id]/entity-combobox";
 
 export const dynamic = "force-dynamic";
-
-/** Trae las marcas de la API del socio para alimentar el combobox.
- *  Si falla, devuelve lista vacía — el combobox permite crear marcas nuevas igual. */
-async function loadBrandOptions(): Promise<EntityOption[]> {
-  try {
-    const r = await fetch(`${AURELLANO_API}/catalog/brands`, { cache: "no-store" });
-    if (!r.ok) return [];
-    const data = await r.json();
-    const list: { slug?: string; name?: string }[] = Array.isArray(data)
-      ? data
-      : data.results ?? [];
-    return list
-      .map((b) => ({ slug: (b.slug ?? "").trim(), name: (b.name ?? b.slug ?? "").trim() }))
-      .filter((b) => b.slug.length > 0)
-      .sort((a, b) => a.name.localeCompare(b.name));
-  } catch (err) {
-    console.warn("[NewProductPage] loadBrandOptions error:", (err as Error).message);
-    return [];
-  }
-}
 
 export default async function NewProductPage() {
   const supabase = await createClient();

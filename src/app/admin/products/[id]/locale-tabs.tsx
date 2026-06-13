@@ -5,6 +5,7 @@ import type { ApiProduct } from "@/lib/pim/api";
 import type { ProductTranslation } from "@/lib/pim/translations";
 import { ProductEditForm } from "./edit-form";
 import { TranslationsForm } from "./translations-form";
+import type { EntityOption } from "./entity-combobox";
 import type { FormFields } from "@/lib/pim/api-mapper";
 import type { ProductMeta } from "@/lib/pim/product-meta";
 
@@ -15,9 +16,10 @@ interface Props {
   caInitial: ProductTranslation | null;
   meta: ProductMeta;
   families?: { slug: string; display_name: string; active: boolean; count: number }[];
+  brandOptions?: EntityOption[];
 }
 
-export function LocaleTabs({ productRef, product, esInitial, caInitial, meta, families }: Props) {
+export function LocaleTabs({ productRef, product, esInitial, caInitial, meta, families, brandOptions }: Props) {
   const [active, setActive] = useState<"es" | "ca">("es");
 
   return (
@@ -28,7 +30,7 @@ export function LocaleTabs({ productRef, product, esInitial, caInitial, meta, fa
       </div>
 
       {active === "es" ? (
-        <ProductEditForm productRef={productRef} initial={esInitial} meta={meta} families={families} />
+        <ProductEditForm productRef={productRef} initial={esInitial} meta={meta} families={families} brandOptions={brandOptions} />
       ) : (
         <TranslationsForm
           productRef={productRef}
