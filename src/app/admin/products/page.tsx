@@ -19,7 +19,10 @@ type SP = {
   sin_gluten?: string;
   sin_lactosa?: string;
   vegetariano?: string;
+  page?: string;
 };
+
+const PIM_PAGE_SIZE = 50;
 
 export default async function AdminProductsPage({
   searchParams,
@@ -151,6 +154,32 @@ export default async function AdminProductsPage({
         )
       : 0;
 
+  // Paginación: 50 por página. La página actual viene de ?page=N.
+  const currentPage = Math.max(1, Number(sp.page) || 1);
+  const totalPages = Math.max(1, Math.ceil(totalShown / PIM_PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages);
+  const pageStart = (safePage - 1) * PIM_PAGE_SIZE;
+  const pageEnd = pageStart + PIM_PAGE_SIZE;
+  const pageItems = filtered.slice(pageStart, pageEnd);
+
+  // Helper: construye href para navegar entre páginas preservando todos los filtros.
+  const hrefForPage = (n: number): string => {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (family) params.set("family", family);
+    if (brandFilter) params.set("brand", brandFilter);
+    if (catalogSlug) params.set("catalog", catalogSlug);
+    if (status) params.set("status", status);
+    if (scoreMin > 0) params.set("score_min", String(scoreMin));
+    if (scoreMax < 100) params.set("score_max", String(scoreMax));
+    if (onlySinGluten) params.set("sin_gluten", "1");
+    if (onlySinLactosa) params.set("sin_lactosa", "1");
+    if (onlyVegetariano) params.set("vegetariano", "1");
+    if (n > 1) params.set("page", String(n));
+    const qs = params.toString();
+    return `/admin/products${qs ? `?${qs}` : ""}`;
+  };
+
   const activeFilters =
     [q, family, brandFilter, catalogSlug, status, onlySinGluten, onlySinLactosa, onlyVegetariano].filter(Boolean).length +
     (scoreMin > 0 ? 1 : 0) +
@@ -166,6 +195,16 @@ export default async function AdminProductsPage({
           </h1>
           <p className="text-sm text-muted-foreground mt-2">
             <span className="font-medium text-foreground">{totalShown}</span> de {totalLoaded}
+            {totalPages > 1 && (
+              <>
+                {" · "}mostrando{" "}
+                <span className="font-medium text-foreground">
+                  {pageStart + 1}–{Math.min(pageEnd, totalShown)}
+                </span>
+                {" · pág. "}
+                <span className="font-medium text-foreground">{safePage}</span> de {totalPages}
+              </>
+            )}
             {" · score medio "}
             <span className="font-medium text-foreground">{avgScore}/100</span>
           </p>
@@ -314,7 +353,7 @@ export default async function AdminProductsPage({
         </div>
       ) : (
         <ul className="space-y-2">
-          {filtered.map((p) => {
+          {pageItems.map((p) => {
             const stat = p.status ?? (p.active === false ? "archived" : "published");
             const score = productScores.get(p.ref) ?? 0;
             return (
@@ -380,6 +419,70 @@ export default async function AdminProductsPage({
             );
           })}
         </ul>
+      )}
+
+      {/* Paginación: 50 por página. Se muestra solo si hay más de una página. */}
+      {totalPages > 1 && (
+        <nav
+          aria-label="Paginación"
+          className="flex flex-wrap items-center justify-center gap-2 pt-4"
+        >
+          {safePage > 1 ? (
+            <Link
+              href={hrefForPage(safePage - 1)}
+              className="inline-flex items-center justify-center min-w-10 h-10 px-4 rounded-full border border-border text-sm font-medium hover:border-foreground transition-colors"
+            >
+              ← Anterior
+            </Link>
+          ) : (
+            <span className="inline-flex items-center justify-center min-w-10 h-10 px-4 rounded-full border border-border text-sm font-medium opacity-30 cursor-not-allowed">
+              ← Anterior
+            </span>
+          )}
+
+          {(() => {
+            const pages: (number | "ellipsis")[] = [];
+            const push = (n: number) => {
+              if (!pages.includes(n)) pages.push(n);
+            };
+            push(1);
+            if (safePage > 3) pages.push("ellipsis");
+            for (let n = Math.max(2, safePage - 1); n <= Math.min(totalPages - 1, safePage + 1); n++) push(n);
+            if (safePage < totalPages - 2) pages.push("ellipsis");
+            if (totalPages > 1) push(totalPages);
+            return pages.map((p, i) =>
+              p === "ellipsis" ? (
+                <span key={`e${i}`} className="px-2 text-muted-foreground">…</span>
+              ) : (
+                <Link
+                  key={p}
+                  href={hrefForPage(p)}
+                  className={`inline-flex items-center justify-center min-w-10 h-10 px-3 rounded-full border text-sm font-medium tabular-nums transition-colors ${
+                    p === safePage
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "border-border hover:border-foreground"
+                  }`}
+                  aria-current={p === safePage ? "page" : undefined}
+                >
+                  {p}
+                </Link>
+              ),
+            );
+          })()}
+
+          {safePage < totalPages ? (
+            <Link
+              href={hrefForPage(safePage + 1)}
+              className="inline-flex items-center justify-center min-w-10 h-10 px-4 rounded-full border border-border text-sm font-medium hover:border-foreground transition-colors"
+            >
+              Siguiente →
+            </Link>
+          ) : (
+            <span className="inline-flex items-center justify-center min-w-10 h-10 px-4 rounded-full border border-border text-sm font-medium opacity-30 cursor-not-allowed">
+              Siguiente →
+            </span>
+          )}
+        </nav>
       )}
     </div>
   );
