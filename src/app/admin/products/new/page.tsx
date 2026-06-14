@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/integrations/supabase/server";
 import { listAllFamilies } from "@/lib/pim/catalogs";
 import { loadBrandOptions } from "@/lib/pim/brands";
+import { withTimeout } from "@/lib/with-timeout";
 import { ProductCreateForm } from "./create-form";
 import type { EntityOption } from "../[id]/entity-combobox";
 
@@ -13,9 +14,11 @@ export default async function NewProductPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/admin/login");
 
+  // Timeout duro 8s para que la página no se cuelgue si Supabase o la
+  // partner API tardan demasiado. Ver src/lib/with-timeout.ts.
   const [families, brandOptions] = await Promise.all([
-    listAllFamilies().catch(() => []),
-    loadBrandOptions(),
+    withTimeout(listAllFamilies(), 8000, "listAllFamilies", [] as Awaited<ReturnType<typeof listAllFamilies>>),
+    withTimeout(loadBrandOptions(), 8000, "loadBrandOptions", [] as Awaited<ReturnType<typeof loadBrandOptions>>),
   ]);
   const familyOptions: EntityOption[] = families.map((f) => ({
     slug: f.slug,

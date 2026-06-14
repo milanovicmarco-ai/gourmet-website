@@ -7,7 +7,8 @@ import { mapFromApi } from "@/lib/pim/api-mapper";
 import { listCatalogs, getProductCatalogs, listAllFamilies } from "@/lib/pim/catalogs";
 import { loadBrandOptions } from "@/lib/pim/brands";
 import { getTranslation } from "@/lib/pim/translations";
-import { getProductMeta, effectiveRef } from "@/lib/pim/product-meta";
+import { getProductMeta, effectiveRef, EMPTY_META } from "@/lib/pim/product-meta";
+import { withTimeout } from "@/lib/with-timeout";
 import { ImagesEditor } from "./images-editor";
 import { CatalogPicker } from "./catalog-picker";
 import { LocaleTabs } from "./locale-tabs";
@@ -27,14 +28,17 @@ export default async function AdminProductDetailPage({
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/admin/login");
 
+  // Cada fetch lleva timeout duro de 8s con fallback seguro. El único
+  // que es realmente crítico es `getProductByRef`: si éste falla, mostramos
+  // notFound. Los demás se degradan a vacío/null sin romper la página.
   const [product, allCatalogs, assignedSlugs, caTranslation, meta, allFamilies, brandOptions] = await Promise.all([
-    getProductByRef(ref).catch(() => null),
-    listCatalogs(true).catch(() => []),
-    getProductCatalogs(ref).catch(() => []),
-    getTranslation(ref, "ca").catch(() => null),
-    getProductMeta(ref),
-    listAllFamilies().catch(() => []),
-    loadBrandOptions(),
+    withTimeout(getProductByRef(ref).catch(() => null), 8000, "getProductByRef", null),
+    withTimeout(listCatalogs(true), 8000, "listCatalogs", [] as Awaited<ReturnType<typeof listCatalogs>>),
+    withTimeout(getProductCatalogs(ref), 8000, "getProductCatalogs", [] as string[]),
+    withTimeout(getTranslation(ref, "ca"), 8000, "getTranslation", null as Awaited<ReturnType<typeof getTranslation>>),
+    withTimeout(getProductMeta(ref), 8000, "getProductMeta", EMPTY_META(ref)),
+    withTimeout(listAllFamilies(), 8000, "listAllFamilies", [] as Awaited<ReturnType<typeof listAllFamilies>>),
+    withTimeout(loadBrandOptions(), 8000, "loadBrandOptions", [] as Awaited<ReturnType<typeof loadBrandOptions>>),
   ]);
   if (!product) notFound();
 
