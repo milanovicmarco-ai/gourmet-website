@@ -22,29 +22,125 @@ const csvParse = (s: string | undefined): string[] =>
         .filter(Boolean)
     : [];
 
-const DIETA_OPTIONS = [
-  { value: "sin_gluten", label: "Sin gluten" },
-  { value: "sin_lactosa", label: "Sin lactosa" },
-  { value: "vegetariano", label: "Vegetariano" },
-  { value: "vegano", label: "Vegano" },
-  { value: "sin_frutos_secos", label: "Sin frutos secos" },
-  { value: "sin_azucares_anadidos", label: "Sin azúcares añadidos" },
-  { value: "alto_proteinas", label: "Alto en proteínas" },
-  { value: "keto", label: "Keto" },
-];
+type Lang = "es" | "ca";
 
-const MENU_OPTIONS = [
-  { value: "aperitivo", label: "Aperitivo" },
-  { value: "entrante", label: "Entrante" },
-  { value: "principal", label: "Principal" },
-  { value: "guarnicion", label: "Guarnición" },
-  { value: "postre", label: "Postre" },
-];
+const STRINGS = {
+  es: {
+    catalogo: "Catálogo",
+    encuentra: "Encuentra el producto",
+    comotrabajas: "como tú trabajas.",
+    filtraDesc: "Filtra por familia, alérgeno o búsqueda libre. Si no lo encuentras, lo conseguimos.",
+    buscar: "Buscar",
+    placeholder: "nombre, marca…",
+    filtrar: "Filtrar",
+    familia: "Familia",
+    marca: "Marca",
+    alergenos: "Alérgenos",
+    menu: "Menú",
+    destacados: "Destacados",
+    ordenarPor: "Ordenar por",
+    nombre: "Nombre",
+    referencia: "Referencia",
+    limpiarFiltros: "Limpiar filtros",
+    producto: "producto",
+    productos: "productos",
+    mostrando: "mostrando",
+    pagina: "Página",
+    de: "de",
+    noConectar: "No se pudo conectar con el catálogo.",
+    cero: "0 productos",
+    noResultados: "No hay resultados",
+    pruebaAjustar:
+      "Prueba ajustando los filtros o pídenos la referencia. Tenemos +200 proveedores y red de importación.",
+    pedirRef: "Pedir referencia",
+    anterior: "{T.anterior}",
+    siguiente: "{T.siguiente}",
+    waMsg: "Hola Aurellano, busco una referencia concreta. ¿Podéis conseguirla?",
+  },
+  ca: {
+    catalogo: "Catàleg",
+    encuentra: "Troba el producte",
+    comotrabajas: "com tu treballes.",
+    filtraDesc: "Filtra per família, al·lèrgens o cerca lliure. Si no el trobes, te'l aconseguim.",
+    buscar: "Cercar",
+    placeholder: "nom, marca…",
+    filtrar: "Filtrar",
+    familia: "Família",
+    marca: "Marca",
+    alergenos: "Al·lèrgens",
+    menu: "Menú",
+    destacados: "Destacats",
+    ordenarPor: "Ordenar per",
+    nombre: "Nom",
+    referencia: "Referència",
+    limpiarFiltros: "Netejar filtres",
+    producto: "producte",
+    productos: "productes",
+    mostrando: "mostrant",
+    pagina: "Pàgina",
+    de: "de",
+    noConectar: "No s'ha pogut connectar amb el catàleg.",
+    cero: "0 productes",
+    noResultados: "Sense resultats",
+    pruebaAjustar:
+      "Prova d'ajustar els filtres o demana'ns la referència. Tenim +200 proveïdors i xarxa d'importació.",
+    pedirRef: "Demanar referència",
+    anterior: "{T.anterior}",
+    siguiente: "Següent →",
+    waMsg: "Hola Aurellano, busco una referència concreta. La podeu aconseguir?",
+  },
+} as const;
 
-const ESPECIALIDAD_OPTIONS = [
-  { value: "destacado", label: "Destacado" },
-  { value: "primer_precio", label: "Primer precio" },
-];
+const dietaOptionsFor = (lang: Lang) =>
+  lang === "ca"
+    ? [
+        { value: "sin_gluten", label: "Sense gluten" },
+        { value: "sin_lactosa", label: "Sense lactosa" },
+        { value: "vegetariano", label: "Vegetarià" },
+        { value: "vegano", label: "Vegà" },
+        { value: "sin_frutos_secos", label: "Sense fruits secs" },
+        { value: "sin_azucares_anadidos", label: "Sense sucres afegits" },
+        { value: "alto_proteinas", label: "Alt en proteïnes" },
+        { value: "keto", label: "Keto" },
+      ]
+    : [
+        { value: "sin_gluten", label: "Sin gluten" },
+        { value: "sin_lactosa", label: "Sin lactosa" },
+        { value: "vegetariano", label: "Vegetariano" },
+        { value: "vegano", label: "Vegano" },
+        { value: "sin_frutos_secos", label: "Sin frutos secos" },
+        { value: "sin_azucares_anadidos", label: "Sin azúcares añadidos" },
+        { value: "alto_proteinas", label: "Alto en proteínas" },
+        { value: "keto", label: "Keto" },
+      ];
+
+const menuOptionsFor = (lang: Lang) =>
+  lang === "ca"
+    ? [
+        { value: "aperitivo", label: "Aperitiu" },
+        { value: "entrante", label: "Entrant" },
+        { value: "principal", label: "Principal" },
+        { value: "guarnicion", label: "Guarnició" },
+        { value: "postre", label: "Postres" },
+      ]
+    : [
+        { value: "aperitivo", label: "Aperitivo" },
+        { value: "entrante", label: "Entrante" },
+        { value: "principal", label: "Principal" },
+        { value: "guarnicion", label: "Guarnición" },
+        { value: "postre", label: "Postre" },
+      ];
+
+const especialidadOptionsFor = (lang: Lang) =>
+  lang === "ca"
+    ? [
+        { value: "destacado", label: "Destacat" },
+        { value: "primer_precio", label: "Primer preu" },
+      ]
+    : [
+        { value: "destacado", label: "Destacado" },
+        { value: "primer_precio", label: "Primer precio" },
+      ];
 
 export type CatalogContentSP = {
   q?: string;
@@ -69,9 +165,15 @@ interface Props {
   basePath: string;
   /** "/es/producto" o "/ca/producte" — para los href de cada ProductCard. */
   productHrefBase: string;
+  /** Idioma del wrapper que renderiza este componente. Default "es". */
+  lang?: Lang;
 }
 
-export async function CatalogContent({ sp, basePath, productHrefBase }: Props) {
+export async function CatalogContent({ sp, basePath, productHrefBase, lang = "es" }: Props) {
+  const T = STRINGS[lang];
+  const DIETA_OPTIONS = dietaOptionsFor(lang);
+  const MENU_OPTIONS = menuOptionsFor(lang);
+  const ESPECIALIDAD_OPTIONS = especialidadOptionsFor(lang);
   const q = sp.q?.trim() || undefined;
   const catalogSlug = sp.catalog?.trim() || undefined;
   const familySel = csvParse(sp.family);
@@ -272,36 +374,35 @@ export async function CatalogContent({ sp, basePath, productHrefBase }: Props) {
       {/* Hero */}
       <section className="container-edit pt-32 md:pt-40 pb-10 md:pb-14">
         <div className="max-w-4xl space-y-6">
-          <p className="eyebrow">{activeCatalog ? `Catálogo · ${activeCatalog.name}` : "Catálogo"}</p>
+          <p className="eyebrow">{activeCatalog ? `${T.catalogo} · ${activeCatalog.name}` : T.catalogo}</p>
           <h1 className="display text-balance">
             {activeCatalog ? (
               <>{activeCatalog.name}</>
             ) : (
               <>
-                Encuentra el producto<br />
-                <span className="italic font-light text-accent">como tú trabajas.</span>
+                {T.encuentra}<br />
+                <span className="italic font-light text-accent">{T.comotrabajas}</span>
               </>
             )}
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl text-pretty">
-            {activeCatalog?.description ??
-              "Filtra por familia, alérgeno o búsqueda libre. Si no lo encuentras, lo conseguimos."}
+            {activeCatalog?.description ?? T.filtraDesc}
           </p>
         </div>
       </section>
 
-      {/* Filtros */}
-      <section className="container-edit pb-8 max-w-5xl">
+      {/* Filtros — full width del container para alinear con la grid de productos. */}
+      <section className="container-edit pb-8">
         <form className="space-y-3">
           {catalogSlug && <input type="hidden" name="catalog" value={catalogSlug} />}
           <div className="grid gap-3 md:grid-cols-[1fr_auto] items-end">
             <label className="block space-y-1.5">
-              <span className="text-xs uppercase tracking-wider text-muted-foreground">Buscar</span>
+              <span className="text-xs uppercase tracking-wider text-muted-foreground">{T.buscar}</span>
               <input
                 type="search"
                 name="q"
                 defaultValue={q ?? ""}
-                placeholder="nombre, marca…"
+                placeholder={T.placeholder}
                 className="w-full bg-secondary border border-border rounded-full px-5 py-3 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition"
               />
             </label>
@@ -309,12 +410,13 @@ export async function CatalogContent({ sp, basePath, productHrefBase }: Props) {
               type="submit"
               className="bg-primary text-primary-foreground rounded-full px-7 py-3 font-medium hover:bg-accent transition-colors h-fit"
             >
-              Filtrar
+              {T.filtrar}
             </button>
           </div>
+          {/* Filtros + orden, todos como columnas del mismo grid → alineados. */}
           <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
             <MultiSelectFilter
-              label="Familia"
+              label={T.familia}
               name="family"
               defaultValues={familySel}
               options={familiesPublished.map((f) => ({
@@ -324,44 +426,41 @@ export async function CatalogContent({ sp, basePath, productHrefBase }: Props) {
               }))}
             />
             <MultiSelectFilter
-              label="Marca"
+              label={T.marca}
               name="brand"
               defaultValues={brandSel}
               options={allBrands.map((b) => ({ value: b.toLowerCase().trim(), label: b }))}
             />
             <MultiSelectFilter
-              label="Alérgenos"
+              label={T.alergenos}
               name="dieta"
               defaultValues={dietaSel}
               options={DIETA_OPTIONS}
             />
             {catalogSlug === "horeca" && (
               <MultiSelectFilter
-                label="Menú"
+                label={T.menu}
                 name="menu"
                 defaultValues={menuSel}
                 options={MENU_OPTIONS}
               />
             )}
             <MultiSelectFilter
-              label="Destacados"
+              label={T.destacados}
               name="especialidad"
               defaultValues={especialidadSel}
               options={ESPECIALIDAD_OPTIONS}
             />
-          </div>
-
-          {/* Selector de orden: alfabético por nombre (default) o por referencia. */}
-          <div className="flex items-center justify-end gap-2 pt-1">
-            <label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
-              Ordenar por
+            {/* Sort como columna del mismo grid → alineado con los demás filtros. */}
+            <label className="block space-y-1.5">
+              <span className="text-xs uppercase tracking-wider text-muted-foreground">{T.ordenarPor}</span>
               <select
                 name="sort"
                 defaultValue={sortKey}
-                className="bg-background border border-border rounded-full px-3 py-1 text-xs normal-case tracking-normal focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
+                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition"
               >
-                <option value="name">Nombre</option>
-                <option value="ref">Referencia</option>
+                <option value="name">{T.nombre}</option>
+                <option value="ref">{T.referencia}</option>
               </select>
             </label>
           </div>
@@ -374,7 +473,7 @@ export async function CatalogContent({ sp, basePath, productHrefBase }: Props) {
               className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-accent transition-colors"
             >
               <X className="h-3.5 w-3.5" />
-              Limpiar filtros
+              {T.limpiarFiltros}
             </Link>
           </div>
         )}
@@ -385,15 +484,15 @@ export async function CatalogContent({ sp, basePath, productHrefBase }: Props) {
         <div className="border-b border-border pb-4 mb-8 flex flex-wrap items-baseline justify-between gap-3">
           <p className="text-sm text-muted-foreground">
             {error ? (
-              <span className="text-destructive">No se pudo conectar con el catálogo.</span>
+              <span className="text-destructive">{T.noConectar}</span>
             ) : totalCount > 0 ? (
               <>
                 <span className="font-semibold text-foreground">{totalCount}</span>{" "}
-                producto{totalCount === 1 ? "" : "s"}
+                {totalCount === 1 ? T.producto : T.productos}
                 {totalPages > 1 && (
                   <>
                     {" · "}
-                    mostrando{" "}
+                    {T.mostrando}{" "}
                     <span className="font-medium text-foreground">
                       {pageStart + 1}–{Math.min(pageEnd, totalCount)}
                     </span>
@@ -401,12 +500,12 @@ export async function CatalogContent({ sp, basePath, productHrefBase }: Props) {
                 )}
               </>
             ) : (
-              <span>0 productos</span>
+              <span>{T.cero}</span>
             )}
           </p>
           {totalPages > 1 && (
             <p className="text-xs text-muted-foreground tabular-nums">
-              Página <span className="font-medium text-foreground">{safePage}</span> de {totalPages}
+              {T.pagina} <span className="font-medium text-foreground">{safePage}</span> {T.de} {totalPages}
             </p>
           )}
         </div>
@@ -432,17 +531,15 @@ export async function CatalogContent({ sp, basePath, productHrefBase }: Props) {
           </div>
         ) : !error ? (
           <div className="rounded-3xl border border-dashed border-border p-12 md:p-16 text-center space-y-5">
-            <h3 className="font-display font-light text-3xl">No hay resultados</h3>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              Prueba ajustando los filtros o pídenos la referencia. Tenemos +200 proveedores y red de importación.
-            </p>
+            <h3 className="font-display font-light text-3xl">{T.noResultados}</h3>
+            <p className="text-muted-foreground max-w-md mx-auto">{T.pruebaAjustar}</p>
             <a
-              href={waLink("Hola Aurellano, busco una referencia concreta. ¿Podéis conseguirla?")}
+              href={waLink(T.waMsg)}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground rounded-full pl-5 pr-6 py-3 text-sm font-medium hover:bg-accent transition-colors"
             >
-              <MessageCircle className="h-4 w-4" /> Pedir referencia
+              <MessageCircle className="h-4 w-4" /> {T.pedirRef}
             </a>
           </div>
         ) : null}
@@ -454,11 +551,11 @@ export async function CatalogContent({ sp, basePath, productHrefBase }: Props) {
                 href={hrefForPage(safePage - 1)}
                 className="inline-flex items-center justify-center min-w-10 h-10 px-4 rounded-full border border-border text-sm font-medium hover:border-foreground transition-colors"
               >
-                ← Anterior
+                {T.anterior}
               </Link>
             ) : (
               <span className="inline-flex items-center justify-center min-w-10 h-10 px-4 rounded-full border border-border text-sm font-medium opacity-30 cursor-not-allowed">
-                ← Anterior
+                {T.anterior}
               </span>
             )}
 
@@ -498,11 +595,11 @@ export async function CatalogContent({ sp, basePath, productHrefBase }: Props) {
                 href={hrefForPage(safePage + 1)}
                 className="inline-flex items-center justify-center min-w-10 h-10 px-4 rounded-full border border-border text-sm font-medium hover:border-foreground transition-colors"
               >
-                Siguiente →
+                {T.siguiente}
               </Link>
             ) : (
               <span className="inline-flex items-center justify-center min-w-10 h-10 px-4 rounded-full border border-border text-sm font-medium opacity-30 cursor-not-allowed">
-                Siguiente →
+                {T.siguiente}
               </span>
             )}
           </nav>

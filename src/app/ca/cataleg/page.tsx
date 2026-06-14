@@ -31,6 +31,7 @@ export default async function CatalegPage({
           sp={sp}
           basePath="/ca/cataleg"
           productHrefBase="/ca/producte"
+          lang="ca"
         />
       </Suspense>
     </Layout>
