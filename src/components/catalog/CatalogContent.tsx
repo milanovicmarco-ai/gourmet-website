@@ -56,7 +56,12 @@ export type CatalogContentSP = {
   gama?: string;
   especialidad?: string;
   page?: string;
+  /** Orden: "name" (alfabético por nombre, default) o "ref" (por referencia). */
+  sort?: string;
 };
+
+type SortKey = "name" | "ref";
+const VALID_SORTS: SortKey[] = ["name", "ref"];
 
 interface Props {
   sp: CatalogContentSP;
@@ -76,6 +81,7 @@ export async function CatalogContent({ sp, basePath, productHrefBase }: Props) {
   const gamaSel = csvParse(sp.gama).map(Number).filter((n) => Number.isFinite(n));
   const especialidadSel = csvParse(sp.especialidad);
   const currentPage = Math.max(1, Number(sp.page) || 1);
+  const sortKey: SortKey = VALID_SORTS.includes(sp.sort as SortKey) ? (sp.sort as SortKey) : "name";
 
   let products: ApiProduct[] = [];
   let error: string | null = null;
@@ -203,15 +209,22 @@ export async function CatalogContent({ sp, basePath, productHrefBase }: Props) {
     return true;
   });
 
-  // Orden: alfabético por nombre, los que empiezan por número al final.
-  filtered.sort((a, b) => {
-    const an = a.name ?? "";
-    const bn = b.name ?? "";
-    const aNum = /^\s*\d/.test(an) ? 1 : 0;
-    const bNum = /^\s*\d/.test(bn) ? 1 : 0;
-    if (aNum !== bNum) return aNum - bNum;
-    return an.localeCompare(bn, "es", { sensitivity: "base", numeric: true });
-  });
+  // Orden: alfabético por nombre (default) o por referencia.
+  if (sortKey === "ref") {
+    filtered.sort((a, b) =>
+      (a.ref ?? "").localeCompare(b.ref ?? "", undefined, { numeric: true, sensitivity: "base" }),
+    );
+  } else {
+    // Por nombre: los que empiezan por número van al final.
+    filtered.sort((a, b) => {
+      const an = a.name ?? "";
+      const bn = b.name ?? "";
+      const aNum = /^\s*\d/.test(an) ? 1 : 0;
+      const bNum = /^\s*\d/.test(bn) ? 1 : 0;
+      if (aNum !== bNum) return aNum - bNum;
+      return an.localeCompare(bn, "es", { sensitivity: "base", numeric: true });
+    });
+  }
 
   const totalCount = filtered.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
@@ -230,6 +243,7 @@ export async function CatalogContent({ sp, basePath, productHrefBase }: Props) {
     if (menuSel.length) params.set("menu", menuSel.join(","));
     if (gamaSel.length) params.set("gama", gamaSel.join(","));
     if (especialidadSel.length) params.set("especialidad", especialidadSel.join(","));
+    if (sortKey !== "name") params.set("sort", sortKey);
     if (n > 1) params.set("page", String(n));
     const qs = params.toString();
     return `${basePath}${qs ? `?${qs}` : ""}`;
@@ -335,6 +349,21 @@ export async function CatalogContent({ sp, basePath, productHrefBase }: Props) {
               defaultValues={especialidadSel}
               options={ESPECIALIDAD_OPTIONS}
             />
+          </div>
+
+          {/* Selector de orden: alfabético por nombre (default) o por referencia. */}
+          <div className="flex items-center justify-end gap-2 pt-1">
+            <label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
+              Ordenar por
+              <select
+                name="sort"
+                defaultValue={sortKey}
+                className="bg-background border border-border rounded-full px-3 py-1 text-xs normal-case tracking-normal focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
+              >
+                <option value="name">Nombre</option>
+                <option value="ref">Referencia</option>
+              </select>
+            </label>
           </div>
         </form>
 
