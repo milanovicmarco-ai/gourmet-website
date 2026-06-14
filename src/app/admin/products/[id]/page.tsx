@@ -28,11 +28,28 @@ export default async function AdminProductDetailPage({
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/admin/login");
 
-  // Cada fetch lleva timeout duro de 8s con fallback seguro. El único
-  // que es realmente crítico es `getProductByRef`: si éste falla, mostramos
-  // notFound. Los demás se degradan a vacío/null sin romper la página.
-  const [product, allCatalogs, assignedSlugs, caTranslation, meta, allFamilies, brandOptions] = await Promise.all([
-    withTimeout(getProductByRef(ref).catch(() => null), 8000, "getProductByRef", null),
+  // Política de fetches:
+  // - getProductByRef es el ÚNICO crítico. Tiene su propio timeout interno
+  //   de 20s (timeoutFetch en api.ts). Si falla con error, lanzamos para
+  //   que Next muestre error.tsx — NO 404 falso, que confunde a Marco.
+  //   Si responde 404 real (producto no existe), devuelve null → notFound.
+  // - Los demás son auxiliares: con timeout 8s y fallback vacío. Si alguno
+  //   se cuelga, la página renderiza con campos faltantes pero no se rompe.
+  //
+  // revalidate = 0 → fetch SIN cache. Esto es el editor del PIM: cada vez
+  // que Marco abre un producto queremos los datos frescos, no una respuesta
+  // potencialmente errónea cacheada hace 1h. (Además, esto es lo que cura
+  // el "404 fantasma": si la API respondió mal una vez, no nos quedamos
+  // pegados a esa respuesta durante 3600s.)
+  const productOrError = await getProductByRef(ref, 0).catch((err: Error) => err);
+  if (productOrError instanceof Error) {
+    // Error transitorio (timeout, 5xx, red): no es 404. Mostrar error.tsx.
+    throw new Error(`No se pudo cargar el producto ${ref}: ${productOrError.message}`);
+  }
+  const product = productOrError;
+  if (!product) notFound();
+
+  const [allCatalogs, assignedSlugs, caTranslation, meta, allFamilies, brandOptions] = await Promise.all([
     withTimeout(listCatalogs(true), 8000, "listCatalogs", [] as Awaited<ReturnType<typeof listCatalogs>>),
     withTimeout(getProductCatalogs(ref), 8000, "getProductCatalogs", [] as string[]),
     withTimeout(getTranslation(ref, "ca"), 8000, "getTranslation", null as Awaited<ReturnType<typeof getTranslation>>),
@@ -40,7 +57,6 @@ export default async function AdminProductDetailPage({
     withTimeout(listAllFamilies(), 8000, "listAllFamilies", [] as Awaited<ReturnType<typeof listAllFamilies>>),
     withTimeout(loadBrandOptions(), 8000, "loadBrandOptions", [] as Awaited<ReturnType<typeof loadBrandOptions>>),
   ]);
-  if (!product) notFound();
 
   // Mapeamos slugs asignados a IDs reales del catálogo
   const assignedIds = allCatalogs.filter((c) => assignedSlugs.includes(c.slug)).map((c) => c.id);

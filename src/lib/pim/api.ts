@@ -73,12 +73,21 @@ export type FamilyCount = { family: string; count: number };
  *  para el peor caso legítimo y a la vez CORTA los productos que se cuelgan:
  *  antes, con 20s, un único ref que no respondía arrastraba la página entera
  *  hasta el timeout porque loadCatalogContext espera con Promise.all. Si un
- *  fetch lo excede, .catch() lo descarta y la página renderiza sin ese dato. */
+ *  fetch lo excede, .catch() lo descarta y la página renderiza sin ese dato.
+ *
+ *  Pero para detalles individuales (getProductByRef del PIM), 6s es DEMASIADO
+ *  corto si la API arranca lenta (cold start tras inactividad) — provoca
+ *  notFound() fantasma. En esos casos sube el timeout pasando el parámetro
+ *  opcional a timeoutFetch. */
 const FETCH_TIMEOUT_MS = 6_000;
 
-async function timeoutFetch(input: string, init?: RequestInit & { next?: { revalidate?: number } }) {
+async function timeoutFetch(
+  input: string,
+  init?: RequestInit & { next?: { revalidate?: number } },
+  timeoutMs: number = FETCH_TIMEOUT_MS,
+) {
   const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  const id = setTimeout(() => controller.abort(), timeoutMs);
   try {
     return await fetch(input, { ...init, signal: controller.signal });
   } finally {
@@ -108,9 +117,21 @@ export async function listProducts(params?: {
 }
 
 export async function getProductByRef(ref: string, revalidate = 3600): Promise<ApiProduct | null> {
-  const res = await timeoutFetch(`${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}`, {
-    next: { revalidate },
-  });
+  // 20s — el detalle individual es una sola request, no arrastra al resto.
+  // El backend de Hostinger arranca lento tras inactividad y 6s daba
+  // notFound() fantasma cuando el producto SÍ existía.
+  //
+  // revalidate = 0 → cache:"no-store" (fresh siempre). El editor del PIM
+  // lo usa así. Revalidate > 0 → cache cacheable en el edge de Vercel,
+  // que es lo que queremos para el catálogo público.
+  const cacheOpts = revalidate === 0
+    ? { cache: "no-store" as const }
+    : { next: { revalidate } };
+  const res = await timeoutFetch(
+    `${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}`,
+    cacheOpts,
+    20_000,
+  );
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`getProductByRef ${res.status}: ${await res.text()}`);
   return res.json();

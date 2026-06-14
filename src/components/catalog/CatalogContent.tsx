@@ -53,8 +53,8 @@ const STRINGS = {
     pruebaAjustar:
       "Prueba ajustando los filtros o pídenos la referencia. Tenemos +200 proveedores y red de importación.",
     pedirRef: "Pedir referencia",
-    anterior: "{T.anterior}",
-    siguiente: "{T.siguiente}",
+    anterior: "← Anterior",
+    siguiente: "Siguiente →",
     waMsg: "Hola Aurellano, busco una referencia concreta. ¿Podéis conseguirla?",
   },
   ca: {
@@ -85,7 +85,7 @@ const STRINGS = {
     pruebaAjustar:
       "Prova d'ajustar els filtres o demana'ns la referència. Tenim +200 proveïdors i xarxa d'importació.",
     pedirRef: "Demanar referència",
-    anterior: "{T.anterior}",
+    anterior: "← Anterior",
     siguiente: "Següent →",
     waMsg: "Hola Aurellano, busco una referència concreta. La podeu aconseguir?",
   },
