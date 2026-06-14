@@ -216,18 +216,36 @@ type PrepareResult = {
   fallbackSlug?: string;
 };
 
+/** Detecta valores "basura" que el usuario pone como sentinel de "sin marca"
+ *  (típico: "-", "—", "•", ".", "  ", "n/a", etc). Si al normalizar quitando
+ *  acentos y caracteres no alfanuméricos queda string vacío, el backend del
+ *  socio no podrá generar slug y rechazará el POST con "Slug vacío tras
+ *  normalizar." → evitamos los 4 round-trips inútiles y degradamos directo. */
+function isJunkBrand(brand: string): boolean {
+  const normalized = brand
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^a-z0-9]+/g, "")
+    .trim();
+  return normalized.length === 0;
+}
+
 async function ensureBrandForPublish(
   body: Record<string, unknown>,
   brand: string | null | undefined,
 ): Promise<PrepareResult> {
   if (body.status !== "published") return { outcome: { kind: "ok" } };
 
-  if (!brand || brand.trim().length === 0) {
+  if (!brand || brand.trim().length === 0 || isJunkBrand(brand)) {
     body.status = "draft";
+    const reason = !brand || brand.trim().length === 0
+      ? "sin marca"
+      : `marca "${brand}" no normalizable (solo caracteres no válidos)`;
     return {
       outcome: {
         kind: "downgraded",
-        warning: "sin marca → guardado como draft (la API del socio exige marca para publicar)",
+        warning: `${reason} → guardado como draft (la API del socio exige marca para publicar)`,
       },
     };
   }
