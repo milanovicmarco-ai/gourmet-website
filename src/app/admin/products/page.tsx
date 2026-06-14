@@ -20,9 +20,13 @@ type SP = {
   sin_lactosa?: string;
   vegetariano?: string;
   page?: string;
+  /** Orden del listado: "ref" (default, asc) o "name" (nombre + marca, asc). */
+  sort?: string;
 };
 
 const PIM_PAGE_SIZE = 50;
+type SortKey = "ref" | "name";
+const VALID_SORTS: SortKey[] = ["ref", "name"];
 
 export default async function AdminProductsPage({
   searchParams,
@@ -49,6 +53,7 @@ export default async function AdminProductsPage({
   const scoreMax = sp.score_max ? Number(sp.score_max) : 100;
   const onlySinGluten = sp.sin_gluten === "1";
   const onlySinLactosa = sp.sin_lactosa === "1";
+  const sortKey: SortKey = VALID_SORTS.includes(sp.sort as SortKey) ? (sp.sort as SortKey) : "ref";
   const onlyVegetariano = sp.vegetariano === "1";
 
   let products: ApiProduct[] = [];
@@ -145,6 +150,25 @@ export default async function AdminProductsPage({
     return true;
   });
 
+  // Ordenación: por ref (default) o por nombre + marca. Locale "es" para que
+  // acentos/ñ se ordenen como espera un humano.
+  if (sortKey === "name") {
+    filtered.sort((a, b) => {
+      const an = (a.name ?? "").trim();
+      const bn = (b.name ?? "").trim();
+      const cmp = an.localeCompare(bn, "es", { sensitivity: "base", numeric: true });
+      if (cmp !== 0) return cmp;
+      const ab = (effectiveBrand(metas[a.ref], a.brand) ?? "").trim();
+      const bb = (effectiveBrand(metas[b.ref], b.brand) ?? "").trim();
+      return ab.localeCompare(bb, "es", { sensitivity: "base", numeric: true });
+    });
+  } else {
+    // sort por ref ascendente con collation numérica (ref_2 antes que ref_10)
+    filtered.sort((a, b) =>
+      (a.ref ?? "").localeCompare(b.ref ?? "", undefined, { numeric: true, sensitivity: "base" }),
+    );
+  }
+
   const totalLoaded = products.length;
   const totalShown = filtered.length;
   const avgScore =
@@ -175,6 +199,7 @@ export default async function AdminProductsPage({
     if (onlySinGluten) params.set("sin_gluten", "1");
     if (onlySinLactosa) params.set("sin_lactosa", "1");
     if (onlyVegetariano) params.set("vegetariano", "1");
+    if (sortKey !== "ref") params.set("sort", sortKey);
     if (n > 1) params.set("page", String(n));
     const qs = params.toString();
     return `/admin/products${qs ? `?${qs}` : ""}`;
@@ -332,6 +357,17 @@ export default async function AdminProductsPage({
             </div>
           </div>
           <div className="flex flex-wrap gap-3 items-center">
+            <label className="flex items-center gap-2">
+              <span className="text-xs uppercase tracking-wider text-muted-foreground">Orden</span>
+              <select
+                name="sort"
+                defaultValue={sortKey}
+                className="bg-background border border-border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
+              >
+                <option value="ref">Por referencia</option>
+                <option value="name">Por nombre + marca</option>
+              </select>
+            </label>
             <Toggle name="sin_gluten" label="Sin gluten" checked={onlySinGluten} />
             <Toggle name="sin_lactosa" label="Sin lactosa" checked={onlySinLactosa} />
             <Toggle name="vegetariano" label="Vegetariano" checked={onlyVegetariano} />

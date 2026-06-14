@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Layout } from "@/components/Layout";
-import { CatalogFeatured, CatalogFeaturedSkeleton } from "@/components/catalog/CatalogFeatured";
 import { CatalogContent, CatalogContentSkeleton, type CatalogContentSP } from "@/components/catalog/CatalogContent";
 
 export const metadata: Metadata = {
@@ -27,12 +26,6 @@ export default async function CatalogoPage({
   const sp = await searchParams;
   return (
     <Layout navTheme="light">
-      {/* Tira "Selección Aurellano": carga rápido (~1s), aparece primero. */}
-      <Suspense fallback={<CatalogFeaturedSkeleton />}>
-        <CatalogFeatured productHrefBase="/es/producto" />
-      </Suspense>
-
-      {/* Catálogo completo: tarda más (itera familias en la API del socio). */}
       <Suspense fallback={<CatalogContentSkeleton />}>
         <CatalogContent
           sp={sp}
