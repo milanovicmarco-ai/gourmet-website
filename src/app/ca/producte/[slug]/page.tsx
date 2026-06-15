@@ -9,9 +9,12 @@ import { getFamilyMetas, humanizeFamilySlug } from "@/lib/pim/catalogs";
 
 type Params = { slug: string };
 
-// Sin caché: la página renderiza según la cookie `aurellano_lang`, así que cada request
-// puede ver una traducción distinta. La cache estática estaba sirviendo siempre la versión ES.
-export const dynamic = "force-dynamic";
+// Cache 1h en el edge de Vercel. Antes era force-dynamic porque la página
+// leía la cookie `aurellano_lang` para decidir idioma, pero desde el refactor
+// i18n el idioma está en el path (/es/ vs /ca/), así que cada subruta es
+// estable y puede cachearse. CRÍTICO: sin este cache, cada visita pegaba
+// directamente al VPS del socio sin paso por el edge.
+export const revalidate = 3600;
 
 // El slug oficial es "{slugify(name)}-{ref}". Si by-slug 404 (porque el slug ha
 // cambiado, o el catálogo viene con otro formato), intentamos por la `ref` que

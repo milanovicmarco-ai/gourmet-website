@@ -9,9 +9,11 @@ import { getFamilyMetas, humanizeFamilySlug } from "@/lib/pim/catalogs";
 
 type Params = { slug: string };
 
-// Sin caché: la página renderiza según la cookie `aurellano_lang`, así que cada request
-// puede ver una traducción distinta. La cache estática estaba sirviendo siempre la versión ES.
-export const dynamic = "force-dynamic";
+// Cache 1h. Este path es LEGACY: next.config redirige /producto/:slug → /es/producto/:slug
+// con 308. Pero si por alguna razón llega tráfico aquí (bots antiguos, links externos),
+// al menos no pegamos al VPS sin cache. Antes era force-dynamic por la cookie i18n
+// (ya extinta tras el refactor de subpaths).
+export const revalidate = 3600;
 
 // El slug oficial es "{slugify(name)}-{ref}". Si by-slug 404 (porque el slug ha
 // cambiado, o el catálogo viene con otro formato), intentamos por la `ref` que

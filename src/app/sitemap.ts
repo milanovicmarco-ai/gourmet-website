@@ -4,6 +4,12 @@ import { ROUTES, productPath } from "@/lib/i18n/routes";
 
 const SITE_URL = "https://aurellano.com";
 
+// El sitemap se regenera como máximo cada hora. Sin esto, cada hit de Googlebot
+// a /sitemap.xml ejecutaba la función → listProducts → fetch al VPS (aunque
+// el fetch fuera cacheado, había overhead). Con revalidate a nivel ruta, Next
+// guarda el XML generado durante 1h.
+export const revalidate = 3600;
+
 /** Genera un par de entradas (ES + CA) para una page key, ambas con sus
  *  hreflang alternates apuntándose la una a la otra. Es lo que Google
  *  necesita para entender que son traducciones equivalentes. */
@@ -50,7 +56,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // ambas como alternates la una de la otra.
   let productRoutes: MetadataRoute.Sitemap = [];
   try {
-    const { results } = await listProducts({ limit: 500, revalidate: 3600 });
+    // limit=1000 cubre los 693 productos actuales tras el bulk import + margen.
+    const { results } = await listProducts({ limit: 1000, revalidate: 3600 });
     for (const p of results) {
       if (p.active === false || !p.slug) continue;
       const esUrl = `${SITE_URL}${productPath("es", p.slug)}`;

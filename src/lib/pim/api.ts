@@ -117,24 +117,48 @@ export async function listProducts(params?: {
 }
 
 export async function getProductByRef(ref: string, revalidate = 3600): Promise<ApiProduct | null> {
-  // 20s — el detalle individual es una sola request, no arrastra al resto.
-  // El backend de Hostinger arranca lento tras inactividad y 6s daba
-  // notFound() fantasma cuando el producto SÍ existía.
+  // 20s por intento. El backend de Hostinger arranca lento tras inactividad
+  // (cold start del contenedor FastAPI) y la primera request desde Vercel
+  // a veces excede 6s. Hacemos hasta 2 intentos: si el primero falla con
+  // timeout, abort o 5xx, reintentamos una vez tras 500ms. El segundo
+  // intento suele acertar porque el contenedor ya está caliente.
   //
   // revalidate = 0 → cache:"no-store" (fresh siempre). El editor del PIM
-  // lo usa así. Revalidate > 0 → cache cacheable en el edge de Vercel,
-  // que es lo que queremos para el catálogo público.
+  // lo usa así. Revalidate > 0 → cacheable en el edge de Vercel, para el
+  // catálogo público.
   const cacheOpts = revalidate === 0
     ? { cache: "no-store" as const }
     : { next: { revalidate } };
-  const res = await timeoutFetch(
-    `${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}`,
-    cacheOpts,
-    20_000,
-  );
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`getProductByRef ${res.status}: ${await res.text()}`);
-  return res.json();
+  const url = `${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}`;
+
+  let lastErr: Error | null = null;
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const res = await timeoutFetch(url, cacheOpts, 20_000);
+      if (res.status === 404) return null;
+      if (!res.ok) {
+        const body = await res.text();
+        // 4xx (no 404) no es transitorio — no merece reintento.
+        if (res.status >= 400 && res.status < 500) {
+          throw new Error(`getProductByRef ${res.status}: ${body}`);
+        }
+        // 5xx → reintenta
+        lastErr = new Error(`getProductByRef ${res.status}: ${body}`);
+        if (attempt < 2) await new Promise((r) => setTimeout(r, 500));
+        continue;
+      }
+      return res.json();
+    } catch (err) {
+      lastErr = err as Error;
+      // AbortError / network error → reintenta una vez
+      if (attempt < 2) {
+        console.warn(`[getProductByRef] intento ${attempt} falló (${lastErr.message}), reintentando…`);
+        await new Promise((r) => setTimeout(r, 500));
+        continue;
+      }
+    }
+  }
+  throw lastErr ?? new Error("getProductByRef agotó intentos sin error claro");
 }
 
 export async function getProductBySlug(slug: string, revalidate = 3600): Promise<ApiProduct | null> {
