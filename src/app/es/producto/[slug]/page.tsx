@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { cookies } from "next/headers";
 import ProductDetail from "@/views/ProductDetail";
 import { getProductBySlug, getProductByRef, type ApiProduct } from "@/lib/pim/api";
-import { getTranslation, type Locale } from "@/lib/pim/translations";
 import { getProductMeta, effectiveRef } from "@/lib/pim/product-meta";
 import { getFamilyMetas, humanizeFamilySlug } from "@/lib/pim/catalogs";
 
@@ -61,28 +59,10 @@ export async function generateMetadata({
   };
 }
 
-async function getLocale(): Promise<Locale | "es"> {
-  const cookieStore = await cookies();
-  const c = cookieStore.get("aurellano_lang")?.value;
-  if (c === "ca" || c === "en") return c;
-  return "es";
-}
-
-/** Aplica la traducción del overlay (CA) por encima de los datos canónicos (ES). */
-function applyTranslation(product: ApiProduct, translation: Awaited<ReturnType<typeof getTranslation>>): ApiProduct {
-  if (!translation) return product;
-  return {
-    ...product,
-    name: translation.name?.trim() || product.name,
-    descripcion_corta: translation.descripcion_corta?.trim() || product.descripcion_corta,
-    description_rich: translation.description_rich?.trim() || product.description_rich,
-    flavor: translation.flavor?.trim() || product.flavor,
-    origen: translation.origen?.trim() || product.origen,
-    ingredientes: translation.ingredientes?.trim() || product.ingredientes,
-    seo_title: translation.seo_title?.trim() || product.seo_title,
-    seo_description: translation.seo_description?.trim() || product.seo_description,
-  };
-}
+// Esta página es la subruta /es/producto, así que el contenido es siempre
+// el ES canónico de la API. No leemos overlay de traducción aquí — eso solo
+// tiene sentido en /ca/producte. (Antes había getLocale + cookie 'aurellano_lang'
+// que es residuo pre-i18n y mezclaba idiomas según el navegador del usuario.)
 
 export default async function ProductoPage({
   params,
@@ -97,12 +77,8 @@ export default async function ProductoPage({
     product.status ?? (product.active === false ? "archived" : "published");
   if (effectiveStatus !== "published") notFound();
 
-  const locale = await getLocale();
-  let display = product;
-  if (locale === "ca" || locale === "en") {
-    const translation = await getTranslation(product.ref, locale);
-    display = applyTranslation(product, translation);
-  }
+  // En /es/producto siempre mostramos la fuente canónica (ES de la API).
+  const display = product;
   // Overlay de nuestro Supabase: la ref visible (display_ref) y la marca real
   // (brand_override). La API trata ambos como problemáticos (PK inmutable, FK estricta),
   // así que la fuente de verdad para el usuario final son estos campos.
