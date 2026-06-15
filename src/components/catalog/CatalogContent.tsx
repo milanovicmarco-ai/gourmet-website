@@ -8,6 +8,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { listFamilies, fetchAllProducts, type ApiProduct } from "@/lib/pim/api";
 import { getMetasForProducts, effectiveRef, effectiveBrand, matchesSearch } from "@/lib/pim/product-meta";
 import { listCatalogs, listAllFamilies, getRefsByCatalogSlug, humanizeFamilySlug } from "@/lib/pim/catalogs";
+import { getTranslationsForProducts, type ProductTranslation } from "@/lib/pim/translations";
 import { MultiSelectFilter } from "@/components/MultiSelectFilter";
 import { MessageCircle, X } from "lucide-react";
 import { waLink } from "@/lib/contact";
@@ -221,6 +222,30 @@ export async function CatalogContent({ sp, basePath, productHrefBase, lang = "es
 
   const metas = await getMetasForProducts(products.map((p) => p.ref)).catch(() => ({}));
 
+  // Si la página es la versión catalana, cargamos en bulk las traducciones
+  // CA para sobrescribir nombres/descripciones. Una sola query a Supabase,
+  // sin N+1. En la versión ES no hace falta (la API ya viene en ES).
+  const translations: Record<string, ProductTranslation> =
+    lang === "ca"
+      ? await getTranslationsForProducts(
+          products.map((p) => p.ref),
+          "ca",
+        ).catch(() => ({}))
+      : {};
+
+  /** Devuelve el nombre del producto en el idioma actual: traducción si
+   *  existe y tiene contenido, si no la canónica de la API. */
+  const displayName = (p: ApiProduct): string => {
+    const t = translations[p.ref];
+    return t?.name?.trim() || p.name;
+  };
+
+  /** Idem para la descripción corta — usada en search match. */
+  const displayDescCorta = (p: ApiProduct): string | null | undefined => {
+    const t = translations[p.ref];
+    return t?.descripcion_corta?.trim() || p.descripcion_corta;
+  };
+
   const matchesDieta = (p: ApiProduct, sel: string[]): boolean => {
     if (sel.length === 0) return true;
     const m = metas[p.ref];
@@ -289,7 +314,7 @@ export async function CatalogContent({ sp, basePath, productHrefBase, lang = "es
     if (
       q &&
       !matchesSearch(
-        [p.name, effectiveBrand(metas[p.ref], p.brand), effectiveRef(metas[p.ref], p.ref), p.ref, p.descripcion_corta],
+        [displayName(p), p.name, effectiveBrand(metas[p.ref], p.brand), effectiveRef(metas[p.ref], p.ref), p.ref, displayDescCorta(p)],
         q,
       )
     )
@@ -522,7 +547,7 @@ export async function CatalogContent({ sp, basePath, productHrefBase, lang = "es
               <ProductCard
                 key={p.ref}
                 image={p.image_url ?? "/images/placeholder.svg"}
-                title={p.name}
+                title={displayName(p)}
                 category={familyLabel(p.family)}
                 origin={`Ref. ${effectiveRef(metas[p.ref], p.ref)}`}
                 href={`${productHrefBase}/${p.slug ?? p.ref}`}
