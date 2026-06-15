@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/integrations/supabase/server";
 import { chat, SYSTEM_VOICE } from "@/lib/ai";
 import type { Locale, ProductTranslation } from "@/lib/pim/translations";
+import { revalidatePublicListings } from "@/lib/pim/revalidate-public";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -72,7 +73,10 @@ export async function saveTranslation(
 
   revalidatePath(`/admin/products/${productRef}`);
   revalidatePath("/admin/products");
-  revalidatePath("/catalogo");
+  // Las listas públicas muestran nombre/descripcion_corta traducidos.
+  // El detalle público (/es/producto/{slug}, /ca/producte/{slug}) no lo
+  // invalidamos aquí porque no tenemos el slug. Expira solo en 1h.
+  await revalidatePublicListings();
 }
 
 /** Traduce un conjunto de campos al idioma destino con OpenAI manteniendo voz Aurellano. */

@@ -13,6 +13,7 @@
 // de verdad. Aquí sólo orquestamos.
 
 import { revalidatePath } from "next/cache";
+import { revalidatePublicListings } from "@/lib/pim/revalidate-public";
 import * as XLSX from "xlsx";
 import { createClient } from "@/integrations/supabase/server";
 import {
@@ -443,8 +444,11 @@ export async function applyImport(formData: FormData): Promise<ApplyResult> {
     }
   }
 
-  // Refresca todas las vistas que dependen del catálogo.
+  // Refresca todas las vistas que dependen del catálogo. El bulk
+  // import puede tocar todos los productos, no invalidamos URLs de
+  // detalle individuales porque serían cientos — el revalidate de
+  // 1h las cubre por sí solo.
   revalidatePath("/admin/products");
-  revalidatePath("/catalogo");
+  await revalidatePublicListings();
   return result;
 }

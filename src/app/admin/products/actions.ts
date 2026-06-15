@@ -10,6 +10,7 @@ import { createClient } from "@/integrations/supabase/server";
 import { mapToApi, type FormFields } from "@/lib/pim/api-mapper";
 import { AURELLANO_API } from "@/lib/pim/api";
 import { ensureBrandExists } from "@/lib/pim/ensure-brand";
+import { revalidatePublicAll, revalidatePublicListings } from "@/lib/pim/revalidate-public";
 
 const apiKey = () => {
   const k = process.env.ADMIN_API_KEY;
@@ -483,9 +484,11 @@ export async function updateProduct(
 
   revalidatePath(`/admin/products/${ref}`);
   revalidatePath(`/admin/products`);
-  revalidatePath(`/catalogo`);
   const slug = typeof data.slug === "string" ? data.slug : undefined;
-  if (slug) revalidatePath(`/producto/${slug}`);
+  // Invalida /es/catalogo, /ca/cataleg, secciones temáticas y ambas
+  // URLs del producto (ES + CA). Sin esto, la edición tardaría hasta
+  // 1h en verse en producción tras el refactor i18n.
+  await revalidatePublicAll(slug);
   return {
     product: data,
     ...(autoFilled.length > 0 ? { autoFilledFields: autoFilled } : {}),

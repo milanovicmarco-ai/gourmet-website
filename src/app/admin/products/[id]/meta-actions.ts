@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/integrations/supabase/server";
 import { MOMENTO_VALUES, type ProductMeta } from "@/lib/pim/product-meta";
+import { revalidatePublicListings } from "@/lib/pim/revalidate-public";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -120,7 +121,11 @@ export async function saveProductMeta(meta: Omit<ProductMeta, never>): Promise<S
 
   revalidatePath(`/admin/products/${meta.product_ref}`);
   revalidatePath("/admin/products");
-  revalidatePath("/catalogo");
+  // Cambios de meta (brand_override, dietas, display_ref) impactan las
+  // listas y agrupaciones públicas. La página de detalle del producto
+  // expira en 1h por revalidate; no la invalidamos aquí porque no
+  // tenemos el slug a mano y un override de meta no suele ser urgente.
+  await revalidatePublicListings();
 
   // Sólo reportamos "no persistido" si el usuario realmente quería un override.
   // Si dejó la ref igual a la canónica, da igual que la columna no exista.

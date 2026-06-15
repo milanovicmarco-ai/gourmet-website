@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/integrations/supabase/server";
+import { revalidatePublicListings } from "@/lib/pim/revalidate-public";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -116,7 +117,7 @@ export async function upsertFamilyMeta(input: {
     );
   if (error) throw new Error(error.message);
   revalidatePath("/admin/settings/families");
-  revalidatePath("/catalogo");
+  await revalidatePublicListings();
   revalidatePath("/admin/products");
 }
 
@@ -158,7 +159,7 @@ export async function renameBrand(fromName: string, toName: string): Promise<num
 
   revalidatePath("/admin/settings/brands");
   revalidatePath("/admin/products");
-  revalidatePath("/catalogo");
+  await revalidatePublicListings();
   return refs.length;
 }
 
@@ -187,7 +188,7 @@ export async function deleteBrand(name: string): Promise<number> {
 
   revalidatePath("/admin/settings/brands");
   revalidatePath("/admin/products");
-  revalidatePath("/catalogo");
+  await revalidatePublicListings();
   return refs.length;
 }
 
