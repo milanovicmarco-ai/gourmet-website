@@ -70,9 +70,6 @@ const Colmado = ({
             <div className="aspect-[4/5] rounded-3xl overflow-hidden">
               <img src={colmadoImg} alt="Mostrador de tienda gourmet" className="h-full w-full object-cover" loading="lazy" />
             </div>
-            <div className="absolute -bottom-6 -left-6 h-32 w-32 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-center p-4 shadow-glow">
-              <span className="text-xs font-medium leading-tight">{t("surtido")}<br />{t("para vender")}</span>
-            </div>
           </div>
         </div>
       </section>
