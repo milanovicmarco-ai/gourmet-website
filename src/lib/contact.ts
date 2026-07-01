@@ -1,5 +1,5 @@
-export const WHATSAPP_NUMBER = "34621181160";
-export const WHATSAPP_DISPLAY = "+34 621 181 160";
+export const WHATSAPP_NUMBER = "34621228811";
+export const WHATSAPP_DISPLAY = "+34 621 228 811";
 export const PHONE_FIXED = "973 248 266";
 export const EMAIL = "hola@aurellano.com";
 export const INSTAGRAM = "https://instagram.com/aurellano1968";
