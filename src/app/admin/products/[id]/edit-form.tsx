@@ -398,7 +398,7 @@ export function ProductEditForm({ productRef, initial, meta, families = [], bran
           <div className="grid sm:grid-cols-3 gap-3">
             <Toggle label="HORECA" checked={form.destacado_horeca} onChange={(v) => set("destacado_horeca", v)} />
             <Toggle label="Retail" checked={form.destacado_retail} onChange={(v) => set("destacado_retail", v)} />
-            <Toggle label="Quesos" checked={form.destacado_fromages} onChange={(v) => set("destacado_fromages", v)} />
+            <Toggle label="Cheese Lovers" checked={form.destacado_fromages} onChange={(v) => set("destacado_fromages", v)} />
           </div>
         </div>
         <div className="pt-3 border-t border-border">
