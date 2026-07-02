@@ -112,7 +112,7 @@ const Quesos = ({ featured = [], featuredCatalogCount = 0 }: Props) => {
           <EmptyHubMessage
             catalogPublishedCount={featuredCatalogCount}
             catalogName="Fromages"
-            flagLabel="Destacado"
+            flagLabel="Cheese Lovers"
           />
         )}
       </section>
