@@ -3,7 +3,7 @@
 import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Upload, X } from "lucide-react";
-import { addProductImage, createProduct } from "../actions";
+import { addProductImage, createProductSafe } from "../actions";
 import { EntityCombobox, type EntityOption } from "../[id]/entity-combobox";
 
 interface ProductCreateFormProps {
@@ -69,7 +69,7 @@ export function ProductCreateForm({
     setSaving(true);
     try {
       setSavingStep("creating");
-      const created = await createProduct({
+      const res = await createProductSafe({
         ref: form.ref.trim() || undefined,
         name: form.name.trim(),
         family: form.family || undefined,
@@ -78,6 +78,14 @@ export function ProductCreateForm({
         price_eur: form.base_price_eur === "" ? null : Number(form.base_price_eur),
         status: form.status,
       });
+      if (!res.ok) {
+        // Mensaje REAL de la API (status + detalle), no el genérico de Next.
+        setError(res.error);
+        setSaving(false);
+        setSavingStep(null);
+        return;
+      }
+      const created = res.data as { ref: string };
       if (imageFile) {
         setSavingStep("uploading");
         const fd = new FormData();
