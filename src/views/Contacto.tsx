@@ -11,7 +11,7 @@ const Contacto = () => {
   return (
   <Layout
     seoTitle="Contacto | Aurellano Productes Gastronòmics"
-    seoDescription="WhatsApp +34 621 181 160, teléfono 973 248 266 y email hola@aurellano.com. Lun-Vie 8:00-18:00. Carrer de les Valls d'Andorra 52, 25005 Lleida."
+    seoDescription="WhatsApp +34 621 228 811, teléfono 973 248 266 y email hola@aurellano.com. Lun-Vie 8:00-18:00. Carrer de les Valls d'Andorra 52, 25005 Lleida."
   >
     <section className="relative overflow-hidden">
       <Circle variant="blur" className="w-[500px] h-[500px] -top-40 -right-40" />

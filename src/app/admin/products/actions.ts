@@ -497,6 +497,39 @@ export async function updateProduct(
 }
 
 // =============================================================
+// Wrappers "Safe": devuelven el error en vez de lanzarlo.
+// En producción, Next.js OCULTA el mensaje de cualquier error lanzado en una
+// Server Action y muestra el genérico "An error occurred in the Server
+// Components render…". Al DEVOLVER el error como dato, el mensaje real —que
+// jsonOr ya construye con el status + cuerpo de la API del socio— llega intacto
+// al formulario y se le muestra al editor. Úsalos desde los forms del cliente.
+// =============================================================
+export type SafeResult<T> = { ok: true; data: T } | { ok: false; error: string };
+
+export async function updateProductSafe(
+  ref: string,
+  form: FormFields,
+): Promise<SafeResult<UpdateProductResult>> {
+  try {
+    return { ok: true, data: await updateProduct(ref, form) };
+  } catch (e) {
+    console.error("[updateProductSafe]", e);
+    return { ok: false, error: (e as Error).message };
+  }
+}
+
+export async function createProductSafe(
+  form: FormFields & { ref?: string },
+): Promise<SafeResult<Record<string, unknown>>> {
+  try {
+    return { ok: true, data: await createProduct(form) };
+  } catch (e) {
+    console.error("[createProductSafe]", e);
+    return { ok: false, error: (e as Error).message };
+  }
+}
+
+// =============================================================
 // Borrar producto (soft por defecto)
 // =============================================================
 export async function deleteProduct(ref: string, hard = false) {

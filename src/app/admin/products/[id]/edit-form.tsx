@@ -2,7 +2,7 @@
 
 import { FormEvent, ReactNode, useState } from "react";
 import { useRouter } from "next/navigation";
-import { updateProduct } from "../actions";
+import { updateProductSafe } from "../actions";
 import { saveProductMeta } from "./meta-actions";
 import type { FormFields } from "@/lib/pim/api-mapper";
 import type { ProductMeta } from "@/lib/pim/product-meta";
@@ -111,11 +111,18 @@ export function ProductEditForm({ productRef, initial, meta, families = [], bran
       // 1) Producto a la API del socio. Si publica y no cumple requisitos del
       // backend (marca, etc.), updateProduct hará fallback automático a "draft"
       // — el PIM nunca rechaza un guardado.
-      const result = await updateProduct(productRef, {
+      const saved = await updateProductSafe(productRef, {
         ...form,
         price_eur: form.price_eur === "" ? null : Number(form.price_eur),
         units_per_box: form.units_per_box === "" ? null : Number(form.units_per_box),
       });
+      if (!saved.ok) {
+        // Mensaje REAL de la API (status + detalle), no el genérico de Next.
+        setMessage({ kind: "err", text: saved.error });
+        setSaving(false);
+        return;
+      }
+      const result = saved.data;
       const data = result.product as {
         image_url?: string | null;
         gallery?: string[];
@@ -398,7 +405,7 @@ export function ProductEditForm({ productRef, initial, meta, families = [], bran
           <div className="grid sm:grid-cols-3 gap-3">
             <Toggle label="HORECA" checked={form.destacado_horeca} onChange={(v) => set("destacado_horeca", v)} />
             <Toggle label="Retail" checked={form.destacado_retail} onChange={(v) => set("destacado_retail", v)} />
-            <Toggle label="Quesos" checked={form.destacado_fromages} onChange={(v) => set("destacado_fromages", v)} />
+            <Toggle label="Cheese Lovers" checked={form.destacado_fromages} onChange={(v) => set("destacado_fromages", v)} />
           </div>
         </div>
         <div className="pt-3 border-t border-border">

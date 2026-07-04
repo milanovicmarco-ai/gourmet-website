@@ -57,9 +57,6 @@ const SecretsDelXef = ({
             <div className="aspect-[4/5] rounded-3xl overflow-hidden">
               <img src={xef} alt="Chef emplatando en restaurante" className="h-full w-full object-cover" loading="lazy" />
             </div>
-            <div className="absolute -bottom-6 -left-6 h-32 w-32 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-center p-4 shadow-glow">
-              <span className="text-xs font-medium leading-tight">{t("listo para")}<br />{t("emplatar")}</span>
-            </div>
           </div>
         </div>
       </section>
