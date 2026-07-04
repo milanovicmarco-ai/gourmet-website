@@ -1,5 +1,6 @@
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
+import { Suspense } from "react";
 import { createClient } from "@/integrations/supabase/server";
 import { computeOptimizationScore, adaptApiProduct } from "@/lib/pim/score";
 import { getProductByRef } from "@/lib/pim/api";
@@ -16,8 +17,23 @@ import { DeleteProductButton } from "./delete-product-button";
 
 export const dynamic = "force-dynamic";
 
-// Aunque la carpeta sigue llamándose [id] por compatibilidad, el parámetro
-// es la `ref` del producto (string como "17601" o "QUESOS-0042").
+/**
+ * Estrategia de carga del editor (streaming con Suspense):
+ *
+ *   FASE 1 (await en el page principal — bloquea el render inicial):
+ *     - getProductByRef (API del socio, lo único realmente crítico)
+ *     - getProductMeta  (Supabase, suele ser rápido)
+ *   Con esos dos ya se renderiza: cabecera + imagen + checklist + DangerZone.
+ *
+ *   FASE 2 (cada sección con su propia Suspense, en paralelo):
+ *     - CatalogSection  → listCatalogs + getProductCatalogs
+ *     - LocaleSection   → getTranslation + listAllFamilies + loadBrandOptions
+ *
+ * Si la API tarda 5s, antes el usuario veía la página en blanco 5s. Ahora ve
+ * la cabecera en cuanto getProductByRef responde, y las secciones secundarias
+ * se llenan independientemente sin bloquear las demás.
+ */
+
 export default async function AdminProductDetailPage({
   params,
 }: {
@@ -28,45 +44,21 @@ export default async function AdminProductDetailPage({
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/admin/login");
 
-  // Política de fetches:
-  // - getProductByRef es el ÚNICO crítico. Tiene su propio timeout interno
-  //   de 20s (timeoutFetch en api.ts). Si falla con error, lanzamos para
-  //   que Next muestre error.tsx — NO 404 falso, que confunde a Marco.
-  //   Si responde 404 real (producto no existe), devuelve null → notFound.
-  // - Los demás son auxiliares: con timeout 8s y fallback vacío. Si alguno
-  //   se cuelga, la página renderiza con campos faltantes pero no se rompe.
-  //
-  // revalidate = 0 → fetch SIN cache. Esto es el editor del PIM: cada vez
-  // que Marco abre un producto queremos los datos frescos, no una respuesta
-  // potencialmente errónea cacheada hace 1h. (Además, esto es lo que cura
-  // el "404 fantasma": si la API respondió mal una vez, no nos quedamos
-  // pegados a esa respuesta durante 3600s.)
-  const productOrError = await getProductByRef(ref, 0).catch((err: Error) => err);
+  // FASE 1: solo lo imprescindible para pintar la cabecera.
+  // revalidate=60 → cache 1min. Suficiente para que abrir varios productos
+  // seguidos sea instantáneo sin perder frescura visible.
+  const [productOrError, meta] = await Promise.all([
+    getProductByRef(ref, 60).catch((err: Error) => err),
+    withTimeout(getProductMeta(ref), 5000, "getProductMeta", EMPTY_META(ref)),
+  ]);
   if (productOrError instanceof Error) {
-    // Error transitorio (timeout, 5xx, red): no es 404. Mostrar error.tsx.
     throw new Error(`No se pudo cargar el producto ${ref}: ${productOrError.message}`);
   }
   const product = productOrError;
   if (!product) notFound();
 
-  const [allCatalogs, assignedSlugs, caTranslation, meta, allFamilies, brandOptions] = await Promise.all([
-    withTimeout(listCatalogs(true), 8000, "listCatalogs", [] as Awaited<ReturnType<typeof listCatalogs>>),
-    withTimeout(getProductCatalogs(ref), 8000, "getProductCatalogs", [] as string[]),
-    withTimeout(getTranslation(ref, "ca"), 8000, "getTranslation", null as Awaited<ReturnType<typeof getTranslation>>),
-    withTimeout(getProductMeta(ref), 8000, "getProductMeta", EMPTY_META(ref)),
-    withTimeout(listAllFamilies(), 8000, "listAllFamilies", [] as Awaited<ReturnType<typeof listAllFamilies>>),
-    withTimeout(loadBrandOptions(), 8000, "loadBrandOptions", [] as Awaited<ReturnType<typeof loadBrandOptions>>),
-  ]);
-
-  // Mapeamos slugs asignados a IDs reales del catálogo
-  const assignedIds = allCatalogs.filter((c) => assignedSlugs.includes(c.slug)).map((c) => c.id);
-
   const formInitial = mapFromApi(product);
-  // Pasamos el meta (overlay Supabase) para que los flags dietéticos extra
-  // cuenten en el criterio "info dietética / nutricional".
   const scoreLocal = computeOptimizationScore(adaptApiProduct(product, meta));
-  // Usamos siempre el cálculo local para que la cabecera y el checklist coincidan
-  // (el server tiene su propio scoring que no aplica criterios de Aurellano como "sin precio").
   const scoreServer = scoreLocal.total;
 
   return (
@@ -126,24 +118,23 @@ export default async function AdminProductDetailPage({
               gallery={product.gallery ?? undefined}
             />
           </section>
-          <section className="rounded-2xl border border-border p-6 bg-background">
-            <CatalogPicker
-              productRef={product.ref}
-              allCatalogs={allCatalogs}
-              initialIds={assignedIds}
-            />
-          </section>
-          <LocaleTabs
-            productRef={product.ref}
-            product={product}
-            esInitial={formInitial}
-            caInitial={caTranslation}
-            meta={meta}
-            families={allFamilies}
-            brandOptions={brandOptions}
-          />
 
-          {/* Danger zone — siempre al final, separado del resto. */}
+          {/* FASE 2A: catálogos asignados. Skeleton mientras carga. */}
+          <Suspense fallback={<SectionSkeleton title="Catálogos" rows={3} />}>
+            <CatalogSection productRef={product.ref} />
+          </Suspense>
+
+          {/* FASE 2B: tabs ES/CA con formulario completo. Skeleton mientras carga. */}
+          <Suspense fallback={<SectionSkeleton title="Datos del producto" rows={8} />}>
+            <LocaleSection
+              productRef={product.ref}
+              product={product}
+              esInitial={formInitial}
+              meta={meta}
+            />
+          </Suspense>
+
+          {/* Danger zone — instantáneo, no depende de fetches secundarios. */}
           <section className="rounded-2xl border border-destructive/20 bg-destructive/5 p-6 space-y-4">
             <div>
               <h2 className="font-display font-medium text-lg">Zona de peligro</h2>
@@ -197,5 +188,76 @@ export default async function AdminProductDetailPage({
         </aside>
       </div>
     </div>
+  );
+}
+
+/** Sección de catálogos: depende solo de listCatalogs + getProductCatalogs.
+ *  Va en su propia Suspense para no bloquear cabecera ni imágenes. */
+async function CatalogSection({ productRef }: { productRef: string }) {
+  const [allCatalogs, assignedSlugs] = await Promise.all([
+    withTimeout(listCatalogs(true), 8000, "listCatalogs", [] as Awaited<ReturnType<typeof listCatalogs>>),
+    withTimeout(getProductCatalogs(productRef), 8000, "getProductCatalogs", [] as string[]),
+  ]);
+  const assignedIds = allCatalogs.filter((c) => assignedSlugs.includes(c.slug)).map((c) => c.id);
+  return (
+    <section className="rounded-2xl border border-border p-6 bg-background">
+      <CatalogPicker
+        productRef={productRef}
+        allCatalogs={allCatalogs}
+        initialIds={assignedIds}
+      />
+    </section>
+  );
+}
+
+/** Sección ES/CA con formularios: depende de traducción + familias + marcas.
+ *  Los 3 fetches van en paralelo, y la sección se renderiza cuando todos
+ *  acaban (sigue siendo más rápido que esperar a TODA la página). */
+async function LocaleSection({
+  productRef,
+  product,
+  esInitial,
+  meta,
+}: {
+  productRef: string;
+  product: Awaited<ReturnType<typeof getProductByRef>>;
+  esInitial: ReturnType<typeof mapFromApi>;
+  meta: Awaited<ReturnType<typeof getProductMeta>>;
+}) {
+  if (!product) return null;
+  const [caTranslation, allFamilies, brandOptions] = await Promise.all([
+    withTimeout(getTranslation(productRef, "ca"), 8000, "getTranslation", null as Awaited<ReturnType<typeof getTranslation>>),
+    withTimeout(listAllFamilies(), 8000, "listAllFamilies", [] as Awaited<ReturnType<typeof listAllFamilies>>),
+    withTimeout(loadBrandOptions(), 8000, "loadBrandOptions", [] as Awaited<ReturnType<typeof loadBrandOptions>>),
+  ]);
+  return (
+    <LocaleTabs
+      productRef={productRef}
+      product={product}
+      esInitial={esInitial}
+      caInitial={caTranslation}
+      meta={meta}
+      families={allFamilies}
+      brandOptions={brandOptions}
+    />
+  );
+}
+
+/** Skeleton genérico para Suspense de secciones. */
+function SectionSkeleton({ title, rows }: { title: string; rows: number }) {
+  return (
+    <section className="rounded-2xl border border-border p-6 bg-background animate-pulse space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="h-4 w-32 bg-muted rounded" />
+        <div className="h-3 w-16 bg-muted rounded" />
+      </div>
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="space-y-2">
+          <div className="h-3 w-24 bg-muted rounded" />
+          <div className="h-10 w-full bg-muted rounded" />
+        </div>
+      ))}
+      <span className="sr-only">{title} cargando…</span>
+    </section>
   );
 }

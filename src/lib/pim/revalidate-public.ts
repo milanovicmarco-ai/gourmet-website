@@ -22,11 +22,19 @@ export async function revalidatePublicListings(): Promise<void> {
   revalidatePath("/es/foie");
   revalidatePath("/ca/foie");
   revalidatePath("/es/colmado");
+  revalidatePath("/ca/colmado");
   revalidatePath("/ca/rebost");
   revalidatePath("/es/despensa");
   revalidatePath("/ca/rebost-sec");
   revalidatePath("/es/especial-sin");
   revalidatePath("/ca/especial-sense");
+  // Hubs HORECA/Colmado sin prefijo (rutas legacy, sin variante i18n) y sus
+  // páginas de "Destacado"/"Primer precio" (loadHubProducts). Faltaban aquí,
+  // por lo que un cambio de flag tardaba hasta 1h (revalidate ISR) en verse.
+  revalidatePath("/secrets-du-xef");
+  revalidatePath("/es/secrets-du-xef");
+  revalidatePath("/ca/secrets-du-xef");
+  revalidatePath("/colmado");
 }
 
 /** Invalida la URL pública de un producto concreto en ambos idiomas.
