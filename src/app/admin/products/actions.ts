@@ -577,6 +577,9 @@ export async function uploadProductImage(ref: string, formData: FormData) {
   const data = await jsonOr("uploadProductImage", res);
   revalidatePath(`/admin/products/${ref}`);
   revalidatePath(`/admin/products`);
+  // La imagen es pública (tarjetas del escaparate) → revalidar listados, igual
+  // que el guardado/borrado. Si no, la foto vieja aguanta hasta caducar el ISR.
+  await revalidatePublicListings();
   return data;
 }
 
@@ -594,6 +597,7 @@ export async function addProductImage(ref: string, formData: FormData) {
   const data = await jsonOr("addProductImage", res);
   revalidatePath(`/admin/products/${ref}`);
   revalidatePath(`/admin/products`);
+  await revalidatePublicListings();
   return data as { image_url: string; gallery: string[] };
 }
 
@@ -611,6 +615,7 @@ export async function removeProductImage(ref: string, url: string) {
   const data = await jsonOr("removeProductImage", res);
   revalidatePath(`/admin/products/${ref}`);
   revalidatePath(`/admin/products`);
+  await revalidatePublicListings();
   return data as { gallery: string[] };
 }
 
@@ -631,6 +636,7 @@ export async function reorderProductImages(ref: string, order: string[]) {
   const data = await jsonOr("reorderProductImages", res);
   revalidatePath(`/admin/products/${ref}`);
   revalidatePath(`/admin/products`);
+  await revalidatePublicListings();
   return data as { gallery: string[] };
 }
 
@@ -651,5 +657,6 @@ export async function setPrimaryProductImage(ref: string, url: string) {
   const data = await jsonOr("setPrimaryProductImage", res);
   revalidatePath(`/admin/products/${ref}`);
   revalidatePath(`/admin/products`);
+  await revalidatePublicListings();
   return data as { image_url: string; gallery: string[] };
 }
