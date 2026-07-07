@@ -543,6 +543,11 @@ export async function deleteProduct(ref: string, hard = false) {
   });
   const data = await jsonOr("deleteProduct", res);
   revalidatePath("/admin/products");
+  // Borrar (soft o hard) también debe refrescar el escaparate público: si no,
+  // la ficha borrada sigue saliendo en /es/quesos y demás listados hasta que
+  // caduque el ISR (≤1h). El guardado ya lo hacía (revalidatePublicAll); el
+  // borrado se lo saltaba.
+  await revalidatePublicListings();
   return data;
 }
 
