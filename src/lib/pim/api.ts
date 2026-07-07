@@ -3,6 +3,8 @@
 // IMPORTANTE: las funciones que escriben usan ADMIN_API_KEY (server-only).
 // No las llames desde un componente "use client" — usa Server Actions.
 
+import { forEachLimited } from "./concurrency";
+
 export const AURELLANO_API =
   process.env.NEXT_PUBLIC_AURELLANO_API ?? "https://aurellano-api.srv1124642.hstgr.cloud";
 
@@ -171,6 +173,11 @@ export async function getProductBySlug(slug: string, revalidate = 3600): Promise
   return res.json();
 }
 
+/** Máx. familias consultadas en paralelo dentro de fetchAllProducts. En serie
+ *  el listado tarda demasiado; ~20 a la vez saturaban el pool del backend
+ *  (incidente 7-jul-2026). 4 es el punto medio. */
+const FAMILY_FETCH_CONCURRENCY = 4;
+
 /** Trae TODOS los productos del catálogo iterando por familia para sortear el cap
  * de 200 por request de la API. Útil para listados que filtran en memoria por
  * campos que la API no expone (marca, score, flags overlay, etc.). */
@@ -187,23 +194,22 @@ export async function fetchAllProducts(opts?: {
   );
   for (const p of baseRes.results) map.set(p.ref, p);
 
-  // Una pasada por cada familia (200 max por familia → cubre catálogos razonables).
-  await Promise.all(
-    families.map(async (f) => {
-      const res = await listProducts({
-        limit: 200,
-        family: f.family,
-        q: opts?.q,
-        revalidate: opts?.revalidate ?? 300,
-      }).catch(() => ({ results: [] as ApiProduct[] }));
-      if (res.results.length === 200) {
-        console.warn(
-          `[fetchAllProducts] familia "${f.family}" devolvió 200 (cap saturado). Podría haber productos sin cargar.`,
-        );
-      }
-      for (const p of res.results) map.set(p.ref, p);
-    }),
-  );
+  // Una pasada por cada familia (200 max por familia → cubre catálogos razonables),
+  // en LOTES de FAMILY_FETCH_CONCURRENCY — no todas a la vez, que saturaba el pool.
+  await forEachLimited(families, FAMILY_FETCH_CONCURRENCY, async (f) => {
+    const res = await listProducts({
+      limit: 200,
+      family: f.family,
+      q: opts?.q,
+      revalidate: opts?.revalidate ?? 300,
+    }).catch(() => ({ results: [] as ApiProduct[] }));
+    if (res.results.length === 200) {
+      console.warn(
+        `[fetchAllProducts] familia "${f.family}" devolvió 200 (cap saturado). Podría haber productos sin cargar.`,
+      );
+    }
+    for (const p of res.results) map.set(p.ref, p);
+  });
 
   return Array.from(map.values());
 }
