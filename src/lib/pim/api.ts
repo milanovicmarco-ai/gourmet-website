@@ -118,12 +118,18 @@ export async function listProducts(params?: {
   return res.json();
 }
 
-export async function getProductByRef(ref: string, revalidate = 3600): Promise<ApiProduct | null> {
+export async function getProductByRef(
+  ref: string,
+  revalidate = 3600,
+  opts?: { retryTimeout?: boolean },
+): Promise<ApiProduct | null> {
   // 8s por intento. El backend arranca lento tras inactividad (cold start del
   // contenedor FastAPI) y la 1ª request desde Vercel a veces excede 6s, así que
-  // 8s da margen sin colgar. Hasta 2 intentos, pero SOLO se reintenta ante error
-  // de RED o 5xx transitorio: un timeout propio (AbortError) significa backend
-  // saturado → reintentar ahí amplificaría la ráfaga, así que no se reintenta.
+  // 8s da margen sin colgar. Hasta 2 intentos. Por defecto (la FICHA individual)
+  // solo se reintenta ante error de RED o 5xx: un timeout propio (AbortError)
+  // significa backend saturado → reintentar amplificaría la ráfaga (#15).
+  // Los LISTADOS públicos pasan `retryTimeout` para reintentar TAMBIÉN el timeout
+  // y no perder productos por un timeout intermitente (van throttled → acotado).
   //
   // revalidate = 0 → cache:"no-store" (fresh siempre). El editor del PIM
   // lo usa así. Revalidate > 0 → cacheable en el edge de Vercel, para el
@@ -152,10 +158,12 @@ export async function getProductByRef(ref: string, revalidate = 3600): Promise<A
       return res.json();
     } catch (err) {
       lastErr = err as Error;
-      // Timeout propio (AbortError) = backend saturado → NO reintentar (amplifica
-      // la ráfaga). Solo un error de red transitorio merece un reintento.
+      // Timeout propio (AbortError): por defecto NO se reintenta (amplifica la
+      // ráfaga, #15). Un error de red siempre. Un timeout SOLO si retryTimeout
+      // (listados: van throttled, el reintento queda acotado).
       const isTimeout = lastErr.name === "AbortError";
-      if (!isTimeout && attempt < 2) {
+      const retryable = !isTimeout || opts?.retryTimeout === true;
+      if (retryable && attempt < 2) {
         console.warn(`[getProductByRef] intento ${attempt} falló (${lastErr.message}), reintentando…`);
         await new Promise((r) => setTimeout(r, 500));
         continue;
