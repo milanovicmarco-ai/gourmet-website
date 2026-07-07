@@ -95,10 +95,17 @@ type LoadOpts = {
   limit?: number;
 };
 
+/** Límite por defecto de una lista curada. Cheese Lovers (`fromages`) es un
+ *  catálogo curado COMPLETO: muestra TODOS los destacados, no la vitrina de 4
+ *  de los otros hubs (colmado/secrets-du-xef). Un `limit` explícito siempre manda.
+ *  ponytail: si algún día son demasiados, paginar; por ahora YAGNI. */
+export const curatedLimit = (catalogSlug: string, limit?: number): number =>
+  limit ?? (catalogSlug === "fromages" ? Infinity : 4);
+
 /** Backward-compatible API: 1 llamada = 1 filtro. Internamente reusa loadCatalogContext. */
 export async function loadCuratedProducts(opts: LoadOpts): Promise<CuratedResult> {
   const ctx = await loadCatalogContext(opts.catalogSlug);
-  const products = applyFilter(ctx, opts.catalogSlug, opts.filter, opts.limit ?? 4);
+  const products = applyFilter(ctx, opts.catalogSlug, opts.filter, curatedLimit(opts.catalogSlug, opts.limit));
   return { products, catalogPublishedCount: ctx.published.length };
 }
 
