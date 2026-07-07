@@ -119,11 +119,11 @@ export async function listProducts(params?: {
 }
 
 export async function getProductByRef(ref: string, revalidate = 3600): Promise<ApiProduct | null> {
-  // 20s por intento. El backend de Hostinger arranca lento tras inactividad
-  // (cold start del contenedor FastAPI) y la primera request desde Vercel
-  // a veces excede 6s. Hacemos hasta 2 intentos: si el primero falla con
-  // timeout, abort o 5xx, reintentamos una vez tras 500ms. El segundo
-  // intento suele acertar porque el contenedor ya está caliente.
+  // 8s por intento. El backend arranca lento tras inactividad (cold start del
+  // contenedor FastAPI) y la 1ª request desde Vercel a veces excede 6s, así que
+  // 8s da margen sin colgar. Hasta 2 intentos, pero SOLO se reintenta ante error
+  // de RED o 5xx transitorio: un timeout propio (AbortError) significa backend
+  // saturado → reintentar ahí amplificaría la ráfaga, así que no se reintenta.
   //
   // revalidate = 0 → cache:"no-store" (fresh siempre). El editor del PIM
   // lo usa así. Revalidate > 0 → cacheable en el edge de Vercel, para el
@@ -136,7 +136,7 @@ export async function getProductByRef(ref: string, revalidate = 3600): Promise<A
   let lastErr: Error | null = null;
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
-      const res = await timeoutFetch(url, cacheOpts, 20_000);
+      const res = await timeoutFetch(url, cacheOpts, 8_000);
       if (res.status === 404) return null;
       if (!res.ok) {
         const body = await res.text();
@@ -152,12 +152,15 @@ export async function getProductByRef(ref: string, revalidate = 3600): Promise<A
       return res.json();
     } catch (err) {
       lastErr = err as Error;
-      // AbortError / network error → reintenta una vez
-      if (attempt < 2) {
+      // Timeout propio (AbortError) = backend saturado → NO reintentar (amplifica
+      // la ráfaga). Solo un error de red transitorio merece un reintento.
+      const isTimeout = lastErr.name === "AbortError";
+      if (!isTimeout && attempt < 2) {
         console.warn(`[getProductByRef] intento ${attempt} falló (${lastErr.message}), reintentando…`);
         await new Promise((r) => setTimeout(r, 500));
         continue;
       }
+      break;
     }
   }
   throw lastErr ?? new Error("getProductByRef agotó intentos sin error claro");
