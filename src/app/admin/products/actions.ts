@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/integrations/supabase/server";
 import { mapToApi, type FormFields } from "@/lib/pim/api-mapper";
-import { AURELLANO_API } from "@/lib/pim/api";
+import { AURELLANO_API, getProductByRef } from "@/lib/pim/api";
 import { ensureBrandExists } from "@/lib/pim/ensure-brand";
 import { revalidatePublicAll, revalidatePublicListings } from "@/lib/pim/revalidate-public";
 
@@ -551,6 +551,15 @@ export async function deleteProduct(ref: string, hard = false) {
   return data;
 }
 
+/** Revalida listados + ficha pública (/producto/{slug}) de un producto por su
+ *  ref. La ficha necesita el slug: lo resuelve con UN fetch puntual (no el
+ *  fan-out flaky del escaparate). Si ese fetch falla, revalida al menos los
+ *  listados — nunca peor que antes. */
+async function revalidatePublicByRef(ref: string): Promise<void> {
+  const slug = (await getProductByRef(ref).catch(() => null))?.slug ?? null;
+  await revalidatePublicAll(slug);
+}
+
 // =============================================================
 // Subir imagen del producto (multipart → Cloudinary)
 // =============================================================
@@ -577,9 +586,9 @@ export async function uploadProductImage(ref: string, formData: FormData) {
   const data = await jsonOr("uploadProductImage", res);
   revalidatePath(`/admin/products/${ref}`);
   revalidatePath(`/admin/products`);
-  // La imagen es pública (tarjetas del escaparate) → revalidar listados, igual
-  // que el guardado/borrado. Si no, la foto vieja aguanta hasta caducar el ISR.
-  await revalidatePublicListings();
+  // La imagen es pública (tarjetas del escaparate + ficha) → revalidar listados
+  // y la ficha /producto/{slug}. Si no, la foto vieja aguanta hasta el ISR (≤1h).
+  await revalidatePublicByRef(ref);
   return data;
 }
 
@@ -597,7 +606,7 @@ export async function addProductImage(ref: string, formData: FormData) {
   const data = await jsonOr("addProductImage", res);
   revalidatePath(`/admin/products/${ref}`);
   revalidatePath(`/admin/products`);
-  await revalidatePublicListings();
+  await revalidatePublicByRef(ref);
   return data as { image_url: string; gallery: string[] };
 }
 
@@ -615,7 +624,7 @@ export async function removeProductImage(ref: string, url: string) {
   const data = await jsonOr("removeProductImage", res);
   revalidatePath(`/admin/products/${ref}`);
   revalidatePath(`/admin/products`);
-  await revalidatePublicListings();
+  await revalidatePublicByRef(ref);
   return data as { gallery: string[] };
 }
 
@@ -636,7 +645,7 @@ export async function reorderProductImages(ref: string, order: string[]) {
   const data = await jsonOr("reorderProductImages", res);
   revalidatePath(`/admin/products/${ref}`);
   revalidatePath(`/admin/products`);
-  await revalidatePublicListings();
+  await revalidatePublicByRef(ref);
   return data as { gallery: string[] };
 }
 
@@ -657,6 +666,6 @@ export async function setPrimaryProductImage(ref: string, url: string) {
   const data = await jsonOr("setPrimaryProductImage", res);
   revalidatePath(`/admin/products/${ref}`);
   revalidatePath(`/admin/products`);
-  await revalidatePublicListings();
+  await revalidatePublicByRef(ref);
   return data as { image_url: string; gallery: string[] };
 }
