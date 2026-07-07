@@ -15,10 +15,6 @@ export default async function QuesosPage() {
   const featured = await loadCuratedProducts({
     catalogSlug: "fromages",
     filter: "destacado",
-    // Cheese Lovers es un catálogo curado: se muestran TODOS los destacados,
-    // sin el tope de 4 de las vitrinas de otros hubs. // ponytail: si algún día
-    // son demasiados, paginar; por ahora YAGNI.
-    limit: Infinity,
   });
   return (
     <Quesos
