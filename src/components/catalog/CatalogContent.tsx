@@ -5,7 +5,7 @@
 
 import Link from "next/link";
 import { ProductCard } from "@/components/ProductCard";
-import { listFamilies, fetchAllProducts, type ApiProduct } from "@/lib/pim/api";
+import { listFamilies, fetchAllProducts, isPublished, type ApiProduct } from "@/lib/pim/api";
 import { getMetasForProducts, effectiveRef, effectiveBrand, matchesSearch } from "@/lib/pim/product-meta";
 import { listCatalogs, listAllFamilies, getRefsByCatalogSlug, humanizeFamilySlug } from "@/lib/pim/catalogs";
 import { getTranslationsForProducts, type ProductTranslation } from "@/lib/pim/translations";
@@ -270,11 +270,6 @@ export async function CatalogContent({ sp, basePath, productHrefBase, lang = "es
       primer_precio: !!m?.primer_precio,
     };
     return sel.some((e) => ok[e]);
-  };
-
-  const isPublished = (p: ApiProduct): boolean => {
-    const effectiveStatus = p.status ?? (p.active === false ? "archived" : "published");
-    return effectiveStatus === "published";
   };
 
   // Listado de marcas únicas

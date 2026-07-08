@@ -5,7 +5,7 @@
 // los traen filtrados, publicados, con overlay aplicado.
 
 import { getRefsByCatalogSlug, getFamilyMetas, humanizeFamilySlug } from "./catalogs";
-import { getProductByRef, type ApiProduct } from "./api";
+import { getProductByRef, isPublished, type ApiProduct } from "./api";
 import { getMetasForProducts, effectiveRef, type ProductMeta } from "./product-meta";
 import { forEachLimited } from "./concurrency";
 
@@ -86,9 +86,7 @@ async function loadCatalogContext(catalogSlug: string) {
     (r) => getProductByRef(r, 3600, { retryTimeout: true }),
   );
 
-  const published = products.filter(
-    (p) => (p.status ?? (p.active === false ? "archived" : "published")) === "published",
-  );
+  const published = products.filter(isPublished);
   const metas = published.length
     ? await getMetasForProducts(published.map((p) => p.ref)).catch(() => ({} as Record<string, ProductMeta>))
     : ({} as Record<string, ProductMeta>);

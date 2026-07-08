@@ -58,6 +58,13 @@ export type ApiProduct = {
   score?: number | null; // sólo en /products?q=
 };
 
+/** ¿El producto es visible en la web pública? Publicado Y activo.
+ *  El soft-delete del admin pone active=false pero DEJA status="published", así
+ *  que hay que exigir AMBOS: `status ?? …` solo (el patrón viejo) dejaba pasar
+ *  los borrados. sitemap.ts ya trataba active===false como no-público. */
+export const isPublished = (p: Pick<ApiProduct, "active" | "status">): boolean =>
+  p.active !== false && (p.status ?? "published") === "published";
+
 export type ProductsListResponse = {
   query?: string;
   results: ApiProduct[];

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ProductDetail from "@/views/ProductDetail";
-import { getProductBySlug, getProductByRef, type ApiProduct } from "@/lib/pim/api";
+import { getProductBySlug, getProductByRef, isPublished, type ApiProduct } from "@/lib/pim/api";
 import { getProductMeta, effectiveRef } from "@/lib/pim/product-meta";
 import { getFamilyMetas, humanizeFamilySlug } from "@/lib/pim/catalogs";
 
@@ -72,10 +72,8 @@ export default async function ProductoPage({
   const { slug } = await params;
   const product = await fetchProduct(slug);
   if (!product) notFound();
-  // La web pública sólo enseña productos publicados.
-  const effectiveStatus =
-    product.status ?? (product.active === false ? "archived" : "published");
-  if (effectiveStatus !== "published") notFound();
+  // La web pública sólo enseña productos publicados y activos.
+  if (!isPublished(product)) notFound();
 
   // En /es/producto siempre mostramos la fuente canónica (ES de la API).
   const display = product;

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Layout } from "@/components/Layout";
 import { ProductCard } from "@/components/ProductCard";
-import { listFamilies, fetchAllProducts, type ApiProduct } from "@/lib/pim/api";
+import { listFamilies, fetchAllProducts, isPublished, type ApiProduct } from "@/lib/pim/api";
 import { getMetasForProducts, effectiveRef, effectiveBrand, matchesSearch } from "@/lib/pim/product-meta";
 import { listCatalogs, listAllFamilies, getRefsByCatalogSlug, humanizeFamilySlug } from "@/lib/pim/catalogs";
 import { MultiSelectFilter } from "./multi-select-filter";
@@ -176,12 +176,6 @@ export default async function CatalogoPage({
       primer_precio: !!m?.primer_precio,
     };
     return sel.some((e) => ok[e]);
-  };
-
-  /** Helper: ¿el producto está publicado? La web pública SÓLO los muestra. */
-  const isPublished = (p: ApiProduct): boolean => {
-    const effectiveStatus = p.status ?? (p.active === false ? "archived" : "published");
-    return effectiveStatus === "published";
   };
 
   // Listado único de marcas vistas en productos publicados (case-insensitive).

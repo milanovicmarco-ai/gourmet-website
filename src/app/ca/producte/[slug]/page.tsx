@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ProductDetail from "@/views/ProductDetail";
-import { getProductBySlug, getProductByRef, type ApiProduct } from "@/lib/pim/api";
+import { getProductBySlug, getProductByRef, isPublished, type ApiProduct } from "@/lib/pim/api";
 import { getTranslation } from "@/lib/pim/translations";
 import { getProductMeta, effectiveRef } from "@/lib/pim/product-meta";
 import { getFamilyMetas, humanizeFamilySlug } from "@/lib/pim/catalogs";
@@ -84,10 +84,8 @@ export default async function ProductoPage({
   const { slug } = await params;
   const product = await fetchProduct(slug);
   if (!product) notFound();
-  // La web pública sólo enseña productos publicados.
-  const effectiveStatus =
-    product.status ?? (product.active === false ? "archived" : "published");
-  if (effectiveStatus !== "published") notFound();
+  // La web pública sólo enseña productos publicados y activos.
+  if (!isPublished(product)) notFound();
 
   // Locale FIJO 'ca' porque estamos en la subruta /ca/producte. Antes leía
   // la cookie 'aurellano_lang' que ya no se usa desde el refactor i18n, y

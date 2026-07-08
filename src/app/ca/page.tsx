@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Index, { type FeaturedProduct } from "@/views/Index";
 import { BRAND } from "@/lib/brand";
 import { getRefsByCatalogSlug, getFamilyMetas, humanizeFamilySlug } from "@/lib/pim/catalogs";
-import { getProductByRef } from "@/lib/pim/api";
+import { getProductByRef, isPublished } from "@/lib/pim/api";
 import { getMetasForProducts, effectiveRef } from "@/lib/pim/product-meta";
 
 export const metadata: Metadata = {
@@ -33,9 +33,7 @@ async function loadFeatured(): Promise<FeaturedProduct[]> {
   const results = await Promise.all(refs.map((r) => getProductByRef(r).catch(() => null)));
   const products = results.filter((p): p is NonNullable<typeof p> => p != null);
   // Sólo publicados
-  const published = products.filter(
-    (p) => (p.status ?? (p.active === false ? "archived" : "published")) === "published",
-  );
+  const published = products.filter(isPublished);
   if (published.length === 0) return [];
   const [metas, familyMetas] = await Promise.all([
     getMetasForProducts(published.map((p) => p.ref)).catch(() => ({})),

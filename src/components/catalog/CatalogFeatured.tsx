@@ -4,7 +4,7 @@
 
 import { ProductCard } from "@/components/ProductCard";
 import { getRefsByCatalogSlug, getFamilyMetas, humanizeFamilySlug } from "@/lib/pim/catalogs";
-import { getProductByRef } from "@/lib/pim/api";
+import { getProductByRef, isPublished } from "@/lib/pim/api";
 import { getMetasForProducts, effectiveRef } from "@/lib/pim/product-meta";
 
 const FEATURED_CATALOG = "seleccion-aurellano";
@@ -23,7 +23,7 @@ export async function CatalogFeatured({ productHrefBase }: Props) {
   const results = await Promise.all(refs.map((r) => getProductByRef(r).catch(() => null)));
   const published = results
     .filter((p): p is NonNullable<typeof p> => p != null)
-    .filter((p) => (p.status ?? (p.active === false ? "archived" : "published")) === "published")
+    .filter(isPublished)
     .slice(0, FEATURED_LIMIT);
 
   if (published.length === 0) return null;
