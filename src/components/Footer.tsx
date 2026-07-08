@@ -283,10 +283,14 @@ export const Footer = () => {
             </a>
           </p>
           <div style={{ display: "flex", gap: "22px" }}>
-            {[t("Privacidad"), t("Condiciones"), t("Cookies")].map((label) => (
+            {[
+              { label: t("Privacidad"), href: "/privacidad" },
+              { label: t("Condiciones"), href: "/condiciones" },
+              { label: t("Cookies"), href: "/cookies" },
+            ].map(({ label, href }) => (
               <Link
                 key={label}
-                href="/condiciones"
+                href={href}
                 style={{
                   fontSize: "11px",
                   color: "rgba(255,255,255,0.3)",

@@ -509,6 +509,77 @@ const ca: Dict = {
   // EspecialSin
 
   // Consejos
+
+  // ── Consentimiento de cookies ──
+  "Uso de cookies": "Ús de cookies",
+  "Usamos cookies propias y de terceros para analizar el tráfico de la web. Puedes aceptarlas, rechazarlas o personalizar tu elección en cualquier momento.":
+    "Utilitzem cookies pròpies i de tercers per analitzar el trànsit de la web. Pots acceptar-les, rebutjar-les o personalitzar la teva elecció en qualsevol moment.",
+  "Más información": "Més informació",
+  "Rechazar todo": "Rebutjar-ho tot",
+  "Personalizar": "Personalitzar",
+  "Aceptar todo": "Acceptar-ho tot",
+  "Preferencias de cookies": "Preferències de cookies",
+  "Elige qué cookies aceptas": "Tria quines cookies acceptes",
+  "Cookies necesarias": "Cookies necessàries",
+  "Imprescindibles para que la web funcione (navegación, seguridad). No se pueden desactivar.":
+    "Imprescindibles perquè la web funcioni (navegació, seguretat). No es poden desactivar.",
+  "Cookies analíticas": "Cookies analítiques",
+  "Nos permiten medir visitas y uso de la web (Google Analytics) para mejorarla.":
+    "Ens permeten mesurar visites i ús de la web (Google Analytics) per millorar-la.",
+  "Cookies de marketing": "Cookies de màrqueting",
+  "Se usarían para medir campañas y mostrar contenido relevante en otras webs.":
+    "S'utilitzarien per mesurar campanyes i mostrar contingut rellevant en altres webs.",
+  "Consulta más detalle en nuestra": "Consulta més detall a la nostra",
+  "Política de Cookies": "Política de Cookies",
+  "Guardar preferencias": "Desar preferències",
+
+  // ── Política de privacidad / cookies (páginas legales) ──
+  "Política de Privacidad": "Política de Privacitat",
+  "Cómo tratamos": "Com tractem",
+  "tus datos.": "les teves dades.",
+  "Responsable del tratamiento": "Responsable del tractament",
+  "Finalidad del tratamiento": "Finalitat del tractament",
+  "Legitimación": "Legitimació",
+  "Destinatarios": "Destinataris",
+  "Tus derechos": "Els teus drets",
+  "Conservación de los datos": "Conservació de les dades",
+  "Reclamaciones": "Reclamacions",
+  "Gestionar mis preferencias de cookies": "Gestionar les meves preferències de cookies",
+  "¿Qué son las cookies?": "Què són les cookies?",
+  "Cookies que utilizamos": "Cookies que utilitzem",
+  "Nombre": "Nom",
+  "Finalidad": "Finalitat",
+  "Duración": "Durada",
+  "Proveedor": "Proveïdor",
+  "Sesión / hasta 12 meses": "Sessió / fins a 12 mesos",
+  "Guarda tu elección de cookies para no volver a preguntarte.": "Desa la teva elecció de cookies per no tornar-t'ho a preguntar.",
+  "Propia": "Pròpia",
+  "Hasta 13 meses": "Fins a 13 mesos",
+  "Hasta 24 horas": "Fins a 24 hores",
+  "Distingue usuarios de forma anónima para medir el uso de la web.": "Distingeix usuaris de forma anònima per mesurar l'ús de la web.",
+  "Limita la frecuencia de las peticiones a Google Analytics.": "Limita la freqüència de les peticions a Google Analytics.",
+  "Solo se instalan si aceptas la categoría \"Analítica\" en el panel de cookies.": "Només s'instal·len si acceptes la categoria \"Analítica\" al plafó de cookies.",
+  "Hasta 12 meses": "Fins a 12 mesos",
+
+  // Privacidad — cuerpo
+  "Aurellano Productes Gastronòmics, con domicilio en Carrer de les Valls d'Andorra, 52, 25005 Lleida, email hola@aurellano.com y teléfono 973 248 266, es responsable del tratamiento de los datos que nos facilitas a través de este sitio web (formulario de contacto, WhatsApp o email).":
+    "Aurellano Productes Gastronòmics, amb domicili al Carrer de les Valls d'Andorra, 52, 25005 Lleida, email hola@aurellano.com i telèfon 973 248 266, és responsable del tractament de les dades que ens facilites a través d'aquest lloc web (formulari de contacte, WhatsApp o email).",
+  "Gestionar tus consultas comerciales, prepararte propuestas de producto y precios, y mantener la relación comercial una vez sois clientes. Si aceptas las cookies analíticas, también usamos datos de navegación agregados para mejorar la web (ver Política de Cookies).":
+    "Gestionar les teves consultes comercials, preparar-te propostes de producte i preus, i mantenir la relació comercial un cop sigueu clients. Si acceptes les cookies analítiques, també utilitzem dades de navegació agregades per millorar la web (vegeu la Política de Cookies).",
+  "El consentimiento que nos das al enviarnos tus datos (contacto) y, en su caso, la ejecución de la relación comercial una vez sois clientes.":
+    "El consentiment que ens dones en enviar-nos les teves dades (contacte) i, si escau, l'execució de la relació comercial un cop sigueu clients.",
+  "No cedemos tus datos a terceros salvo obligación legal. Usamos proveedores tecnológicos (hosting, email, Google Analytics si aceptas cookies analíticas) que actúan como encargados del tratamiento bajo contrato.":
+    "No cedim les teves dades a tercers, tret d'obligació legal. Utilitzem proveïdors tecnològics (hosting, email, Google Analytics si acceptes cookies analítiques) que actuen com a encarregats del tractament sota contracte.",
+  "Puedes ejercer tus derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad escribiéndonos a hola@aurellano.com adjuntando copia de tu DNI o documento equivalente.":
+    "Pots exercir els teus drets d'accés, rectificació, supressió, oposició, limitació i portabilitat escrivint-nos a hola@aurellano.com adjuntant còpia del teu DNI o document equivalent.",
+  "Conservamos tus datos mientras dure la relación comercial y, tras finalizar, durante los plazos legalmente exigibles para atender posibles responsabilidades.":
+    "Conservem les teves dades mentre duri la relació comercial i, un cop finalitzada, durant els terminis legalment exigibles per atendre possibles responsabilitats.",
+  "Si consideras que no hemos tratado tus datos correctamente, puedes presentar una reclamación ante la Agencia Española de Protección de Datos (www.aepd.es).":
+    "Si consideres que no hem tractat les teves dades correctament, pots presentar una reclamació davant l'Agència Espanyola de Protecció de Dades (www.aepd.es).",
+
+  // Cookies — cuerpo
+  "Las cookies son pequeños archivos que se guardan en tu navegador cuando visitas una web. Nos ayudan a recordar tu elección de cookies y, si nos das permiso, a entender cómo se usa la web para mejorarla.":
+    "Les cookies són petits arxius que es desen al teu navegador quan visites una web. Ens ajuden a recordar la teva elecció de cookies i, si ens ho permets, a entendre com s'utilitza la web per millorar-la.",
 };
 
 const dictionaries: Record<Lang, Dict> = { es: {}, ca };

@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
+import { ConsentProvider } from "@/components/consent/ConsentProvider";
+import { CookieBanner } from "@/components/consent/CookieBanner";
 import {
   ADDRESS_STREET,
   ADDRESS_CITY,
@@ -119,6 +121,13 @@ const localBusinessSchema = {
   ],
 };
 
+// Solo lectura de env var (estático, no fuerza render dinámico). La lectura de
+// la cookie de consentimiento se hace en el cliente (ver ConsentProvider) para
+// no perder el prerenderizado estático/ISR del resto del sitio: usar
+// `cookies()` de next/headers en el layout raíz convertiría TODAS las rutas
+// en dinámicas (server-rendered on demand), incluido el catálogo con ISR.
+const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
@@ -133,9 +142,34 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
         />
+        {/* Google Consent Mode v2: todo denegado por defecto hasta que el
+            cliente confirme (cookie ya guardada o decisión en el banner). */}
+        <script
+          id="consent-default"
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){ window.dataLayer.push(arguments); }
+              gtag('consent', 'default', {
+                analytics_storage: 'denied',
+                ad_storage: 'denied',
+                ad_user_data: 'denied',
+                ad_personalization: 'denied',
+                wait_for_update: 500
+              });
+              window.gtag = gtag;
+            `,
+          }}
+        />
       </head>
       <body>
-        <Providers>{children}</Providers>
+        <ConsentProvider gtmId={GTM_ID}>
+          <Providers>
+            {children}
+            <CookieBanner />
+          </Providers>
+        </ConsentProvider>
       </body>
     </html>
   );
