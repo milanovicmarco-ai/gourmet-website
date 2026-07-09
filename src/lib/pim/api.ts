@@ -3,8 +3,6 @@
 // IMPORTANTE: las funciones que escriben usan ADMIN_API_KEY (server-only).
 // No las llames desde un componente "use client" — usa Server Actions.
 
-import { forEachLimited } from "./concurrency";
-
 export const AURELLANO_API =
   process.env.NEXT_PUBLIC_AURELLANO_API ?? "https://aurellano-api.srv1124642.hstgr.cloud";
 
@@ -106,12 +104,14 @@ async function timeoutFetch(
 
 export async function listProducts(params?: {
   limit?: number;
+  offset?: number;
   family?: string;
   q?: string;
   revalidate?: number;
 }): Promise<ProductsListResponse> {
   const sp = new URLSearchParams();
   if (params?.limit) sp.set("limit", String(params.limit));
+  if (params?.offset) sp.set("offset", String(params.offset));
   if (params?.family) sp.set("family", params.family);
   if (params?.q) sp.set("q", params.q);
 
@@ -191,44 +191,60 @@ export async function getProductBySlug(slug: string, revalidate = 3600): Promise
   return res.json();
 }
 
-/** Máx. familias consultadas en paralelo dentro de fetchAllProducts. En serie
- *  el listado tarda demasiado; ~20 a la vez saturaban el pool del backend
- *  (incidente 7-jul-2026). 4 es el punto medio. */
-const FAMILY_FETCH_CONCURRENCY = 4;
+/** Offsets que barre `fetchAllProducts` en paralelo. Con el cap de 200 por
+ *  request de la API, cubre hasta 1000 productos en UNA sola ronda de red.
+ *  Catálogo actual: ~690 productos → margen de sobra. Súbelo si el catálogo
+ *  crece por encima de ~900 (el warning al final avisa). */
+const PAGE_OFFSETS = [0, 200, 400, 600, 800] as const;
 
-/** Trae TODOS los productos del catálogo iterando por familia para sortear el cap
- * de 200 por request de la API. Útil para listados que filtran en memoria por
- * campos que la API no expone (marca, score, flags overlay, etc.). */
+/** Trae TODOS los productos del catálogo. Útil para listados que filtran en
+ *  memoria por campos que la API no expone (marca, dieta, flags overlay, etc.).
+ *
+ *  Estrategia: paginación por offset en PARALELO (todas las páginas a la vez).
+ *  Es lo más rápido posible dado el cap de 200/request: wall-clock ≈ 1 llamada.
+ *  Sustituye al fan-out por familia (que hacía ~15 llamadas en 4 tandas ≈ 4×
+ *  la latencia de una llamada). Con `q` (búsqueda libre), la API ignora offset
+ *  y filtra server-side devolviendo pocos resultados → 1 llamada basta. */
 export async function fetchAllProducts(opts?: {
   q?: string;
   revalidate?: number;
 }): Promise<ApiProduct[]> {
-  const families = await listFamilies(opts?.revalidate ?? 3600).catch(() => []);
-  const map = new Map<string, ApiProduct>();
+  const revalidate = opts?.revalidate ?? 3600;
 
-  // Pasada base: cubre productos sin familia asignada y los primeros 200 globales.
-  const baseRes = await listProducts({ limit: 200, q: opts?.q, revalidate: opts?.revalidate ?? 300 }).catch(
-    () => ({ results: [] as ApiProduct[] }),
+  // Búsqueda libre: la API filtra server-side, resultados pequeños, offset se
+  // ignora. Una sola llamada.
+  if (opts?.q) {
+    const res = await listProducts({ limit: 200, q: opts.q, revalidate }).catch(
+      () => ({ results: [] as ApiProduct[] }),
+    );
+    return res.results;
+  }
+
+  // Sin búsqueda: barrer offsets en paralelo. Cada Promise cachea de forma
+  // independiente en el edge de Vercel (misma URL = misma entrada de cache).
+  const pages = await Promise.all(
+    PAGE_OFFSETS.map((offset) =>
+      listProducts({ limit: 200, offset, revalidate }).catch(
+        () => ({ results: [] as ApiProduct[] }),
+      ),
+    ),
   );
-  for (const p of baseRes.results) map.set(p.ref, p);
 
-  // Una pasada por cada familia (200 max por familia → cubre catálogos razonables),
-  // en LOTES de FAMILY_FETCH_CONCURRENCY — no todas a la vez, que saturaba el pool.
-  await forEachLimited(families, FAMILY_FETCH_CONCURRENCY, async (f) => {
-    const res = await listProducts({
-      limit: 200,
-      family: f.family,
-      q: opts?.q,
-      revalidate: opts?.revalidate ?? 300,
-    }).catch(() => ({ results: [] as ApiProduct[] }));
-    if (res.results.length === 200) {
-      console.warn(
-        `[fetchAllProducts] familia "${f.family}" devolvió 200 (cap saturado). Podría haber productos sin cargar.`,
-      );
-    }
-    for (const p of res.results) map.set(p.ref, p);
-  });
+  // Si la última página vuelve llena, el catálogo pasó del rango cubierto y
+  // faltan productos. Añade más offsets a PAGE_OFFSETS.
+  const last = pages[pages.length - 1];
+  if (last.results.length === 200) {
+    console.warn(
+      `[fetchAllProducts] offset=${PAGE_OFFSETS[PAGE_OFFSETS.length - 1]} devolvió 200 items (cap saturado). Amplía PAGE_OFFSETS o hay productos sin cargar.`,
+    );
+  }
 
+  // Dedup por ref: si dos páginas se solapan (orden inestable del backend),
+  // el Map se queda con una sola copia. Barato y correcto.
+  const map = new Map<string, ApiProduct>();
+  for (const page of pages) {
+    for (const p of page.results) map.set(p.ref, p);
+  }
   return Array.from(map.values());
 }
 
