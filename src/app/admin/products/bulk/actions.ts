@@ -390,21 +390,23 @@ async function applyCatalogs(ref: string, slugs: string[] | null) {
 
 const APPLY_BATCH_SIZE = 5;
 
-export async function applyImport(formData: FormData): Promise<ApplyResult> {
-  await requireAdmin();
-  const rows = await parseXlsx(formData);
-  const existing = await fetchAllProductRefs();
-
+/**
+ * Procesa un slice de filas en paralelo (APPLY_BATCH_SIZE a la vez).
+ * lineOffset es el índice de rows[0] dentro del xlsx completo (para
+ * calcular el número de fila correcto en los mensajes de error).
+ */
+async function runApplyBatch(
+  rows: ImportRow[],
+  existing: Set<string>,
+  lineOffset: number,
+): Promise<ApplyResult> {
   const result: ApplyResult = { created: [], updated: [], deleted: [], errors: [], warnings: [] };
 
-  // Procesar en batches paralelos para reducir el tiempo total.
-  // listBrands y listFamilies ya usan caché de 2min, así que el primer producto
-  // del batch carga la lista y el resto la reutiliza sin llamadas extra al VPS.
   for (let batchStart = 0; batchStart < rows.length; batchStart += APPLY_BATCH_SIZE) {
     const batch = rows.slice(batchStart, batchStart + APPLY_BATCH_SIZE);
     await Promise.all(
       batch.map(async (r, batchIdx) => {
-        const line = batchStart + batchIdx + 2;
+        const line = lineOffset + batchStart + batchIdx + 2;
         try {
           if (r.borrar) {
             if (!r.ref || !existing.has(r.ref)) {
@@ -416,7 +418,6 @@ export async function applyImport(formData: FormData): Promise<ApplyResult> {
           }
 
           if (!r.ref || !existing.has(r.ref)) {
-            // Crear
             if (!r.name) throw new Error("falta nombre");
             const payload = mapToApi(toFormFields(r));
             if (r.ref) payload.ref = r.ref;
@@ -430,7 +431,6 @@ export async function applyImport(formData: FormData): Promise<ApplyResult> {
             return;
           }
 
-          // Update
           const payload = mapToApi(toFormFields(r));
           const hasApiChanges = Object.values(payload).some((v) => v !== undefined);
           if (hasApiChanges) {
@@ -449,10 +449,32 @@ export async function applyImport(formData: FormData): Promise<ApplyResult> {
     );
   }
 
-  // Refresca todas las vistas que dependen del catálogo. El bulk
-  // import puede tocar todos los productos, no invalidamos URLs de
-  // detalle individuales porque serían cientos — el revalidate de
-  // 1h las cubre por sí solo.
+  return result;
+}
+
+/** Aplica un chunk de `limit` filas empezando en `offset` (base-0 sobre las
+ *  filas de datos, sin contar el header). Diseñado para ser llamado en bucle
+ *  desde el cliente en lotes de ~25 filas, evitando el límite de 60 s de Vercel. */
+export async function applyImportChunk(
+  formData: FormData,
+  offset: number,
+  limit: number,
+): Promise<ApplyResult> {
+  await requireAdmin();
+  const allRows = await parseXlsx(formData);
+  const rows = allRows.slice(offset, offset + limit);
+  const existing = await fetchAllProductRefs();
+  const result = await runApplyBatch(rows, existing, offset);
+  revalidatePath("/admin/products");
+  await revalidatePublicListings();
+  return result;
+}
+
+export async function applyImport(formData: FormData): Promise<ApplyResult> {
+  await requireAdmin();
+  const rows = await parseXlsx(formData);
+  const existing = await fetchAllProductRefs();
+  const result = await runApplyBatch(rows, existing, 0);
   revalidatePath("/admin/products");
   await revalidatePublicListings();
   return result;

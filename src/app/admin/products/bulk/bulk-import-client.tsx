@@ -2,13 +2,15 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { previewImport, applyImport, type DiffSummary, type ApplyResult } from "./actions";
+import { previewImport, applyImportChunk, type DiffSummary, type ApplyResult } from "./actions";
+
+const CHUNK_SIZE = 25;
 
 type State =
   | { kind: "idle" }
   | { kind: "previewing" }
   | { kind: "preview"; summary: DiffSummary }
-  | { kind: "applying" }
+  | { kind: "applying"; done: number; total: number }
   | { kind: "applied"; result: ApplyResult }
   | { kind: "error"; message: string };
 
@@ -42,13 +44,26 @@ export function BulkImportClient() {
       setState({ kind: "error", message: "Vuelve a seleccionar el archivo." });
       return;
     }
-    if (!confirm("Aplicar los cambios al catálogo. ¿Continuar?")) return;
-    setState({ kind: "applying" });
+    if (!(state.kind === "preview")) return;
+    const total = state.summary.rows.length;
+    if (!confirm(`Aplicar ${total} filas al catálogo. ¿Continuar?`)) return;
+
+    setState({ kind: "applying", done: 0, total });
+    const accumulated: ApplyResult = { created: [], updated: [], deleted: [], errors: [], warnings: [] };
+
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const result = await applyImport(fd);
-      setState({ kind: "applied", result });
+      for (let offset = 0; offset < total; offset += CHUNK_SIZE) {
+        const fd = new FormData();
+        fd.append("file", file);
+        const chunk = await applyImportChunk(fd, offset, CHUNK_SIZE);
+        accumulated.created.push(...chunk.created);
+        accumulated.updated.push(...chunk.updated);
+        accumulated.deleted.push(...chunk.deleted);
+        accumulated.errors.push(...chunk.errors);
+        accumulated.warnings.push(...(chunk.warnings ?? []));
+        setState({ kind: "applying", done: Math.min(offset + CHUNK_SIZE, total), total });
+      }
+      setState({ kind: "applied", result: accumulated });
       router.refresh();
     } catch (e) {
       setState({ kind: "error", message: (e as Error).message });
@@ -73,7 +88,7 @@ export function BulkImportClient() {
         <button
           type="button"
           onClick={onPreview}
-          disabled={state.kind === "previewing" || state.kind === "applying"}
+          disabled={state.kind === "previewing" || state.kind === "applying" || state.kind === "applied"}
           className="bg-primary text-primary-foreground rounded-full px-6 py-2.5 text-sm font-medium hover:bg-accent transition-colors disabled:opacity-60"
         >
           {state.kind === "previewing" ? "Procesando…" : "Previsualizar"}
@@ -141,8 +156,16 @@ export function BulkImportClient() {
       )}
 
       {state.kind === "applying" && (
-        <div className="rounded-lg border border-border bg-secondary/30 p-4 text-sm">
-          Aplicando cambios… esto puede tardar un poco si el Excel tiene muchas filas.
+        <div className="rounded-lg border border-border bg-secondary/30 p-4 space-y-3">
+          <p className="text-sm">
+            Aplicando… <span className="tabular-nums font-medium">{state.done} / {state.total}</span> filas
+          </p>
+          <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+            <div
+              className="h-full bg-primary rounded-full transition-all duration-300"
+              style={{ width: `${Math.round((state.done / Math.max(state.total, 1)) * 100)}%` }}
+            />
+          </div>
         </div>
       )}
 
