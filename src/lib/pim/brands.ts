@@ -18,7 +18,7 @@ export async function loadBrandOptions(): Promise<BrandOption[]> {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), BRANDS_TIMEOUT_MS);
   try {
-    const r = await fetch(`${AURELLANO_API}/catalog/brands`, {
+    const r = await fetch(`${AURELLANO_API}/catalog/brands?limit=500`, {
       // Cache 1h en el edge de Vercel. Si Marco crea una marca nueva en el
       // editor, ensureBrandExists ya garantiza que existe antes de guardar,
       // así que el combobox un poco stale no rompe nada.
