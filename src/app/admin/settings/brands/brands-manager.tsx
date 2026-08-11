@@ -2,8 +2,9 @@
 
 import { useState, useTransition, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Edit2, Trash2, Loader2, Search } from "lucide-react";
+import { Edit2, Trash2, Loader2, Search, RefreshCw } from "lucide-react";
 import { renameBrand, deleteBrand } from "../actions";
+import { syncBrandsToPartner, type SyncResult } from "./sync-action";
 
 type BrandRow = { canonical: string; count: number; refs: string[] };
 
@@ -20,6 +21,29 @@ export function BrandsManager({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [message, setMessage] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
+
+  async function handleSync() {
+    if (!confirm(`Sincronizar ${brands.length} marcas con el catálogo del partner. Puede tardar unos segundos. ¿Continuar?`)) return;
+    setSyncing(true);
+    setSyncResult(null);
+    setMessage(null);
+    try {
+      const result = await syncBrandsToPartner();
+      setSyncResult(result);
+      setMessage({
+        kind: result.failed.length === 0 ? "ok" : "err",
+        text: result.failed.length === 0
+          ? `Sincronización completada: ${result.synced.length} marca${result.synced.length === 1 ? "" : "s"} procesadas.`
+          : `${result.synced.length} procesadas, ${result.failed.length} con error.`,
+      });
+    } catch (e) {
+      setMessage({ kind: "err", text: (e as Error).message });
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   const filtered = useMemo(() => {
     const qn = q.trim().toLowerCase();
@@ -98,6 +122,15 @@ export function BrandsManager({
           <span className="font-medium text-foreground">{brands.length}</span> marca{brands.length === 1 ? "" : "s"} ·{" "}
           <span className="font-medium text-foreground">{totalProducts}</span> productos totales
         </p>
+        <button
+          type="button"
+          onClick={handleSync}
+          disabled={syncing || pending}
+          className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium hover:border-foreground transition-colors disabled:opacity-50"
+        >
+          {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+          {syncing ? "Sincronizando…" : "Sincronizar con partner"}
+        </button>
       </div>
 
       {message && (
@@ -109,6 +142,13 @@ export function BrandsManager({
           }`}
         >
           {message.text}
+          {syncResult && syncResult.failed.length > 0 && (
+            <ul className="mt-2 list-disc list-inside space-y-1 text-xs">
+              {syncResult.failed.map((f) => (
+                <li key={f.name}><strong>{f.name}</strong>: {f.reason}</li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 
