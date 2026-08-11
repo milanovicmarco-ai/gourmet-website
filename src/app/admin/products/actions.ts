@@ -136,7 +136,7 @@ export async function ensureFamilyExists(
   try {
     const listRes = await fetch(`${AURELLANO_API}/catalog/families`, {
       headers: { Authorization: `Bearer ${apiKey()}` },
-      cache: "no-store",
+      next: { revalidate: 120 },
     });
     if (listRes.ok) {
       const raw = await listRes.json();

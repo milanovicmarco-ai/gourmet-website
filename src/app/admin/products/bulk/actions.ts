@@ -388,6 +388,8 @@ async function applyCatalogs(ref: string, slugs: string[] | null) {
   }
 }
 
+const APPLY_BATCH_SIZE = 5;
+
 export async function applyImport(formData: FormData): Promise<ApplyResult> {
   await requireAdmin();
   const rows = await parseXlsx(formData);
@@ -395,53 +397,56 @@ export async function applyImport(formData: FormData): Promise<ApplyResult> {
 
   const result: ApplyResult = { created: [], updated: [], deleted: [], errors: [], warnings: [] };
 
-  for (let i = 0; i < rows.length; i++) {
-    const r = rows[i];
-    const line = i + 2;
-    try {
-      if (r.borrar) {
-        if (!r.ref || !existing.has(r.ref)) {
-          throw new Error("marcada para borrar pero ref inválida");
-        }
-        await deleteProductApi(r.ref);
-        result.deleted.push({ ref: r.ref });
-        continue;
-      }
+  // Procesar en batches paralelos para reducir el tiempo total.
+  // listBrands y listFamilies ya usan caché de 2min, así que el primer producto
+  // del batch carga la lista y el resto la reutiliza sin llamadas extra al VPS.
+  for (let batchStart = 0; batchStart < rows.length; batchStart += APPLY_BATCH_SIZE) {
+    const batch = rows.slice(batchStart, batchStart + APPLY_BATCH_SIZE);
+    await Promise.all(
+      batch.map(async (r, batchIdx) => {
+        const line = batchStart + batchIdx + 2;
+        try {
+          if (r.borrar) {
+            if (!r.ref || !existing.has(r.ref)) {
+              throw new Error("marcada para borrar pero ref inválida");
+            }
+            await deleteProductApi(r.ref);
+            result.deleted.push({ ref: r.ref });
+            return;
+          }
 
-      if (!r.ref || !existing.has(r.ref)) {
-        // Crear
-        if (!r.name) throw new Error("falta nombre");
-        const payload = mapToApi(toFormFields(r));
-        // Si el usuario puso una ref nueva, la incluimos como hint (algunas APIs la usan).
-        if (r.ref) payload.ref = r.ref;
-        const { product: created, outcome } = await postProduct(payload, r.brand);
-        await applyOverlay(created.ref, r);
-        await applyCatalogs(created.ref, r.catalogos);
-        result.created.push({ ref: created.ref });
-        if (outcome.kind === "downgraded") {
-          result.warnings.push({ line, ref: created.ref, message: outcome.warning });
-        }
-        continue;
-      }
+          if (!r.ref || !existing.has(r.ref)) {
+            // Crear
+            if (!r.name) throw new Error("falta nombre");
+            const payload = mapToApi(toFormFields(r));
+            if (r.ref) payload.ref = r.ref;
+            const { product: created, outcome } = await postProduct(payload, r.brand);
+            await applyOverlay(created.ref, r);
+            await applyCatalogs(created.ref, r.catalogos);
+            result.created.push({ ref: created.ref });
+            if (outcome.kind === "downgraded") {
+              result.warnings.push({ line, ref: created.ref, message: outcome.warning });
+            }
+            return;
+          }
 
-      // Update
-      const payload = mapToApi(toFormFields(r));
-      // Si solo cambian campos de overlay (p.ej. ref_visible→display_ref, marca,
-      // flags dietéticos), no hay nada que mandar a la API del socio: su PUT
-      // devolvería 400 "payload vacío". Saltamos el PUT y aplicamos solo el overlay.
-      const hasApiChanges = Object.values(payload).some((v) => v !== undefined);
-      if (hasApiChanges) {
-        const { outcome } = await putProduct(r.ref, payload, r.brand);
-        if (outcome.kind === "downgraded") {
-          result.warnings.push({ line, ref: r.ref, message: outcome.warning });
+          // Update
+          const payload = mapToApi(toFormFields(r));
+          const hasApiChanges = Object.values(payload).some((v) => v !== undefined);
+          if (hasApiChanges) {
+            const { outcome } = await putProduct(r.ref, payload, r.brand);
+            if (outcome.kind === "downgraded") {
+              result.warnings.push({ line, ref: r.ref, message: outcome.warning });
+            }
+          }
+          await applyOverlay(r.ref, r);
+          await applyCatalogs(r.ref, r.catalogos);
+          result.updated.push({ ref: r.ref });
+        } catch (err) {
+          result.errors.push({ line, ref: r.ref, message: (err as Error).message });
         }
-      }
-      await applyOverlay(r.ref, r);
-      await applyCatalogs(r.ref, r.catalogos);
-      result.updated.push({ ref: r.ref });
-    } catch (err) {
-      result.errors.push({ line, ref: r.ref, message: (err as Error).message });
-    }
+      }),
+    );
   }
 
   // Refresca todas las vistas que dependen del catálogo. El bulk

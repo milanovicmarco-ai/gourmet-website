@@ -38,7 +38,7 @@ async function listBrands(): Promise<ApiBrand[]> {
   try {
     const res = await fetch(`${AURELLANO_API}/catalog/brands`, {
       headers: { Authorization: `Bearer ${apiKey()}` },
-      cache: "no-store",
+      next: { revalidate: 120 },
     });
     if (!res.ok) return [];
     const raw = await res.json();
