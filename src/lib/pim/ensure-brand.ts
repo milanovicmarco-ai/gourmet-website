@@ -33,10 +33,11 @@ function apiKey() {
   return k;
 }
 
-/** Devuelve la lista actual de brands del backend o array vacío si falla. */
+/** Devuelve la lista actual de brands del backend o array vacío si falla.
+ *  Pide limit=500 para evitar truncados por paginación. */
 async function listBrands(): Promise<ApiBrand[]> {
   try {
-    const res = await fetch(`${AURELLANO_API}/catalog/brands`, {
+    const res = await fetch(`${AURELLANO_API}/catalog/brands?limit=500`, {
       headers: { Authorization: `Bearer ${apiKey()}` },
       next: { revalidate: 120 },
     });
@@ -45,6 +46,21 @@ async function listBrands(): Promise<ApiBrand[]> {
     return Array.isArray(raw) ? raw : (raw.results ?? []);
   } catch {
     return [];
+  }
+}
+
+/** Busca un brand concreto por slug directamente en el backend (sin caché).
+ *  Usado como fallback cuando la lista paginada no lo encuentra. */
+async function fetchBrandBySlug(slug: string): Promise<ApiBrand | undefined> {
+  try {
+    const res = await fetch(`${AURELLANO_API}/catalog/brands/${encodeURIComponent(slug)}`, {
+      headers: { Authorization: `Bearer ${apiKey()}` },
+      cache: "no-store",
+    });
+    if (!res.ok) return undefined;
+    return (await res.json()) as ApiBrand;
+  } catch {
+    return undefined;
   }
 }
 
@@ -150,11 +166,18 @@ export async function ensureBrandExists(
       const body = await createRes.text().catch(() => "");
       lastReason = `POST /brands ${createRes.status}: ${body.slice(0, 200)}`;
       console.warn(`[ensureBrandExists] shape rechazada (${createRes.status}): ${body.slice(0, 200)}`);
-      // 409 → ya existe (carrera con otro POST). Re-buscamos.
+      // 409 → ya existe. Buscamos directamente por slug (la lista cacheada
+      // puede estar truncada si hay muchas marcas).
       if (createRes.status === 409) {
+        const direct = await fetchBrandBySlug(slug);
+        if (direct) return { ok: true, brand: direct.name ?? trimmed, slug: brandSlug(direct, slug) };
+        // Si el endpoint individual no existe en esta API, fallback al listado fresco.
         const retryList = await listBrands();
         const match = findBrand(retryList, trimmed, slug);
         if (match) return { ok: true, brand: match.name, slug: brandSlug(match, slug) };
+        // La marca existe (nos dio 409) aunque no podamos obtenerla — confiamos en el slug.
+        console.warn(`[ensureBrandExists] 409 para '${trimmed}' pero no se pudo recuperar por GET. Usando slug calculado.`);
+        return { ok: true, brand: trimmed, slug };
       }
     } catch (err) {
       lastReason = (err as Error).message;
