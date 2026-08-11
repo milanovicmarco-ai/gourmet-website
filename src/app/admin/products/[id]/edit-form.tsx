@@ -248,7 +248,13 @@ export function ProductEditForm({ productRef, initial, meta, families = [], bran
         <FieldWrap label="Marca">
           <EntityCombobox
             kind="brand"
-            value={brandOptions.find((b) => b.name.toLowerCase() === form.brand.toLowerCase().trim())?.slug ?? null}
+            value={
+              brandOptions.find(
+                (b) =>
+                  b.name.toLowerCase() === form.brand.toLowerCase().trim() ||
+                  b.slug === form.brand.toLowerCase().trim(),
+              )?.slug ?? null
+            }
             options={brandOptions}
             onChange={(slug) => {
               const name = slug ? (brandOptions.find((b) => b.slug === slug)?.name ?? "") : "";
