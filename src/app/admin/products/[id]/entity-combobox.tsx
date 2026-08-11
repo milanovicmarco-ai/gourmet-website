@@ -126,7 +126,7 @@ export function EntityCombobox({
           onClick={() => setOpen((v) => !v)}
           className="flex-1 flex items-center justify-between bg-background border border-border rounded-lg px-3 py-2 text-left focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-colors"
         >
-          <span className={displayLabel ? (selected ? "" : "text-amber-600") : "text-muted-foreground"}>
+          <span className={displayLabel ? "" : "text-muted-foreground"}>
             {displayLabel ?? placeholder ?? "— Seleccionar —"}
           </span>
           <ChevronsUpDown className="h-4 w-4 text-muted-foreground shrink-0" />
