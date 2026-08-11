@@ -49,7 +49,7 @@ export default async function AdminProductDetailPage({
   // seguidos sea instantáneo sin perder frescura visible.
   const [productOrError, meta] = await Promise.all([
     getProductByRef(ref, 60).catch((err: Error) => err),
-    withTimeout(getProductMeta(ref), 5000, "getProductMeta", EMPTY_META(ref)),
+    withTimeout(getProductMeta(ref), 12000, "getProductMeta", EMPTY_META(ref)),
   ]);
   if (productOrError instanceof Error) {
     throw new Error(`No se pudo cargar el producto ${ref}: ${productOrError.message}`);
