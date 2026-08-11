@@ -16,6 +16,9 @@ interface EntityComboboxProps {
   onChange: (slug: string | null) => void;
   onOptionsChange?: (next: EntityOption[]) => void;
   placeholder?: string;
+  /** Texto a mostrar cuando value es null pero hay un valor guardado que no
+   *  está en las opciones (ej. marca en brand_override no registrada en la API). */
+  fallbackLabel?: string;
 }
 
 /**
@@ -36,6 +39,7 @@ export function EntityCombobox({
   onChange,
   onOptionsChange,
   placeholder,
+  fallbackLabel,
 }: EntityComboboxProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -44,6 +48,7 @@ export function EntityCombobox({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const selected = options.find((o) => o.slug === value) ?? null;
+  const displayLabel = selected?.name ?? (fallbackLabel?.trim() || null);
 
   // Cerrar al hacer click fuera
   useEffect(() => {
@@ -121,8 +126,8 @@ export function EntityCombobox({
           onClick={() => setOpen((v) => !v)}
           className="flex-1 flex items-center justify-between bg-background border border-border rounded-lg px-3 py-2 text-left focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-colors"
         >
-          <span className={selected ? "" : "text-muted-foreground"}>
-            {selected ? selected.name : placeholder ?? "— Seleccionar —"}
+          <span className={displayLabel ? (selected ? "" : "text-amber-600") : "text-muted-foreground"}>
+            {displayLabel ?? placeholder ?? "— Seleccionar —"}
           </span>
           <ChevronsUpDown className="h-4 w-4 text-muted-foreground shrink-0" />
         </button>

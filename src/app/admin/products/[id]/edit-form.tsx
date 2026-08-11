@@ -262,6 +262,7 @@ export function ProductEditForm({ productRef, initial, meta, families = [], bran
             }}
             onOptionsChange={setBrandOptions}
             placeholder="ej. Maison Lafleur"
+            fallbackLabel={form.brand || undefined}
           />
         </FieldWrap>
         <Field
