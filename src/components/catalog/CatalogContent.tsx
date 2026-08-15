@@ -339,12 +339,12 @@ export async function CatalogContent({ sp, basePath, productHrefBase, lang = "es
   } else {
     // Por nombre: los que empiezan por número van al final.
     filtered.sort((a, b) => {
-      const an = a.name ?? "";
-      const bn = b.name ?? "";
+      const an = displayName(a);
+      const bn = displayName(b);
       const aNum = /^\s*\d/.test(an) ? 1 : 0;
       const bNum = /^\s*\d/.test(bn) ? 1 : 0;
       if (aNum !== bNum) return aNum - bNum;
-      return an.localeCompare(bn, "es", { sensitivity: "base", numeric: true });
+      return an.localeCompare(bn, lang, { sensitivity: "base", numeric: true });
     });
   }
 
