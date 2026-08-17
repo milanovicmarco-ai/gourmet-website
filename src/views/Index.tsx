@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, MessageCircle, ChefHat, Store, Truck, Sparkles, Lightbulb, Quote } from "lucide-react";
+import { ArrowRight, MessageCircle, ChefHat, Store, Truck, Sparkles, Lightbulb } from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { Circle } from "@/components/Circle";
 import { SectionHeader } from "@/components/SectionHeader";
@@ -10,7 +10,7 @@ import { WHATSAPP_LINK } from "@/lib/contact";
 import { useI18n } from "@/lib/i18n";
 
 /** Shape mínimo que pasa el server component (page.tsx) para la sección
- * "Selección curada" — provienen del catálogo `seleccion-aurellano` (Supabase). */
+ * "Nuestro catálogo" — provienen del catálogo `seleccion-aurellano` (Supabase). */
 export type FeaturedProduct = {
   ref: string;
   slug: string;
@@ -115,9 +115,8 @@ const Index = ({ featured = [] }: IndexProps) => {
       {/* ========== SEGMENTACIÓN ========== */}
       <section className="container-edit py-20 md:py-32 relative">
         <SectionHeader
-          eyebrow={t("Para quién trabajamos")}
-          title={<>{t("Lo que te piden")}<span className="pink-underline">{t("tus clientes")}</span>.</>}
-          subtitle={t("Seleccionamos producto y servicio según lo que necesita cada negocio.")}
+          eyebrow={t("Tus partners")}
+          title={<>{t("Productos adaptados a")} <span className="pink-underline">{t("tus necesidades")}</span>.</>}
         />
 
         <div className="mt-14 grid md:grid-cols-2 gap-6 lg:gap-10">
@@ -146,7 +145,7 @@ const Index = ({ featured = [] }: IndexProps) => {
             </div>
             <div className="relative space-y-4">
               <h3 className="font-display font-light text-3xl md:text-5xl tracking-tight">{t("Colmado")}</h3>
-              <p className="text-muted-foreground max-w-md">{t("Producto premium de alta rotación y cero desperdicio. Lo que tu cliente busca y aún no sabe.")}</p>
+              <p className="text-muted-foreground max-w-md">{t("Productos seleccionados para tiendas; lo que tu cliente busca y aún no sabe.")}</p>
               <span className="inline-flex items-center gap-2 text-sm font-medium text-foreground">{t("Ver catálogo")} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" /></span>
             </div>
           </Link>
@@ -214,14 +213,11 @@ const Index = ({ featured = [] }: IndexProps) => {
 
       {/* ========== BLOQUES PRODUCTO ========== */}
       <section className="container-edit py-20 md:py-32">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-14">
+        <div className="mb-14">
           <SectionHeader
-            eyebrow={t("Selección curada")}
-            title={<>{t("Lo que hoy nos tiene")} <span className="pink-underline">{t("obsesionados")}</span>.</>}
+            eyebrow={t("Nuestro catálogo")}
+            title={<>{t("Lo que nos")} <span className="pink-underline">{t("apasiona")}</span>.</>}
           />
-          <Link href="/catalogo" className="text-sm font-medium inline-flex items-center gap-2 hover:text-accent transition-colors">
-            {t("Ver todo el catálogo")} <ArrowRight className="h-4 w-4" />
-          </Link>
         </div>
 
         {featured.length > 0 ? (
@@ -264,13 +260,6 @@ const Index = ({ featured = [] }: IndexProps) => {
             <p className="text-lg md:text-xl text-primary-foreground/85 leading-relaxed max-w-xl">
               {t("Trabajamos directo con maestros afinadores. Por origen, intensidad y maduración. Te ayudamos a montar la tabla perfecta — y a maridarla.")}
             </p>
-            <ul className="grid grid-cols-2 gap-y-3 gap-x-6 text-sm max-w-md">
-              {["Cabra", "Oveja", "Vaca", "Mezclas", "Azules", "Pasta blanda", "Curados", "Veganos"].map((c) => (
-                <li key={c} className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-accent" />{t(c)}
-                </li>
-              ))}
-            </ul>
             <Link
               href="/quesos"
               className="inline-flex items-center gap-2 bg-accent text-accent-foreground rounded-full pl-6 pr-7 py-4 font-medium hover:bg-primary-foreground hover:text-primary transition-colors"
@@ -285,8 +274,8 @@ const Index = ({ featured = [] }: IndexProps) => {
       <section className="container-edit py-20 md:py-32">
         <SectionHeader
           align="center"
-          eyebrow={t("Especialidades Gourmet")}
-          title={<>{t("Tres mundos, un mismo")} <span className="pink-underline">{t("criterio")}</span>.</>}
+          eyebrow={t("Productos únicos")}
+          title={<>{t("3 mundos, un mismo")} <span className="pink-underline">{t("criterio")}</span>.</>}
           subtitle={t("Selecciones temáticas pensadas para diferenciarte. Cada una con su catálogo dedicado.")}
         />
 
@@ -294,42 +283,50 @@ const Index = ({ featured = [] }: IndexProps) => {
           {[
             {
               tag: t("Delicatessen"),
-              title: t("Productos que enamoran"),
               desc: t("Iconos del gusto: foie, quesos afinados, anchoas, vermut. Lo que un paladar exigente reconoce al primer bocado."),
               img: especialidadDelicatessen,
               to: "/catalogo?catalog=delicatessen",
             },
             {
               tag: t("Healthy"),
-              title: t("Sano sin renunciar"),
               desc: t("Vegano, sin gluten, sin lactosa, fermentados, miel cruda. Bienestar real con sabor de verdad."),
               img: especialidadHealthy,
               to: "/catalogo?catalog=healthy",
             },
             {
               tag: t("Limited Edition"),
-              title: t("Series limitadas"),
               desc: t("Producciones cortas, importaciones puntuales, ediciones numeradas. Lo que está hoy, mañana puede no estar."),
               img: especialidadLimited,
               to: "/catalogo?catalog=limited-edition",
             },
           ].map((i) => (
             <Link
-              key={i.title}
+              key={i.tag}
               href={i.to}
+              // container-type: la tipografía del título se calcula sobre el ancho
+              // de la tarjeta para que quepa siempre en una sola línea.
+              style={{ containerType: "inline-size" }}
               className="group relative overflow-hidden rounded-3xl bg-secondary aspect-[4/5] hover-lift block"
             >
               <img
                 src={i.img}
-                alt={i.title}
+                alt={i.tag}
                 className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1200ms] group-hover:scale-105"
                 loading="lazy"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-primary/95 via-primary/50 to-transparent" />
               <div className="absolute inset-x-0 bottom-0 p-7 text-primary-foreground space-y-3">
-                <p className="text-xs uppercase tracking-[0.18em] text-accent">{i.tag}</p>
-                <h3 className="font-display font-light text-2xl leading-tight">{i.title}</h3>
-                <p className="text-sm text-primary-foreground/80 line-clamp-3">{i.desc}</p>
+                {/* 7.5 ≈ ratio ancho/tamaño de la cadena más larga ("Limited Edition")
+                 * en Montserrat Light; garantiza una línea sin desbordar el padding. */}
+                <h3
+                  className="font-display font-light leading-tight text-accent whitespace-nowrap"
+                  style={{ fontSize: "clamp(1.25rem, calc((100cqw - 3.5rem) / 7.5), 3rem)" }}
+                >
+                  {i.tag}
+                </h3>
+                {/* Altura fija de 3 líneas → título, párrafo y CTA quedan a la misma
+                 * altura en las tres tarjetas (el bloque está anclado abajo). */}
+                <p className="text-sm text-primary-foreground/80 line-clamp-3 min-h-[3.75rem]">{i.desc}</p>
                 <span className="inline-flex items-center gap-1.5 text-sm font-medium pt-1">
                   {t("Ver catálogo")} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </span>
@@ -338,38 +335,6 @@ const Index = ({ featured = [] }: IndexProps) => {
           ))}
         </div>
       </section>
-
-      {/* ========== TESTIMONIO + BANNER TOSTADAS ========== */}
-      <section className="container-edit pb-20 md:pb-32">
-        <div className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 relative overflow-hidden rounded-3xl bg-primary text-primary-foreground p-10 md:p-14">
-            <Circle variant="outline" className="w-80 h-80 -top-20 -right-20 border-primary-foreground/10" />
-            <Quote className="h-8 w-8 text-accent mb-6" />
-            <p className="font-display font-light text-2xl md:text-3xl leading-snug max-w-2xl text-balance">
-              {t("\"Llevamos 12 años trabajando con Aurellano. Nunca hemos tenido un imprevisto que no resolvieran en horas. Es como tener un sumiller del producto en plantilla.\"")}
-            </p>
-            <p className="mt-6 text-sm text-primary-foreground/60">{t("Chef · Restaurante 1 Estrella Michelin · Cataluña")}</p>
-          </div>
-
-          <div className="relative overflow-hidden rounded-3xl bg-accent text-accent-foreground p-10 flex flex-col justify-between min-h-[300px]">
-            <Circle variant="outline" className="w-64 h-64 -bottom-20 -left-20 border-accent-foreground/20" />
-            <div className="relative space-y-2">
-              <p className="eyebrow text-accent-foreground/70">{t("Novedad")}</p>
-              <h3 className="font-display font-light text-3xl leading-tight">{t("Tostadas personalizadas para tu carta")}</h3>
-            </div>
-            <p className="relative text-sm text-accent-foreground/85">{t("Diseñamos contigo formato, harina y horneado. Pedido mínimo desde 200 unidades.")}</p>
-            <a
-              href={WHATSAPP_LINK}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="relative inline-flex items-center gap-2 text-sm font-medium border border-accent-foreground/30 rounded-full pl-5 pr-6 py-2.5 self-start hover:bg-accent-foreground hover:text-accent transition-colors"
-            >
-              {t("Pídelas")} <ArrowRight className="h-4 w-4" />
-            </a>
-          </div>
-        </div>
-      </section>
-
 
       {/* ========== CTA FINAL — blanco arriba → rosa abajo ========== */}
       <section

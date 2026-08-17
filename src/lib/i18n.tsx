@@ -117,17 +117,15 @@ const ca: Dict = {
   "proveedores": "proveïdors",
   "referencias": "referències",
   "tradición familiar": "tradició familiar",
-  "Para quién trabajamos": "Per a qui treballem",
-  "Lo que te piden": "El que et demanen",
-  "tus clientes": "els teus clients",
-  "Seleccionamos producto y servicio según lo que necesita cada negocio.":
-    "Seleccionem producte i servei segons el que necessita cada negoci.",
+  "Tus partners": "Els teus partners",
+  "Productos adaptados a": "Productes adaptats a",
+  "tus necesidades": "les teves necessitats",
   "HORECA": "HORECA",
   "Producto pensado para hostelería: 4ª y 5ª gama, platos preparados, ingredientes de autor.":
     "Producte pensat per a l'hostaleria: 4a i 5a gamma, plats preparats, ingredients d'autor.",
   "Establecimientos": "Establiments",
-  "Producto premium de alta rotación y cero desperdicio. Lo que tu cliente busca y aún no sabe.":
-    "Producte premium d'alta rotació i zero malbaratament. El que el teu client busca i encara no sap.",
+  "Productos seleccionados para tiendas; lo que tu cliente busca y aún no sabe.":
+    "Productes seleccionats per a botigues; el que el teu client busca i encara no sap.",
   "Qué ofrecemos": "Què oferim",
   "Más que un proveedor.": "Més que un proveïdor.",
   "Tu": "El teu",
@@ -141,8 +139,9 @@ const ca: Dict = {
   "Ideas para tu carta o tienda: combinaciones, novedades, propuestas para cada estación.":
     "Idees per a la teva carta o botiga: combinacions, novetats, propostes per a cada estació.",
   "Selección curada": "Selecció curada",
-  "Lo que hoy nos tiene": "El que avui ens té",
-  "obsesionados": "obsessionats",
+  "Nuestro catálogo": "El nostre catàleg",
+  "Lo que nos": "El que ens",
+  "apasiona": "apassiona",
   "Ver todo el catálogo": "Veure tot el catàleg",
   "Especialidad de la casa": "Especialitat de la casa",
   "Quesos afinados": "Formatges afinats",
@@ -176,29 +175,17 @@ const ca: Dict = {
   "HORECA y comercio": "HORECA i comerç",
   "Servicio al Principat": "Servei al Principat",
 
-  "Especialidades Gourmet": "Especialitats Gourmet",
-  "Tres mundos, un mismo": "Tres mons, un mateix",
+  "Productos únicos": "Productes únics",
+  "3 mundos, un mismo": "3 mons, un mateix",
   "criterio": "criteri",
   "Selecciones temáticas pensadas para diferenciarte. Cada una con su catálogo dedicado.":
     "Seleccions temàtiques pensades per diferenciar-te. Cadascuna amb el seu catàleg dedicat.",
-  "Productos que enamoran": "Productes que enamoren",
   "Iconos del gusto: foie, quesos afinados, anchoas, vermut. Lo que un paladar exigente reconoce al primer bocado.":
     "Icones del gust: foie, formatges afinats, anxoves, vermut. El que un paladar exigent reconeix a la primera mossegada.",
-  "Sano sin renunciar": "Sa sense renunciar",
   "Vegano, sin gluten, sin lactosa, fermentados, miel cruda. Bienestar real con sabor de verdad.":
     "Vegà, sense gluten, sense lactosa, fermentats, mel crua. Benestar real amb sabor de veritat.",
-  "Series limitadas": "Sèries limitades",
   "Producciones cortas, importaciones puntuales, ediciones numeradas. Lo que está hoy, mañana puede no estar.":
     "Produccions curtes, importacions puntuals, edicions numerades. El que hi ha avui, demà pot no ser-hi.",
-  "\"Llevamos 12 años trabajando con Aurellano. Nunca hemos tenido un imprevisto que no resolvieran en horas. Es como tener un sumiller del producto en plantilla.\"":
-    "\"Fa 12 anys que treballem amb Aurellano. Mai hem tingut un imprevist que no resolguessin en hores. És com tenir un sommelier del producte a plantilla.\"",
-  "Chef · Restaurante 1 Estrella Michelin · Cataluña":
-    "Xef · Restaurant 1 Estrella Michelin · Catalunya",
-  "Novedad": "Novetat",
-  "Tostadas personalizadas para tu carta": "Torrades personalitzades per a la teva carta",
-  "Diseñamos contigo formato, harina y horneado. Pedido mínimo desde 200 unidades.":
-    "Dissenyem amb tu format, farina i cocció. Comanda mínima des de 200 unitats.",
-  "Pídelas": "Demana-les",
   "Empecemos": "Comencem",
   "¿Hablamos de": "Parlem de",
   "tu carta": "la teva carta",
