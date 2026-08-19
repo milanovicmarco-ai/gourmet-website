@@ -67,7 +67,7 @@ const SecretsDelXef = ({
           {[
             { title: "Sin merma", desc: "Porcionado y formato pensado para servicio. Aprovecha el 100%." },
             { title: "Calidad uniforme", desc: "Misma receta plato a plato. Tu cliente repite porque sabe a lo de siempre." },
-            { title: "Tu carta, tu autoría", desc: "Te damos la base. Tú añades la firma. Nadie sabrá que no es 100% de la casa." },
+            { title: "Tu carta, tu autoría", desc: "Te damos la base. Tú añades la firma." },
           ].map((b, i) => (
             <div key={b.title} className="border-t border-border pt-8 space-y-3">
               <span className="text-xs text-muted-foreground">0{i + 1}</span>
@@ -95,8 +95,8 @@ const SecretsDelXef = ({
         <div className="container-edit py-20 md:py-28">
           <SectionHeader
             eyebrow={t("Primer precio")}
-            title={<>{t("Margen para tu negocio,")} <span className="pink-underline">{t("precio para tu carta")}</span>.</>}
-            subtitle={t("Una selección de productos económicos y de alta rotación para escalar márgenes sin perder criterio.")}
+            title={t("Productos de Primer Precio.")}
+            subtitle={t("Una selección de productos económicos y de alta rotación para escalar márgenes.")}
           />
           {primerPrecio.length > 0 ? (
             <>

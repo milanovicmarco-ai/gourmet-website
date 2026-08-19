@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 export const revalidate = 3600;
 
 const FEATURED_CATALOG = "seleccion-aurellano";
-const FEATURED_LIMIT = 4;
+const FEATURED_LIMIT = 12;
 
 async function loadFeatured(): Promise<FeaturedProduct[]> {
   const refs = await getRefsByCatalogSlug(FEATURED_CATALOG).catch(() => []);

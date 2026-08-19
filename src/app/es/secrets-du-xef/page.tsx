@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 export const revalidate = 3600;
 
 export default async function SecretsPage() {
-  const { featured, primerPrecio } = await loadHubProducts({ catalogSlug: "horeca" });
+  const { featured, primerPrecio } = await loadHubProducts({ catalogSlug: "horeca", limit: 24 });
   return (
     <SecretsDelXef
       featured={featured.products}

@@ -10,7 +10,7 @@ import { waLink } from "@/lib/contact";
 import type { CuratedProduct } from "@/lib/pim/featured";
 import { useI18n } from "@/lib/i18n";
 
-const colmadoImg = "/images/colmado.jpg";
+const colmadoImg = "/images/productes_gourmet_horeca.jpg";
 
 interface Props {
   /** Productos destacados del catálogo retail. */
@@ -41,13 +41,13 @@ const Colmado = ({
         <Circle variant="blur" className="w-96 h-96 -bottom-20 right-0" />
         <div className="container-edit pt-28 md:pt-36 pb-20 md:pb-28 relative grid lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-6 space-y-6">
-            <p className="eyebrow text-primary-foreground/60">{t("Para tiendas y mercados")}</p>
+            <p className="eyebrow text-primary-foreground/60">{t("PRODUCTOS HORECA")}</p>
             <h1 className="display text-balance">
               {t("Colmado")}<br />
               <span className="italic font-light text-accent">{t("Gourmet.")}</span>
             </h1>
             <p className="text-lg text-primary-foreground/75 max-w-xl">
-              {t("Producto gourmet pensado para tiendas, supermercados especializados, paradas de mercado y ultramarinos. Alta rotación, márgenes saneados y un surtido que diferencia tu lineal.")}
+              {t("Producto gourmet pensado para tiendas, supermercados especializados, paradas de mercado y ultramarinos.")}
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
@@ -74,33 +74,12 @@ const Colmado = ({
         </div>
       </section>
 
-      {/* BENEFICIOS */}
-      <section className="container-edit py-20 md:py-28">
-        <SectionHeader
-          eyebrow={t("Beneficios para tu tienda")}
-          title={<>{t("Margen, rotación y")} <span className="pink-underline">{t("diferenciación")}</span>.</>}
-        />
-        <div className="mt-12 grid md:grid-cols-3 gap-8">
-          {[
-            { title: "Surtido curado", desc: "Selección que escapa del lineal genérico. Tu clientela viene a buscarte por lo que solo tienes tú." },
-            { title: "Formato retail", desc: "Etiquetado preparado para tienda, formatos que rotan y precio cerrado por unidad." },
-            { title: "Reposición ágil", desc: "Pedidos pequeños sin penalización. Repones cuando lo necesitas, no cuando toca." },
-          ].map((b, i) => (
-            <div key={b.title} className="border-t border-border pt-8 space-y-3">
-              <span className="text-xs text-muted-foreground">0{i + 1}</span>
-              <h3 className="font-display font-light text-2xl">{t(b.title)}</h3>
-              <p className="text-sm text-muted-foreground">{t(b.desc)}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* SELECCIÓN destacada del catálogo retail */}
       <section className="container-edit pb-20 md:pb-28">
-        <SectionHeader eyebrow={t("Selección retail")} title={t("Lo que está volando del lineal.")} />
+        <SectionHeader eyebrow={t("Selección retail")} title={t("Top ventas.")} />
         {featured.length > 0 ? (
           <>
-            <div className="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+            <div className="mt-12 grid grid-cols-2 md:grid-cols-3 gap-6 lg:gap-8">
               {featured.map((p) => (
                 <ProductCard
                   key={p.ref}

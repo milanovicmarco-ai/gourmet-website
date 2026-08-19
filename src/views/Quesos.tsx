@@ -149,7 +149,7 @@ const Quesos = ({ featured = [], featuredCatalogCount = 0 }: Props) => {
           <div className="relative max-w-3xl mx-auto space-y-8">
             <p className="eyebrow justify-center inline-flex text-primary/70">{t("Empecemos")}</p>
             <h2 className="display text-balance text-primary">
-              {t("¿Montamos")} <span className="italic font-light">{t("tu tabla")}</span>?
+              {t("¿Montamos")} <span className="italic font-light">{t("tu tabla de quesos")}</span>?
             </h2>
             <p className="text-lg text-primary/80 max-w-xl mx-auto">
               {t("Te asesoramos con cantidades, formatos y maridajes según tu carta. Selección curada por maestros afinadores.")}

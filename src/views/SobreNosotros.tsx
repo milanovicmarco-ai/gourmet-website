@@ -13,7 +13,7 @@ const milestones = [
   { year: "1968", title: "Empieza la historia", desc: "Fundación en Lleida como pequeño distribuidor de producto local." },
   { year: "1985", title: "El salto al gourmet", desc: "Apuesta por producto de importación y denominaciones de origen." },
   { year: "2005", title: "Profesionalización", desc: "Logística propia, almacén refrigerado y red de transporte." },
-  { year: "Hoy", title: "+10.000 referencias", desc: "Empresa familiar profesionalizada, +200 proveedores y servicio en toda España y Andorra." },
+  { year: "Hoy", title: "Más de 10.000 referencias", desc: "Empresa familiar profesionalizada, +200 proveedores y servicio en toda España y Andorra." },
 ];
 
 const SobreNosotros = () => {
@@ -44,8 +44,8 @@ const SobreNosotros = () => {
       <Circle variant="accent" className="w-72 h-72 -top-10 -right-20" />
       <div className="container-edit pt-32 md:pt-40 pb-12 md:pb-16 max-w-4xl space-y-6 relative">
         <p className="eyebrow">{t("Sobre nosotros")}</p>
-        <h1 className="display text-balance">{t("+50 años seleccionando")}<br /><span className="italic font-light text-accent">{t("producto con criterio.")}</span></h1>
-        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl">{t("Empresa familiar de Lleida. Nacimos como pequeño distribuidor y nos hemos convertido en partner gourmet de referencia para profesionales en toda España y Andorra.")}</p>
+        <h1 className="display text-balance">{t("+50 años seleccionando")}<br /><span className="italic font-light text-accent">{t("productos.")}</span></h1>
+        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl">{t("Empresa familiar de Lleida. Nacimos como pequeño distribuidor y nos hemos convertido en partner gourmet de referencia para profesionales del sector.")}</p>
       </div>
     </section>
 

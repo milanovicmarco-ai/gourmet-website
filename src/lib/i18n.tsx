@@ -249,8 +249,10 @@ const ca: Dict = {
 
   // ── Colmado (textos visibles) ──
   "Para tiendas y mercados": "Per a botigues i mercats",
+  "PRODUCTOS HORECA": "PRODUCTES HORECA",
   "Gourmet.": "Gourmet.",
   "Producto gourmet pensado para tiendas, supermercados especializados, paradas de mercado y ultramarinos. Alta rotación, márgenes saneados y un surtido que diferencia tu lineal.": "Producte gourmet pensat per a botigues, supermercats especialitzats, parades de mercat i ultramarins. Alta rotació, marges sanejats i un assortit que diferencia el teu lineal.",
+  "Producto gourmet pensado para tiendas, supermercados especializados, paradas de mercado y ultramarinos.": "Producte gourmet pensat per a botigues, supermercats especialitzats, parades de mercat i ultramarins.",
   "Ver catálogo para tu tienda": "Veure catàleg per a la teva botiga",
   "Beneficios para tu tienda": "Beneficis per a la teva botiga",
   "Margen, rotación y": "Marge, rotació i",
@@ -264,6 +266,7 @@ const ca: Dict = {
   "Pedidos pequeños sin penalización. Repones cuando lo necesitas, no cuando toca.": "Comandes petites sense penalització. Reposes quan ho necessites, no quan toca.",
   "Selección retail": "Selecció retail",
   "Lo que está volando del lineal.": "El que vola del lineal.",
+  "Top ventas.": "Top vendes.",
   "Ver todos los productos Colmado": "Veure tots els productes Colmado",
   "Primer precio": "Primer preu",
   "Económicos para tu lineal,": "Econòmics per al teu lineal,",
@@ -273,19 +276,20 @@ const ca: Dict = {
 
   // ── Sobre Nosaltres (cos) ──
   "+50 años seleccionando": "+50 anys seleccionant",
-  "producto con criterio.": "producte amb criteri.",
-  "Empresa familiar de Lleida. Nacimos como pequeño distribuidor y nos hemos convertido en partner gourmet de referencia para profesionales en toda España y Andorra.": "Empresa familiar de Lleida. Vam néixer com a petit distribuïdor i ens hem convertit en partner gourmet de referència per a professionals a tota Espanya i Andorra.",
+  "productos.": "productes.",
+  "Empresa familiar de Lleida. Nacimos como pequeño distribuidor y nos hemos convertido en partner gourmet de referencia para profesionales del sector.": "Empresa familiar de Lleida. Vam néixer com a petit distribuïdor i ens hem convertit en partner gourmet de referència per a professionals del sector.",
   "De pequeño distribuidor": "De petit distribuïdor",
-  "a partner": "a partner",
+  "a partner": "a soci",
   "de referencia": "de referència",
   "Hoy": "Avui",
   "Empieza la historia": "Comença la història",
-  "Fundación en Lleida como pequeño distribuidor de producto local.": "Fundació a Lleida com a petit distribuïdor de producte local.",
-  "El salto al gourmet": "El salt al gourmet",
-  "Apuesta por producto de importación y denominaciones de origen.": "Aposta per producte d'importació i denominacions d'origen.",
+  "Fundación en Lleida como pequeño distribuidor de producto local.": "Fundació a Lleida com a petit distribuïdor de productes locals.",
+  "El salto al gourmet": "El salt al sector gurmet",
+  "Apuesta por producto de importación y denominaciones de origen.": "Aposta pel producte d'importació i per les denominacions d'origen.",
   "Profesionalización": "Professionalització",
   "Logística propia, almacén refrigerado y red de transporte.": "Logística pròpia, magatzem refrigerat i xarxa de transport.",
-  "Empresa familiar profesionalizada, +200 proveedores y servicio en toda España y Andorra.": "Empresa familiar professionalitzada, +200 proveïdors i servei a tota Espanya i Andorra.",
+  "Empresa familiar profesionalizada, +200 proveedores y servicio en toda España y Andorra.": "Empresa familiar professionalitzada, amb més de 200 proveïdors i servei a tot Espanya i Andorra.",
+  "Más de 10.000 referencias": "Més de 10.000 referències",
   "Cómo trabajamos": "Com treballem",
   "Cerca de cada": "A prop de cada",
   "cliente.": "client.",
@@ -441,6 +445,7 @@ const ca: Dict = {
   "Pera + sidra natural": "Pera + sidra natural",
   "¿Montamos": "Muntem",
   "tu tabla": "la teva taula",
+  "tu tabla de quesos": "la teva fusta de formatges",
 
   // ── Secrets du Xef (repàs) ──
   "Te asesoramos con cantidades, formatos y maridajes según tu carta. Selección curada por maestros afinadores.":
@@ -470,14 +475,15 @@ const ca: Dict = {
   "Misma receta plato a plato. Tu cliente repite porque sabe a lo de siempre.":
     "Mateixa recepta plat a plat. El teu client repeteix perquè té el gust de sempre.",
   "Tu carta, tu autoría": "La teva carta, la teva autoria",
-  "Te damos la base. Tú añades la firma. Nadie sabrá que no es 100% de la casa.":
-    "Et donem la base. Tu hi afegeixes la firma. Ningú sabrà que no és 100% de la casa.",
+  "Te damos la base. Tú añades la firma.":
+    "Et donem la base. Tu hi afegeixes la firma.",
   "Lo que está saliendo de cocina.": "El que està sortint de cuina.",
   "Ver todos los productos HORECA": "Veure tots els productes HORECA",
   "Margen para tu negocio,": "Marge per al teu negoci,",
   "precio para tu carta": "preu per a la teva carta",
-  "Una selección de productos económicos y de alta rotación para escalar márgenes sin perder criterio.":
-    "Una selecció de productes econòmics i d'alta rotació per escalar marges sense perdre criteri.",
+  "Productos de Primer Precio.": "Productes de Primer Preu.",
+  "Una selección de productos económicos y de alta rotación para escalar márgenes.":
+    "Una selecció de productes econòmics i d'alta rotació per escalar marges.",
   "Ver todos los primer precio HORECA": "Veure tots els primer preu HORECA",
 
   // Sobre Nosotros

@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 export const revalidate = 3600;
 
 export default async function ColmadoPage() {
-  const { featured, primerPrecio } = await loadHubProducts({ catalogSlug: "retail" });
+  const { featured, primerPrecio } = await loadHubProducts({ catalogSlug: "retail", limit: 24 });
   return (
     <Colmado
       featured={featured.products}
