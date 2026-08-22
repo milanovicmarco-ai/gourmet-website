@@ -252,7 +252,7 @@ const ca: Dict = {
   "PRODUCTOS HORECA": "PRODUCTES HORECA",
   "Gourmet.": "Gourmet.",
   "Producto gourmet pensado para tiendas, supermercados especializados, paradas de mercado y ultramarinos. Alta rotación, márgenes saneados y un surtido que diferencia tu lineal.": "Producte gourmet pensat per a botigues, supermercats especialitzats, parades de mercat i ultramarins. Alta rotació, marges sanejats i un assortit que diferencia el teu lineal.",
-  "Producto gourmet pensado para tiendas, supermercados especializados, paradas de mercado y ultramarinos.": "Producte gourmet pensat per a botigues, supermercats especialitzats, parades de mercat i ultramarins.",
+  "Producto pensado para tiendas, supermercados especializados, paradas de mercado y ultramarinos.": "Producte pensat per a botigues, supermercats especialitzats, parades de mercat i ultramarins.",
   "Ver catálogo para tu tienda": "Veure catàleg per a la teva botiga",
   "Beneficios para tu tienda": "Beneficis per a la teva botiga",
   "Margen, rotación y": "Marge, rotació i",
@@ -269,10 +269,6 @@ const ca: Dict = {
   "Top ventas.": "Top vendes.",
   "Ver todos los productos Colmado": "Veure tots els productes Colmado",
   "Primer precio": "Primer preu",
-  "Económicos para tu lineal,": "Econòmics per al teu lineal,",
-  "margen para tu tienda": "marge per a la teva botiga",
-  "Productos de alta rotación con precio entry-level y buen margen para escalar volumen.": "Productes d'alta rotació amb preu entry-level i bon marge per escalar volum.",
-  "Ver todos los primer precio Retail": "Veure tots els primer preu Retail",
 
   // ── Sobre Nosaltres (cos) ──
   "+50 años seleccionando": "+50 anys seleccionant",

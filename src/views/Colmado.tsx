@@ -16,16 +16,11 @@ interface Props {
   /** Productos destacados del catálogo retail. */
   featured?: CuratedProduct[];
   featuredCatalogCount?: number;
-  /** Productos "primer precio" del catálogo retail. */
-  primerPrecio?: CuratedProduct[];
-  primerPrecioCatalogCount?: number;
 }
 
 const Colmado = ({
   featured = [],
   featuredCatalogCount = 0,
-  primerPrecio = [],
-  primerPrecioCatalogCount = 0,
 }: Props) => {
   const { t } = useI18n();
   return (
@@ -47,7 +42,7 @@ const Colmado = ({
               <span className="italic font-light text-accent">{t("Gourmet.")}</span>
             </h1>
             <p className="text-lg text-primary-foreground/75 max-w-xl">
-              {t("Producto gourmet pensado para tiendas, supermercados especializados, paradas de mercado y ultramarinos.")}
+              {t("Producto pensado para tiendas, supermercados especializados, paradas de mercado y ultramarinos.")}
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
@@ -107,47 +102,6 @@ const Colmado = ({
             flagLabel="Destacado"
           />
         )}
-      </section>
-
-      {/* Primer precio — siempre visible con mensaje empty si no hay */}
-      <section className="bg-accent/5 border-y border-border">
-        <div className="container-edit py-20 md:py-28">
-          <SectionHeader
-            eyebrow={t("Primer precio")}
-            title={<>{t("Económicos para tu lineal,")} <span className="pink-underline">{t("margen para tu tienda")}</span>.</>}
-            subtitle={t("Productos de alta rotación con precio entry-level y buen margen para escalar volumen.")}
-          />
-          {primerPrecio.length > 0 ? (
-            <>
-              <div className="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-                {primerPrecio.map((p) => (
-                  <ProductCard
-                    key={p.ref}
-                    image={p.image_url ?? "/images/placeholder.svg"}
-                    title={p.name}
-                    category={p.family || "—"}
-                    origin={`Ref. ${p.ref}`}
-                    href={`/producto/${p.slug}`}
-                  />
-                ))}
-              </div>
-              <div className="mt-10 text-center">
-                <Link
-                  href="/catalogo?catalog=retail&especialidad=primer_precio"
-                  className="inline-flex items-center gap-2 border border-foreground rounded-full pl-5 pr-6 py-3 text-sm font-medium"
-                >
-                  {t("Ver todos los primer precio Retail")} <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            </>
-          ) : (
-            <EmptyHubMessage
-              catalogPublishedCount={primerPrecioCatalogCount}
-              catalogName="Retail"
-              flagLabel="Primer precio"
-            />
-          )}
-        </div>
       </section>
 
     </Layout>
