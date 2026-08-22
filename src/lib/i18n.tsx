@@ -299,14 +299,14 @@ const ca: Dict = {
   "Incorporamos nuevas ideas, productos y formatos para adaptarnos a las nuevas necesidades de cada cliente.": "Incorporem noves idees, productes i formats per adaptar-nos a les noves necessitats de cada client.",
   "¿Empezamos a": "Comencem a",
   "trabajar juntos": "treballar junts",
-  "Cuéntanos qué necesitas para tu negocio. Te respondemos en horas con propuesta, precios y muestras si hace falta.": "Explica'ns què necessites per al teu negoci. Et responem en hores amb proposta, preus i mostres si cal.",
+  "Cuéntanos qué necesitas para tu negocio. Te respondemos en breve con propuesta, precios y muestras si hace falta.": "Explica'ns què necessites per al teu negoci. Et responem en breu amb proposta, preus i mostres si cal.",
 
   // ── Contacte ──
   "Hablemos": "Parlem-ne",
   "Estamos al otro": "Som a l'altre",
   "lado del WhatsApp.": "costat del WhatsApp.",
   "El canal principal de Aurellano es WhatsApp. Te respondemos rápido, con propuesta y precios.": "El canal principal d'Aurellano és WhatsApp. Et responem ràpid, amb proposta i preus.",
-  "Respondemos en horas en horario laboral. Cuéntanos qué buscas.": "Responem en hores en horari laboral. Explica'ns què busques.",
+  "Respondemos en breve en horario laboral. Cuéntanos qué buscas.": "Responem en breu en horari laboral. Explica'ns què busques.",
   "Teléfono": "Telèfon",
   "Email": "Email",
   "Dirección": "Adreça",

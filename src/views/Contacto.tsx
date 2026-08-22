@@ -35,7 +35,7 @@ const Contacto = () => {
           <MessageCircle className="h-10 w-10" strokeWidth={1.5} />
           <h2 className="font-display font-light text-4xl md:text-5xl tracking-tight">WhatsApp</h2>
           <p className="text-accent-foreground/85 text-lg">{WHATSAPP_DISPLAY}</p>
-          <p className="text-sm text-accent-foreground/70 max-w-md">{t("Respondemos en horas en horario laboral. Cuéntanos qué buscas.")}</p>
+          <p className="text-sm text-accent-foreground/70 max-w-md">{t("Respondemos en breve en horario laboral. Cuéntanos qué buscas.")}</p>
         </div>
       </a>
 

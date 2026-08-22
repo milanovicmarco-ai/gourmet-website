@@ -134,7 +134,7 @@ const SobreNosotros = () => {
             {t("¿Empezamos a")} <span className="italic font-light">{t("trabajar juntos")}</span>?
           </h2>
           <p className="text-lg text-primary/80 max-w-xl mx-auto">
-            {t("Cuéntanos qué necesitas para tu negocio. Te respondemos en horas con propuesta, precios y muestras si hace falta.")}
+            {t("Cuéntanos qué necesitas para tu negocio. Te respondemos en breve con propuesta, precios y muestras si hace falta.")}
           </p>
           <a
             href={WHATSAPP_LINK}
