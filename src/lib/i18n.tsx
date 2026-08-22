@@ -178,20 +178,20 @@ const ca: Dict = {
   "Productos únicos": "Productes únics",
   "3 mundos, un mismo": "3 mons, un mateix",
   "criterio": "criteri",
-  "Selecciones temáticas pensadas para diferenciarte. Cada una con su catálogo dedicado.":
-    "Seleccions temàtiques pensades per diferenciar-te. Cadascuna amb el seu catàleg dedicat.",
+  "Selecciones temáticas pensadas para diferenciarte.":
+    "Seleccions temàtiques pensades per diferenciar-te.",
   "Iconos del gusto: foie, quesos afinados, anchoas, vermut. Lo que un paladar exigente reconoce al primer bocado.":
     "Icones del gust: foie, formatges afinats, anxoves, vermut. El que un paladar exigent reconeix a la primera mossegada.",
-  "Vegano, sin gluten, sin lactosa, fermentados, miel cruda. Bienestar real con sabor de verdad.":
-    "Vegà, sense gluten, sense lactosa, fermentats, mel crua. Benestar real amb sabor de veritat.",
+  "Vegano, sin gluten, sin lactosa, fermentados. Bienestar real con sabor de verdad.":
+    "Vegà, sense gluten, sense lactosa, fermentats. Benestar real amb sabor de veritat.",
   "Producciones cortas, importaciones puntuales, ediciones numeradas. Lo que está hoy, mañana puede no estar.":
     "Produccions curtes, importacions puntuals, edicions numerades. El que hi ha avui, demà pot no ser-hi.",
   "Empecemos": "Comencem",
   "¿Hablamos de": "Parlem de",
   "tu carta": "la teva carta",
   "?": "?",
-  "Cuéntanos qué necesitas. Te respondemos en horas con propuesta, precios y muestras si hace falta.":
-    "Explica'ns què necessites. Et responem en hores amb proposta, preus i mostres si cal.",
+  "Cuéntanos qué necesitas. Te respondemos en breve con propuesta, precios y muestras si hace falta.":
+    "Explica'ns què necessites. Et responem en breu amb proposta, preus i mostres si cal.",
   "Escribir por WhatsApp": "Escriure per WhatsApp",
 
   // Footer

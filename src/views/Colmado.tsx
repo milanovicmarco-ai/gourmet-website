@@ -75,7 +75,7 @@ const Colmado = ({
       </section>
 
       {/* SELECCIÓN destacada del catálogo retail */}
-      <section className="container-edit pb-20 md:pb-28">
+      <section className="container-edit py-20 md:py-28">
         <SectionHeader eyebrow={t("Selección retail")} title={t("Top ventas.")} />
         {featured.length > 0 ? (
           <>

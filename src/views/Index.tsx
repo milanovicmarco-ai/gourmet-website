@@ -276,7 +276,7 @@ const Index = ({ featured = [] }: IndexProps) => {
           align="center"
           eyebrow={t("Productos únicos")}
           title={<>{t("3 mundos, un mismo")} <span className="pink-underline">{t("criterio")}</span>.</>}
-          subtitle={t("Selecciones temáticas pensadas para diferenciarte. Cada una con su catálogo dedicado.")}
+          subtitle={t("Selecciones temáticas pensadas para diferenciarte.")}
         />
 
         <div className="mt-14 grid md:grid-cols-3 gap-6">
@@ -289,7 +289,7 @@ const Index = ({ featured = [] }: IndexProps) => {
             },
             {
               tag: t("Healthy"),
-              desc: t("Vegano, sin gluten, sin lactosa, fermentados, miel cruda. Bienestar real con sabor de verdad."),
+              desc: t("Vegano, sin gluten, sin lactosa, fermentados. Bienestar real con sabor de verdad."),
               img: especialidadHealthy,
               to: "/catalogo?catalog=healthy",
             },
@@ -351,7 +351,7 @@ const Index = ({ featured = [] }: IndexProps) => {
               {t("¿Hablamos de")} <span className="italic font-light">{t("tu carta")}</span>?
             </h2>
             <p className="text-lg text-primary/80 max-w-xl mx-auto">
-              {t("Cuéntanos qué necesitas. Te respondemos en horas con propuesta, precios y muestras si hace falta.")}
+              {t("Cuéntanos qué necesitas. Te respondemos en breve con propuesta, precios y muestras si hace falta.")}
             </p>
             <a
               href={WHATSAPP_LINK}
