@@ -60,8 +60,8 @@ const ca: Dict = {
   "Inspiración": "Inspiració",
   "Catálogos": "Catàlegs",
   "y colecciones.": "i col·leccions.",
-  "Selecciones y dossieres en PDF de Aurellano y nuestras marcas distribuidas. Descárgalos y enséñalos a tu equipo o clientela.":
-    "Seleccions i dossiers en PDF d'Aurellano i les nostres marques distribuïdes. Descarrega'ls i mostra'ls al teu equip o clientela.",
+  "Selecciones y dossieres en PDF de Aurellano y nuestras marcas distribuidas.":
+    "Seleccions i dossiers en PDF d'Aurellano i les nostres marques distribuïdes.",
   "Próximamente": "Pròximament",
   "Estamos preparando las nuevas selecciones. Vuelve pronto o pídenos un catálogo concreto por WhatsApp.":
     "Estem preparant les noves seleccions. Torna aviat o demana'ns un catàleg concret per WhatsApp.",
@@ -294,13 +294,13 @@ const ca: Dict = {
   "Cerca de cada": "A prop de cada",
   "cliente.": "client.",
   "Empresa familiar": "Empresa familiar",
-  "Tres generaciones. Conocemos por su nombre a los clientes que llevan décadas con nosotros.": "Tres generacions. Coneixem pel seu nom els clients que fa dècades que estan amb nosaltres.",
+  "Cercanía que se construye con el tiempo. Conocemos a nuestros clientes, sus necesidades y su manera de trabajar.": "Cercania que es construeix amb el temps. Coneixem els nostres clients, les seves necessitats i la seva manera de treballar.",
   "Profesionalizada": "Professionalitzada",
-  "Procesos, trazabilidad y logística propia. Te servimos como una multinacional, te tratamos como vecinos.": "Processos, traçabilitat i logística pròpia. Et servim com una multinacional, et tractem com a veïns.",
+  "Una manera de trabajar cuidada con procesos claros, trazabilidad y una gestión ágil. Para ofrecerte un servicio cercano y eficiente.": "Una manera de treballar acurada amb processos clars, traçabilitat i una gestió àgil. Per oferir-te un servei proper i eficient.",
   "Visión gourmet": "Visió gourmet",
-  "Buscamos lo que aún no se conoce. Visitamos productores. Probamos antes que nadie.": "Busquem el que encara no es coneix. Visitem productors. Provem abans que ningú.",
+  "Buscamos constantemente nuevos productos para adaptarnos a las necesidades de cada cliente.": "Busquem constantment nous productes per adaptar-nos a les necessitats de cada client.",
   "Innovación": "Innovació",
-  "Apostamos por producto inclusivo, sin alérgenos y formatos pensados para tu negocio.": "Apostem per producte inclusiu, sense al·lèrgens i formats pensats per al teu negoci.",
+  "Incorporamos nuevas ideas, productos y formatos para adaptarnos a las nuevas necesidades de cada cliente.": "Incorporem noves idees, productes i formats per adaptar-nos a les noves necessitats de cada client.",
   "¿Empezamos a": "Comencem a",
   "trabajar juntos": "treballar junts",
   "Cuéntanos qué necesitas para tu negocio. Te respondemos en horas con propuesta, precios y muestras si hace falta.": "Explica'ns què necessites per al teu negoci. Et responem en hores amb proposta, preus i mostres si cal.",
@@ -321,7 +321,6 @@ const ca: Dict = {
   "24–48h en Cataluña.": "24–48h a Catalunya.",
   "Pedido mínimo": "Comanda mínima",
   "Desde 200€ portes incluidos.": "Des de 200€ ports inclosos.",
-  "Pedidos en cajas completas.": "Comandes en caixes completes.",
 
   // ── Condicions de venda ──
   "Condiciones de venta": "Condicions de venda",

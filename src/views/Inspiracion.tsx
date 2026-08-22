@@ -22,9 +22,7 @@ export function InspiracionView({ catalogs }: Props) {
             <span className="italic font-light text-accent">{t("y colecciones.")}</span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl text-pretty">
-            {t(
-              "Selecciones y dossieres en PDF de Aurellano y nuestras marcas distribuidas. Descárgalos y enséñalos a tu equipo o clientela.",
-            )}
+            {t("Selecciones y dossieres en PDF de Aurellano y nuestras marcas distribuidas.")}
           </p>
         </div>
       </section>

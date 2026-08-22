@@ -105,10 +105,10 @@ const SobreNosotros = () => {
         </div>
         <div className="lg:col-span-7 grid sm:grid-cols-2 gap-8">
           {[
-            { title: "Empresa familiar", desc: "Tres generaciones. Conocemos por su nombre a los clientes que llevan décadas con nosotros." },
-            { title: "Profesionalizada", desc: "Procesos, trazabilidad y logística propia. Te servimos como una multinacional, te tratamos como vecinos." },
-            { title: "Visión gourmet", desc: "Buscamos lo que aún no se conoce. Visitamos productores. Probamos antes que nadie." },
-            { title: "Innovación", desc: "Apostamos por producto inclusivo, sin alérgenos y formatos pensados para tu negocio." },
+            { title: "Empresa familiar", desc: "Cercanía que se construye con el tiempo. Conocemos a nuestros clientes, sus necesidades y su manera de trabajar." },
+            { title: "Profesionalizada", desc: "Una manera de trabajar cuidada con procesos claros, trazabilidad y una gestión ágil. Para ofrecerte un servicio cercano y eficiente." },
+            { title: "Visión gourmet", desc: "Buscamos constantemente nuevos productos para adaptarnos a las necesidades de cada cliente." },
+            { title: "Innovación", desc: "Incorporamos nuevas ideas, productos y formatos para adaptarnos a las nuevas necesidades de cada cliente." },
           ].map((b) => (
             <div key={b.title} className="space-y-2 border-t border-primary-foreground/15 pt-6">
               <h3 className="font-display font-medium text-lg">{t(b.title)}</h3>

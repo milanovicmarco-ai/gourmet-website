@@ -71,7 +71,7 @@ const Contacto = () => {
         </div>
         <div>
           <p className="eyebrow">{t("Pedido mínimo")}</p>
-          <p className="mt-3">{t("Desde 200€ portes incluidos.")}<br />{t("Pedidos en cajas completas.")}</p>
+          <p className="mt-3">{t("Desde 200€ portes incluidos.")}</p>
         </div>
       </div>
     </section>
