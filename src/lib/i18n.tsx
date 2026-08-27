@@ -264,7 +264,7 @@ const ca: Dict = {
   "Etiquetado preparado para tienda, formatos que rotan y precio cerrado por unidad.": "Etiquetatge preparat per a botiga, formats que roten i preu tancat per unitat.",
   "Reposición ágil": "Reposició àgil",
   "Pedidos pequeños sin penalización. Repones cuando lo necesitas, no cuando toca.": "Comandes petites sense penalització. Reposes quan ho necessites, no quan toca.",
-  "Tu coges": "Tu agafes",
+  "Tu coges": "Tu tries",
   "Lo que está volando del lineal.": "El que vola del lineal.",
   "Top ventas.": "Top vendes.",
   "Ver todos los productos Colmado": "Veure tots els productes Colmado",
