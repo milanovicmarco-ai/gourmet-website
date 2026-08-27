@@ -159,7 +159,7 @@ export const Nav = () => {
         <div className="flex items-center gap-3">
           <LangSwitcher isDark={isDark} />
           <Link
-            href="/contacto"
+            href={ROUTES.contacto[lang]}
             className="hidden md:inline-flex items-center gap-2 text-sm font-semibold bg-accent text-accent-foreground rounded-full px-5 py-2.5 hover:bg-accent/90 transition-colors duration-300"
           >
             {t("Contacto")}

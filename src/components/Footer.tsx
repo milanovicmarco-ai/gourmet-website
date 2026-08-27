@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Instagram, MapPin, MessageCircle, ChevronDown } from "lucide-react";
 import { WHATSAPP_LINK, INSTAGRAM, GOOGLE_BUSINESS_URL } from "@/lib/contact";
 import { useI18n } from "@/lib/i18n";
+import { ROUTES } from "@/lib/i18n/routes";
 
 const socials = [
   { href: INSTAGRAM, label: "Instagram", icon: Instagram },
@@ -13,32 +14,33 @@ const socials = [
 ];
 
 export const Footer = () => {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const catalogoPath = ROUTES.catalogo[lang];
   const nav = [
     {
       title: t("Productos"),
       links: [
-        { to: "/catalogo", label: t("Catálogo") },
-        { to: "/secrets-du-xef", label: t("Secrets du Xef") },
-        { to: "/colmado", label: t("Colmado") },
-        { to: "/inspiracion", label: t("Inspiración") },
+        { to: catalogoPath, label: t("Catálogo") },
+        { to: ROUTES.secrets[lang], label: t("Secrets du Xef") },
+        { to: ROUTES.colmado[lang], label: t("Colmado") },
+        { to: ROUTES.inspirate[lang], label: t("Inspiración") },
       ],
     },
     {
       title: t("Gourmet"),
       links: [
-        { to: "/quesos", label: t("Fromages") },
-        { to: "/catalogo?catalog=delicatessen", label: t("Delicatessen") },
-        { to: "/catalogo?catalog=healthy", label: t("Healthy") },
-        { to: "/catalogo?catalog=limited-edition", label: t("Limited Edition") },
+        { to: ROUTES.quesos[lang], label: t("Fromages") },
+        { to: `${catalogoPath}?catalog=delicatessen`, label: t("Delicatessen") },
+        { to: `${catalogoPath}?catalog=healthy`, label: t("Healthy") },
+        { to: `${catalogoPath}?catalog=limited-edition`, label: t("Limited Edition") },
       ],
     },
     {
       title: t("Aurellano"),
       links: [
-        { to: "/sobre-nosotros", label: t("Historia") },
-        { to: "/sobre-nosotros", label: t("Misión y visión") },
-        { to: "/contacto", label: t("Contacto") },
+        { to: ROUTES.sobre[lang], label: t("Historia") },
+        { to: ROUTES.sobre[lang], label: t("Misión y visión") },
+        { to: ROUTES.contacto[lang], label: t("Contacto") },
       ],
     },
   ];
