@@ -9,8 +9,9 @@ import Link from "next/link";
 import { waLink } from "@/lib/contact";
 import type { CuratedProduct } from "@/lib/pim/featured";
 import { useI18n } from "@/lib/i18n";
+import { ROUTES } from "@/lib/i18n/routes";
 
-const colmadoImg = "/images/productes_gourmet_horeca.jpg";
+const colmadoImg = "/images/aurellano_productes_colmado.png";
 
 interface Props {
   /** Productos destacados del catálogo retail. */
@@ -22,7 +23,8 @@ const Colmado = ({
   featured = [],
   featuredCatalogCount = 0,
 }: Props) => {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const catalogRetailPath = `${ROUTES.catalogo[lang]}?catalog=retail`;
   return (
     <Layout
       navTheme="dark"
@@ -36,7 +38,7 @@ const Colmado = ({
         <Circle variant="blur" className="w-96 h-96 -bottom-20 right-0" />
         <div className="container-edit pt-28 md:pt-36 pb-20 md:pb-28 relative grid lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-6 space-y-6">
-            <p className="eyebrow text-primary-foreground/60">{t("PRODUCTOS HORECA")}</p>
+            <p className="eyebrow text-primary-foreground/60">{t("SELECCIÓN DE VENTA AL DETALLE")}</p>
             <h1 className="display text-balance">
               {t("Colmado")}<br />
               <span className="italic font-light text-accent">{t("Gourmet.")}</span>
@@ -46,7 +48,7 @@ const Colmado = ({
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
-                href="/catalogo?catalog=retail"
+                href={catalogRetailPath}
                 className="inline-flex items-center gap-2 bg-accent text-accent-foreground rounded-full pl-6 pr-7 py-4 font-medium hover:opacity-90 transition-opacity"
               >
                 <Store className="h-5 w-5" /> {t("Ver catálogo para tu tienda")}
@@ -71,7 +73,7 @@ const Colmado = ({
 
       {/* SELECCIÓN destacada del catálogo retail */}
       <section className="container-edit py-20 md:py-28">
-        <SectionHeader eyebrow={t("Selección retail")} title={t("Top ventas.")} />
+        <SectionHeader eyebrow={t("Tu coges")} title={t("Top ventas.")} />
         {featured.length > 0 ? (
           <>
             <div className="mt-12 grid grid-cols-2 md:grid-cols-3 gap-6 lg:gap-8">
@@ -88,7 +90,7 @@ const Colmado = ({
             </div>
             <div className="mt-10 text-center">
               <Link
-                href="/catalogo?catalog=retail"
+                href={catalogRetailPath}
                 className="inline-flex items-center gap-2 border border-foreground rounded-full pl-5 pr-6 py-3 text-sm font-medium"
               >
                 {t("Ver todos los productos Colmado")} <ArrowRight className="h-4 w-4" />

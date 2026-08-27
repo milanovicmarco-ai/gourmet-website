@@ -29,6 +29,10 @@ const SecretsDelXef = ({
   primerPrecioCatalogCount = 0,
 }: Props) => {
   const t = useT();
+  const sortByName = (arr: CuratedProduct[]) =>
+    [...arr].sort((a, b) => a.name.localeCompare(b.name, "es", { sensitivity: "base", numeric: true }));
+  const featuredSorted = sortByName(featured);
+  const primerPrecioSorted = sortByName(primerPrecio);
   return (
     <Layout
       navTheme="dark"
@@ -82,7 +86,7 @@ const SecretsDelXef = ({
       <CuratedGrid
         eyebrow={t("Selección")}
         title={t("Lo que está saliendo de cocina.")}
-        products={featured}
+        products={featuredSorted}
         catalogPublishedCount={featuredCatalogCount}
         catalogName="HORECA"
         flagLabel="Destacado"
@@ -98,10 +102,10 @@ const SecretsDelXef = ({
             title={t("Productos de Primer Precio.")}
             subtitle={t("Una selección de productos económicos y de alta rotación para escalar márgenes.")}
           />
-          {primerPrecio.length > 0 ? (
+          {primerPrecioSorted.length > 0 ? (
             <>
               <div className="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-                {primerPrecio.map((p) => (
+                {primerPrecioSorted.map((p) => (
                   <ProductCard
                     key={p.ref}
                     image={p.image_url ?? "/images/placeholder.svg"}

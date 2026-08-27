@@ -8,6 +8,7 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { ProductCard } from "@/components/ProductCard";
 import { WHATSAPP_LINK } from "@/lib/contact";
 import { useI18n } from "@/lib/i18n";
+import { ROUTES } from "@/lib/i18n/routes";
 
 /** Shape mínimo que pasa el server component (page.tsx) para la sección
  * "Nuestro catálogo" — provienen del catálogo `seleccion-aurellano` (Supabase). */
@@ -34,7 +35,8 @@ interface IndexProps {
 }
 
 const Index = ({ featured = [] }: IndexProps) => {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const catalogoPath = ROUTES.catalogo[lang];
 
   return (
     <Layout
@@ -78,7 +80,7 @@ const Index = ({ featured = [] }: IndexProps) => {
                 <ArrowRight className="h-4 w-4 -ml-1 transition-transform group-hover:translate-x-1" />
               </a>
               <Link
-                href="/catalogo"
+                href={catalogoPath}
                 className="inline-flex items-center gap-2 border border-primary-foreground/40 text-primary-foreground rounded-full pl-6 pr-7 py-4 font-medium hover:bg-primary-foreground hover:text-primary transition-colors"
               >
                 {t("Ver catálogo")}
@@ -115,12 +117,12 @@ const Index = ({ featured = [] }: IndexProps) => {
       {/* ========== SEGMENTACIÓN ========== */}
       <section className="container-edit py-20 md:py-32 relative">
         <SectionHeader
-          eyebrow={t("Tus partners")}
+          eyebrow={t("A tu lado")}
           title={<>{t("Productos adaptados a")} <span className="pink-underline">{t("tus necesidades")}</span>.</>}
         />
 
         <div className="mt-14 grid md:grid-cols-2 gap-6 lg:gap-10">
-          <Link href="/secrets-du-xef" className="group relative overflow-hidden rounded-3xl bg-primary text-primary-foreground p-8 md:p-12 min-h-[420px] flex flex-col justify-between hover-lift">
+          <Link href={ROUTES.secrets[lang]} className="group relative overflow-hidden rounded-3xl bg-primary text-primary-foreground p-8 md:p-12 min-h-[420px] flex flex-col justify-between hover-lift">
             <img src={xef} alt="Chef emplatando" className="absolute inset-0 h-full w-full object-cover opacity-40 group-hover:opacity-50 group-hover:scale-105 transition-all duration-[1200ms]" loading="lazy" />
             <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/70 to-primary/20" />
             <Circle variant="outline" className="w-72 h-72 -top-20 -right-20 border-primary-foreground/10" />
@@ -135,7 +137,7 @@ const Index = ({ featured = [] }: IndexProps) => {
             </div>
           </Link>
 
-          <Link href="/catalogo" className="group relative overflow-hidden rounded-3xl bg-secondary p-8 md:p-12 min-h-[420px] flex flex-col justify-between hover-lift">
+          <Link href={`${catalogoPath}?catalog=retail`} className="group relative overflow-hidden rounded-3xl bg-secondary p-8 md:p-12 min-h-[420px] flex flex-col justify-between hover-lift">
             <img src={colmado} alt="Mostrador de tienda gourmet" className="absolute inset-0 h-full w-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-[1200ms]" loading="lazy" />
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-background/10" />
             <Circle variant="accent" className="w-56 h-56 -bottom-20 -right-20" />
@@ -145,7 +147,7 @@ const Index = ({ featured = [] }: IndexProps) => {
             </div>
             <div className="relative space-y-4">
               <h3 className="font-display font-light text-3xl md:text-5xl tracking-tight">{t("Colmado")}</h3>
-              <p className="text-muted-foreground max-w-md">{t("Productos seleccionados para tiendas; lo que tu cliente busca y aún no sabe.")}</p>
+              <p className="text-muted-foreground max-w-md">{t("Productos seleccionados para las tiendas.")}</p>
               <span className="inline-flex items-center gap-2 text-sm font-medium text-foreground">{t("Ver catálogo")} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" /></span>
             </div>
           </Link>
@@ -254,14 +256,14 @@ const Index = ({ featured = [] }: IndexProps) => {
           <div className="max-w-2xl space-y-7">
             <p className="eyebrow text-accent">{t("Especialidad de la casa")}</p>
             <h2 className="font-display font-light leading-[1.02] tracking-tight text-5xl md:text-7xl text-balance">
-              {t("Quesos afinados")}<br />
+              {t("Quesos")}<br />
               <span className="italic text-accent">{t("con criterio.")}</span>
             </h2>
             <p className="text-lg md:text-xl text-primary-foreground/85 leading-relaxed max-w-xl">
               {t("Trabajamos directo con maestros afinadores. Por origen, intensidad y maduración. Te ayudamos a montar la tabla perfecta — y a maridarla.")}
             </p>
             <Link
-              href="/quesos"
+              href={ROUTES.quesos[lang]}
               className="inline-flex items-center gap-2 bg-accent text-accent-foreground rounded-full pl-6 pr-7 py-4 font-medium hover:bg-primary-foreground hover:text-primary transition-colors"
             >
               {t("Explorar quesos")} <ArrowRight className="h-4 w-4" />
@@ -285,19 +287,19 @@ const Index = ({ featured = [] }: IndexProps) => {
               tag: t("Delicatessen"),
               desc: t("Iconos del gusto: foie, quesos afinados, anchoas, vermut. Lo que un paladar exigente reconoce al primer bocado."),
               img: especialidadDelicatessen,
-              to: "/catalogo?catalog=delicatessen",
+              to: `${catalogoPath}?catalog=delicatessen`,
             },
             {
               tag: t("Healthy"),
               desc: t("Vegano, sin gluten, sin lactosa, fermentados. Bienestar real con sabor de verdad."),
               img: especialidadHealthy,
-              to: "/catalogo?catalog=healthy",
+              to: `${catalogoPath}?catalog=healthy`,
             },
             {
               tag: t("Limited Edition"),
               desc: t("Producciones cortas, importaciones puntuales, ediciones numeradas. Lo que está hoy, mañana puede no estar."),
               img: especialidadLimited,
-              to: "/catalogo?catalog=limited-edition",
+              to: `${catalogoPath}?catalog=limited-edition`,
             },
           ].map((i) => (
             <Link

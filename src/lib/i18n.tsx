@@ -117,15 +117,15 @@ const ca: Dict = {
   "proveedores": "proveïdors",
   "referencias": "referències",
   "tradición familiar": "tradició familiar",
-  "Tus partners": "Els teus partners",
+  "A tu lado": "Al teu costat",
   "Productos adaptados a": "Productes adaptats a",
   "tus necesidades": "les teves necessitats",
   "HORECA": "HORECA",
   "Producto pensado para hostelería: 4ª y 5ª gama, platos preparados, ingredientes de autor.":
     "Producte pensat per a l'hostaleria: 4a i 5a gamma, plats preparats, ingredients d'autor.",
   "Establecimientos": "Establiments",
-  "Productos seleccionados para tiendas; lo que tu cliente busca y aún no sabe.":
-    "Productes seleccionats per a botigues; el que el teu client busca i encara no sap.",
+  "Productos seleccionados para las tiendas.":
+    "Productes seleccionats per a les botigues.",
   "Qué ofrecemos": "Què oferim",
   "Más que un proveedor.": "Més que un proveïdor.",
   "Tu": "El teu",
@@ -249,7 +249,7 @@ const ca: Dict = {
 
   // ── Colmado (textos visibles) ──
   "Para tiendas y mercados": "Per a botigues i mercats",
-  "PRODUCTOS HORECA": "PRODUCTES HORECA",
+  "SELECCIÓN DE VENTA AL DETALLE": "SELECCIÓ DE VENDA AL DETALL",
   "Gourmet.": "Gourmet.",
   "Producto gourmet pensado para tiendas, supermercados especializados, paradas de mercado y ultramarinos. Alta rotación, márgenes saneados y un surtido que diferencia tu lineal.": "Producte gourmet pensat per a botigues, supermercats especialitzats, parades de mercat i ultramarins. Alta rotació, marges sanejats i un assortit que diferencia el teu lineal.",
   "Producto pensado para tiendas, supermercados especializados, paradas de mercado y ultramarinos.": "Producte pensat per a botigues, supermercats especialitzats, parades de mercat i ultramarins.",
@@ -264,7 +264,7 @@ const ca: Dict = {
   "Etiquetado preparado para tienda, formatos que rotan y precio cerrado por unidad.": "Etiquetatge preparat per a botiga, formats que roten i preu tancat per unitat.",
   "Reposición ágil": "Reposició àgil",
   "Pedidos pequeños sin penalización. Repones cuando lo necesitas, no cuando toca.": "Comandes petites sense penalització. Reposes quan ho necessites, no quan toca.",
-  "Selección retail": "Selecció retail",
+  "Tu coges": "Tu agafes",
   "Lo que está volando del lineal.": "El que vola del lineal.",
   "Top ventas.": "Top vendes.",
   "Ver todos los productos Colmado": "Veure tots els productes Colmado",
