@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 // Revalida cada 1 hora. Los Server Actions del PIM hacen revalidatePath("/")
 // cuando editas algo crítico → los cambios se reflejan al momento sin redeploy.
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 const FEATURED_CATALOG = "seleccion-aurellano";
 const FEATURED_LIMIT = 12;

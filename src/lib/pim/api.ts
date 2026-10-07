@@ -119,7 +119,7 @@ export async function listProducts(params?: {
     // Cache 1 hora en el edge de Vercel. Reduce drásticamente latencia tras la
     // primera carga. Cuando Marco edita en el PIM, las server actions hacen
     // revalidatePath y refrescan en seguida.
-    next: { revalidate: params?.revalidate ?? 3600 },
+    next: { revalidate: params?.revalidate ?? 86400 },
   });
   if (!res.ok) throw new Error(`listProducts ${res.status}: ${await res.text()}`);
   return res.json();
@@ -127,7 +127,7 @@ export async function listProducts(params?: {
 
 export async function getProductByRef(
   ref: string,
-  revalidate = 3600,
+  revalidate = 86400,
   opts?: { retryTimeout?: boolean },
 ): Promise<ApiProduct | null> {
   // 8s por intento. El backend arranca lento tras inactividad (cold start del
@@ -181,7 +181,7 @@ export async function getProductByRef(
   throw lastErr ?? new Error("getProductByRef agotó intentos sin error claro");
 }
 
-export async function getProductBySlug(slug: string, revalidate = 3600): Promise<ApiProduct | null> {
+export async function getProductBySlug(slug: string, revalidate = 86400): Promise<ApiProduct | null> {
   const res = await timeoutFetch(
     `${AURELLANO_API}/catalog/products/by-slug/${encodeURIComponent(slug)}`,
     { next: { revalidate } },
@@ -209,7 +209,7 @@ export async function fetchAllProducts(opts?: {
   q?: string;
   revalidate?: number;
 }): Promise<ApiProduct[]> {
-  const revalidate = opts?.revalidate ?? 3600;
+  const revalidate = opts?.revalidate ?? 86400;
 
   // Búsqueda libre: la API filtra server-side, resultados pequeños, offset se
   // ignora. Una sola llamada.
@@ -248,7 +248,7 @@ export async function fetchAllProducts(opts?: {
   return Array.from(map.values());
 }
 
-export async function listFamilies(revalidate = 3600): Promise<FamilyCount[]> {
+export async function listFamilies(revalidate = 86400): Promise<FamilyCount[]> {
   const res = await timeoutFetch(`${AURELLANO_API}/catalog/families`, {
     next: { revalidate },
   });

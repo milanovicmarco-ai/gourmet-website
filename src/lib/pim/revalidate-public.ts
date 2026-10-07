@@ -7,12 +7,18 @@
 // ya no existen como rutas reales. Sin esto, una edición en el PIM tardaba
 // hasta 1h en reflejarse en producción.
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { CATALOG_INDEX_TAG } from "./catalog-index";
+
+// El índice ligero del catálogo (catalog-index.ts) cachea 24 h: toda edición del
+// PIM debe expirarlo al instante para que listados y landings reflejen el cambio.
+const expireCatalogIndex = () => revalidateTag(CATALOG_INDEX_TAG, { expire: 0 });
 
 /** Invalida los listados públicos (catálogo + secciones que listan
  * productos). Llamar siempre que algo que se renderiza en esas listas
  * cambie: nombre, marca, familia, precio, asignación a catálogo, etc. */
 export async function revalidatePublicListings(): Promise<void> {
+  expireCatalogIndex();
   // Catálogos en sus dos variantes de URL.
   revalidatePath("/es/catalogo");
   revalidatePath("/ca/cataleg");
@@ -41,6 +47,7 @@ export async function revalidatePublicListings(): Promise<void> {
  * Llamar tras cualquier edición que afecte al render del detalle:
  * traducciones, meta, imagen, descripción, etc. */
 export async function revalidatePublicProduct(slug: string | null | undefined): Promise<void> {
+  expireCatalogIndex();
   if (!slug) return;
   revalidatePath(`/es/producto/${slug}`);
   revalidatePath(`/ca/producte/${slug}`);

@@ -12,7 +12,16 @@ type Params = { slug: string };
 // i18n el idioma está en el path (/es/ vs /ca/), así que cada subruta es
 // estable y puede cachearse. CRÍTICO: sin este cache, cada visita pegaba
 // directamente al VPS del socio sin paso por el edge.
-export const revalidate = 3600;
+export const revalidate = 86400;
+
+// Sin generateStaticParams, Next renderiza las rutas con [slug] EN CADA petición
+// (no-store) y el `revalidate` de arriba no se aplica. Devolver [] hace que cada
+// ficha se genere en su primera visita y se sirva cacheada (ISR) después; el PIM
+// la invalida con revalidatePath al editar.
+export async function generateStaticParams() {
+  return [];
+}
+
 
 // El slug oficial es "{slugify(name)}-{ref}". Si by-slug 404 (porque el slug ha
 // cambiado, o el catálogo viene con otro formato), intentamos por la `ref` que

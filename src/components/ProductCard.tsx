@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { cldImage, cldSrcSet } from "@/lib/pim/cloudinary";
 
 interface ProductCardProps {
   image: string;
@@ -34,9 +35,12 @@ export const ProductCard = ({
         )}
       >
         <img
-          src={image}
+          src={cldImage(image, 600)}
+          srcSet={cldSrcSet(image, [320, 600, 900])}
+          sizes="(min-width: 1024px) 25vw, 50vw"
           alt={title}
           loading="lazy"
+          decoding="async"
           width={800}
           height={1000}
           className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-105"

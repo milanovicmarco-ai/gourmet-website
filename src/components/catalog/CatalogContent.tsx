@@ -5,10 +5,10 @@
 
 import Link from "next/link";
 import { ProductCard } from "@/components/ProductCard";
-import { listFamilies, fetchAllProducts, isPublished, type ApiProduct } from "@/lib/pim/api";
-import { getMetasForProducts, effectiveRef, effectiveBrand, matchesSearch } from "@/lib/pim/product-meta";
-import { listCatalogs, listAllFamilies, getRefsByCatalogSlug, humanizeFamilySlug } from "@/lib/pim/catalogs";
-import { getTranslationsForProducts, type ProductTranslation } from "@/lib/pim/translations";
+import { isPublished, type ApiProduct } from "@/lib/pim/api";
+import { getCatalogIndex } from "@/lib/pim/catalog-index";
+import { effectiveRef, effectiveBrand, matchesSearch } from "@/lib/pim/product-meta";
+import { listCatalogs, listAllFamilies, humanizeFamilySlug } from "@/lib/pim/catalogs";
 import { MultiSelectFilter } from "@/components/MultiSelectFilter";
 import { MessageCircle, X } from "lucide-react";
 import { waLink } from "@/lib/contact";
@@ -189,19 +189,19 @@ export async function CatalogContent({ sp, basePath, productHrefBase, lang = "es
   let products: ApiProduct[] = [];
   let error: string | null = null;
 
-  const [allProducts, fa, ca, af] = await Promise.all([
-    fetchAllProducts({ revalidate: 3600 }).catch((e) => {
-      console.warn("[catalog] fetchAllProducts:", (e as Error).message);
+  // Todo sale del índice ligero cacheado (24 h; se invalida al editar en el PIM):
+  // ninguna llamada a la API del socio ni a Neon por visita/filtro.
+  const [index, ca, af] = await Promise.all([
+    getCatalogIndex().catch((e) => {
+      console.warn("[catalog] getCatalogIndex:", (e as Error).message);
       error = (e as Error).message;
-      return [] as ApiProduct[];
+      return null;
     }),
-    listFamilies().catch(() => [] as Awaited<ReturnType<typeof listFamilies>>),
     listCatalogs().catch(() => []),
     listAllFamilies().catch(() => []),
   ]);
-  products = allProducts;
-  // families = fa (unused here)
-  void fa;
+  products = (index?.products ?? []) as ApiProduct[];
+  const metas = index?.metas ?? {};
   const catalogs = ca;
   const allFamilies = af;
 
@@ -215,23 +215,12 @@ export async function CatalogContent({ sp, basePath, productHrefBase, lang = "es
   let activeCatalog: (typeof catalogs)[number] | null = null;
   if (catalogSlug && !error) {
     activeCatalog = catalogs.find((c) => c.slug === catalogSlug) ?? null;
-    const refsInCatalog = await getRefsByCatalogSlug(catalogSlug).catch(() => []);
-    const set = new Set(refsInCatalog);
-    products = products.filter((p) => set.has(p.ref));
+    products = products.filter((p) => index?.catalogsByRef[p.ref]?.includes(catalogSlug));
   }
 
-  const metas = await getMetasForProducts(products.map((p) => p.ref)).catch(() => ({}));
-
-  // Si la página es la versión catalana, cargamos en bulk las traducciones
-  // CA para sobrescribir nombres/descripciones. Una sola query a Supabase,
-  // sin N+1. En la versión ES no hace falta (la API ya viene en ES).
-  const translations: Record<string, ProductTranslation> =
-    lang === "ca"
-      ? await getTranslationsForProducts(
-          products.map((p) => p.ref),
-          "ca",
-        ).catch(() => ({}))
-      : {};
+  // Versión catalana: traducciones CA ya incluidas en el índice.
+  const translations: Record<string, { name?: string | null; descripcion_corta?: string | null }> =
+    lang === "ca" ? (index?.ca ?? {}) : {};
 
   /** Devuelve el nombre del producto en el idioma actual: traducción si
    *  existe y tiene contenido, si no la canónica de la API. */

@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { listProducts } from "@/lib/pim/api";
+import { getCatalogIndex } from "@/lib/pim/catalog-index";
 import { ROUTES, productPath } from "@/lib/i18n/routes";
 
 const SITE_URL = "https://aurellano.com";
@@ -8,7 +8,7 @@ const SITE_URL = "https://aurellano.com";
 // a /sitemap.xml ejecutaba la función → listProducts → fetch al VPS (aunque
 // el fetch fuera cacheado, había overhead). Con revalidate a nivel ruta, Next
 // guarda el XML generado durante 1h.
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 /** Genera un par de entradas (ES + CA) para una page key, ambas con sus
  *  hreflang alternates apuntándose la una a la otra. Es lo que Google
@@ -56,9 +56,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // ambas como alternates la una de la otra.
   let productRoutes: MetadataRoute.Sitemap = [];
   try {
-    // limit=1000 cubre los 693 productos actuales tras el bulk import + margen.
-    const { results } = await listProducts({ limit: 1000, revalidate: 3600 });
-    for (const p of results) {
+    // Desde el índice ligero cacheado (la API limita a 200 por petición, así que
+    // el antiguo `limit: 1000` daba 422 y el sitemap salía sin productos).
+    const { products } = await getCatalogIndex();
+    for (const p of products) {
       if (p.active === false || !p.slug) continue;
       const esUrl = `${SITE_URL}${productPath("es", p.slug)}`;
       const caUrl = `${SITE_URL}${productPath("ca", p.slug)}`;

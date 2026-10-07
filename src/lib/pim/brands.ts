@@ -22,7 +22,7 @@ export async function loadBrandOptions(): Promise<BrandOption[]> {
       // Cache 1h en el edge de Vercel. Si Marco crea una marca nueva en el
       // editor, ensureBrandExists ya garantiza que existe antes de guardar,
       // así que el combobox un poco stale no rompe nada.
-      next: { revalidate: 3600 },
+      next: { revalidate: 86400 },
       signal: controller.signal,
     });
     if (!r.ok) return [];

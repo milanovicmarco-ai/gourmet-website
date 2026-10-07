@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 // Revalida cada 1 hora; los Server Actions de inspiration hacen revalidatePath
 // al subir/editar/borrar catálogos PDF así que los cambios se reflejan al momento.
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 export default async function InspiracionPage() {
   const catalogs = await listActiveInspirationCatalogs();

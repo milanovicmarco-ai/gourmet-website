@@ -13,7 +13,16 @@ type Params = { slug: string };
 // con 308. Pero si por alguna razón llega tráfico aquí (bots antiguos, links externos),
 // al menos no pegamos al VPS sin cache. Antes era force-dynamic por la cookie i18n
 // (ya extinta tras el refactor de subpaths).
-export const revalidate = 3600;
+export const revalidate = 86400;
+
+// Sin generateStaticParams, Next renderiza las rutas con [slug] EN CADA petición
+// (no-store) y el `revalidate` de arriba no se aplica. Devolver [] hace que cada
+// ficha se genere en su primera visita y se sirva cacheada (ISR) después; el PIM
+// la invalida con revalidatePath al editar.
+export async function generateStaticParams() {
+  return [];
+}
+
 
 // El slug oficial es "{slugify(name)}-{ref}". Si by-slug 404 (porque el slug ha
 // cambiado, o el catálogo viene con otro formato), intentamos por la `ref` que

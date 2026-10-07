@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 // resto de visitas son instantáneas (servidas desde el edge cache de Vercel).
 // Los Server Actions del PIM hacen revalidatePath("/catalogo") al editar,
 // así que los cambios se reflejan al instante de todos modos.
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 type SP = {
   q?: string;

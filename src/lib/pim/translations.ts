@@ -1,7 +1,9 @@
 // Helpers para gestionar las traducciones de producto en nuestro Supabase.
 // La fuente canónica es la API del socio (siempre en español). Estas son traducciones overlay.
 
-import { createClient } from "@/integrations/supabase/server";
+// Cliente público (sin cookies): product_translations es de lectura pública y
+// leer cookies sacaba las fichas/listados CA del prerender estático (ISR).
+import { createPublicClient } from "@/integrations/supabase/server";
 
 export type Locale = "ca" | "en";
 
@@ -24,7 +26,7 @@ export async function getTranslation(
   ref: string,
   locale: Locale,
 ): Promise<ProductTranslation | null> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("product_translations")
     .select("*")
@@ -48,7 +50,7 @@ export async function getTranslationsForProducts(
   locale: Locale,
 ): Promise<Record<string, ProductTranslation>> {
   if (refs.length === 0) return {};
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("product_translations")
     .select("*")

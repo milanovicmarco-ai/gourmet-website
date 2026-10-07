@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 // Lee del catálogo HORECA con los flags destacado / primer_precio. Dinámica
 // porque queremos que los cambios del PIM se reflejen sin redeploy.
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 export default async function SecretsPage() {
   const { featured, primerPrecio } = await loadHubProducts({ catalogSlug: "horeca", limit: 24 });

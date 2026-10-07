@@ -4,9 +4,10 @@
 // el PIM, y marcados con los flags `destacado` o `primer_precio`, estas funciones
 // los traen filtrados, publicados, con overlay aplicado.
 
-import { getRefsByCatalogSlug, getFamilyMetas, humanizeFamilySlug } from "./catalogs";
-import { getProductByRef, isPublished, type ApiProduct } from "./api";
-import { getMetasForProducts, effectiveRef, type ProductMeta } from "./product-meta";
+import { getFamilyMetas, humanizeFamilySlug } from "./catalogs";
+import { isPublished, type ApiProduct } from "./api";
+import { getCatalogIndex } from "./catalog-index";
+import { effectiveRef, type ProductMeta } from "./product-meta";
 import { forEachLimited } from "./concurrency";
 
 /** Máx. refs consultadas en paralelo en el fan-out de un catálogo. Acota la
@@ -64,33 +65,20 @@ export type CuratedResult = {
   catalogPublishedCount: number;
 };
 
-/** Carga el contexto base de un catálogo (refs + productos + metas + families)
- *  UNA sola vez. Hace 1 fetch por ref EN PARALELO — cada uno cacheable 10 min,
- *  así que tras la 1ª visita las siguientes son instantáneas. */
+/** Carga el contexto base de un catálogo (productos + metas + familias) desde el
+ *  índice ligero cacheado: 0 llamadas a la API del socio por render. Antes hacía
+ *  un fetch por producto del catálogo (hasta 356 por regeneración de página). */
 async function loadCatalogContext(catalogSlug: string) {
-  const [refs, familyMetas] = await Promise.all([
-    getRefsByCatalogSlug(catalogSlug).catch(() => [] as string[]),
+  const [index, familyMetas] = await Promise.all([
+    getCatalogIndex(),
     getFamilyMetas().catch(() => ({} as Record<string, { display_name: string | null }>)),
   ]);
-  if (refs.length === 0) {
-    return { refs: [] as string[], published: [] as ApiProduct[], metas: {} as Record<string, ProductMeta>, familyMetas, failedRefCount: 0 };
-  }
-
-  // Fan-out THROTTLED con reintento de timeout: recupera timeouts intermitentes
-  // del backend socio sin perder productos. Antes: `Promise.all` sin throttle +
-  // `.catch(()=>null)` que tragaba los fallos en silencio → listados incompletos
-  // que ISR congelaba hasta 1h. Más fiable que `listProducts({limit:200})`, que
-  // perdería productos en posición 201+ del listado global.
-  const { products, failedRefCount } = await fetchRefsResilient(
-    refs,
-    (r) => getProductByRef(r, 3600, { retryTimeout: true }),
-  );
-
-  const published = products.filter(isPublished);
-  const metas = published.length
-    ? await getMetasForProducts(published.map((p) => p.ref)).catch(() => ({} as Record<string, ProductMeta>))
-    : ({} as Record<string, ProductMeta>);
-  return { refs, published, metas, familyMetas, failedRefCount };
+  const published = index.products.filter(
+    (p) => isPublished(p) && index.catalogsByRef[p.ref]?.includes(catalogSlug),
+  ) as ApiProduct[];
+  const metas: Record<string, ProductMeta> = {};
+  for (const p of published) if (index.metas[p.ref]) metas[p.ref] = index.metas[p.ref];
+  return { refs: published.map((p) => p.ref), published, metas, familyMetas, failedRefCount: 0 };
 }
 
 /** Filtra `published` aplicando el flag pedido (destacado/primer_precio) y

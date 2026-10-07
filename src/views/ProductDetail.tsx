@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
 import type { ApiProduct } from "@/lib/pim/api";
 
+import { cldImage, cldSrcSet } from "@/lib/pim/cloudinary";
 interface ProductDetailProps {
   product: ApiProduct;
   /** Slug crudo de la familia (para enlazar al catálogo filtrado). */
@@ -106,7 +107,9 @@ const ProductDetail = ({ product, familySlug, familyDisplay }: ProductDetailProp
             {activeUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={activeUrl}
+                src={cldImage(activeUrl, 1200)}
+                srcSet={cldSrcSet(activeUrl, [600, 900, 1200, 1600])}
+                sizes="(min-width: 1024px) 50vw, 100vw"
                 alt={product.name}
                 className="h-full w-full object-cover transition-opacity duration-500"
               />
@@ -134,7 +137,7 @@ const ProductDetail = ({ product, familySlug, familyDisplay }: ProductDetailProp
                   )}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={url} alt="" className="h-full w-full object-cover" />
+                  <img src={cldImage(url, 200)} alt="" loading="lazy" className="h-full w-full object-cover" />
                 </button>
               ))}
             </div>

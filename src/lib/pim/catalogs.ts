@@ -22,7 +22,10 @@ export type Catalog = {
 
 /** Lee todos los catálogos. Por defecto sólo activos. */
 export async function listCatalogs(includeInactive = false): Promise<Catalog[]> {
-  const supabase = await createServerSupabase();
+  // Solo activos = dato público → cliente sin cookies (no fuerza render dinámico).
+  const supabase = includeInactive
+    ? ((await createServerSupabase()) as unknown as ReturnType<typeof createPublicClient>)
+    : createPublicClient();
   let query = supabase.from("catalogs").select("*").order("sort_order").order("name");
   if (!includeInactive) query = query.eq("active", true);
   const { data, error } = await query;

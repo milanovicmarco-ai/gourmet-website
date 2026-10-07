@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/colmado" },
 };
 
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 export default async function ColmadoPage() {
   const featured = await loadCuratedProducts({ catalogSlug: "retail", filter: "destacado", limit: 24 });
