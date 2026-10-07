@@ -37,6 +37,9 @@ export async function proxy(req: NextRequest) {
   return response;
 }
 
+// Solo "/" (redirección de idioma) y /admin (refresco de sesión Supabase).
+// El resto del sitio es público y no necesita pasar por una función: cada
+// invocación del proxy consume Fluid Active CPU en Vercel.
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|og|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+  matcher: ["/", "/admin/:path*"],
 };
