@@ -10,6 +10,7 @@ import {
   snapshotProductByRef,
   snapshotProductBySlug,
 } from "./snapshot";
+import { catalogFetch } from "./catalog-backend";
 
 export const AURELLANO_API =
   process.env.NEXT_PUBLIC_AURELLANO_API ?? "https://aurellano-api.srv1124642.hstgr.cloud";
@@ -104,7 +105,7 @@ async function timeoutFetch(
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    return await fetch(input, { ...init, signal: controller.signal });
+    return await catalogFetch(input, { ...init, signal: controller.signal });
   } finally {
     clearTimeout(id);
   }

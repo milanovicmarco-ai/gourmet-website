@@ -13,6 +13,7 @@ import { createPublicClient } from "@/integrations/supabase/server";
 import { AURELLANO_API, isPublished, type ApiProduct } from "./api";
 import { EMPTY_META, type ProductMeta } from "./product-meta";
 import { snapshotAllProducts } from "./snapshot";
+import { catalogFetch } from "./catalog-backend";
 
 export const CATALOG_INDEX_TAG = "catalog-index";
 const REVALIDATE_SECONDS = 86_400;
@@ -49,7 +50,7 @@ async function fetchApiPage(offset: number): Promise<ApiProduct[]> {
     try {
       // cache:"no-store": la respuesta cruda puede pasar de 2 MB; cacheamos el
       // ÍNDICE resultante (unstable_cache), no cada página de la API.
-      const res = await fetch(url, { cache: "no-store", signal: ctrl.signal });
+      const res = await catalogFetch(url, { cache: "no-store", signal: ctrl.signal });
       if (!res.ok) throw new Error(`API ${res.status}`);
       const json = (await res.json()) as { results: ApiProduct[] };
       return json.results;

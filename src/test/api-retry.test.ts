@@ -2,6 +2,10 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { getProductByRef } from "@/lib/pim/api";
 
+// Estos tests prueban los reintentos HTTP contra la API remota: fuerzan ese
+// backend (el interruptor se lee en cada llamada, no al importar).
+process.env.CATALOG_BACKEND = "api";
+
 const abortError = () => Object.assign(new Error("The operation was aborted"), { name: "AbortError" });
 const okProduct = (ref: string) => new Response(JSON.stringify({ ref, name: "Queso" }), { status: 200 });
 

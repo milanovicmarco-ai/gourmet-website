@@ -9,6 +9,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/integrations/supabase/server";
 import { mapToApi, type FormFields } from "@/lib/pim/api-mapper";
 import { AURELLANO_API, getProductByRef } from "@/lib/pim/api";
+import { catalogFetch } from "@/lib/pim/catalog-backend";
 import { ensureBrandExists } from "@/lib/pim/ensure-brand";
 import { revalidatePublicAll, revalidatePublicListings } from "@/lib/pim/revalidate-public";
 
@@ -75,7 +76,7 @@ export async function createProduct(form: FormFields & { ref?: string }) {
     await enrichForPublish(payload, form.brand);
   }
 
-  const res = await fetch(`${AURELLANO_API}/catalog/products`, {
+  const res = await catalogFetch(`${AURELLANO_API}/catalog/products`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -134,7 +135,7 @@ export async function ensureFamilyExists(
 
   // 1) Buscar entre las familias existentes
   try {
-    const listRes = await fetch(`${AURELLANO_API}/catalog/families`, {
+    const listRes = await catalogFetch(`${AURELLANO_API}/catalog/families`, {
       headers: { Authorization: `Bearer ${apiKey()}` },
       next: { revalidate: 120 },
     });
@@ -174,7 +175,7 @@ export async function ensureFamilyExists(
   for (const bodyCreate of shapes) {
     try {
       console.log(`[ensureFamilyExists] POST /catalog/families probando shape:`, JSON.stringify(bodyCreate));
-      const createRes = await fetch(`${AURELLANO_API}/catalog/families`, {
+      const createRes = await catalogFetch(`${AURELLANO_API}/catalog/families`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -208,7 +209,7 @@ export async function ensureFamilyExists(
 // =============================================================
 async function doProductPut(ref: string, payload: Record<string, unknown>) {
   console.log(`[updateProduct] PUT ${ref} payload:`, JSON.stringify(payload));
-  const res = await fetch(`${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}`, {
+  const res = await catalogFetch(`${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -537,7 +538,7 @@ export async function deleteProduct(ref: string, hard = false) {
   const url = hard
     ? `${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}?hard=true&confirm_ref=${encodeURIComponent(ref)}`
     : `${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}`;
-  const res = await fetch(url, {
+  const res = await catalogFetch(url, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${apiKey()}` },
   });
@@ -575,7 +576,7 @@ async function revalidatePublicByRef(ref: string): Promise<void> {
 // =============================================================
 export async function uploadProductImage(ref: string, formData: FormData) {
   await requireAdmin();
-  const res = await fetch(
+  const res = await catalogFetch(
     `${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}/image`,
     {
       method: "POST",
@@ -595,7 +596,7 @@ export async function uploadProductImage(ref: string, formData: FormData) {
 /** Añade una imagen a la galería (no sustituye las anteriores). */
 export async function addProductImage(ref: string, formData: FormData) {
   await requireAdmin();
-  const res = await fetch(
+  const res = await catalogFetch(
     `${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}/images`,
     {
       method: "POST",
@@ -614,7 +615,7 @@ export async function addProductImage(ref: string, formData: FormData) {
 export async function removeProductImage(ref: string, url: string) {
   await requireAdmin();
   const qs = new URLSearchParams({ url }).toString();
-  const res = await fetch(
+  const res = await catalogFetch(
     `${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}/images?${qs}`,
     {
       method: "DELETE",
@@ -631,7 +632,7 @@ export async function removeProductImage(ref: string, url: string) {
 /** Reordena la galería del producto. La primera URL pasa a ser la principal. */
 export async function reorderProductImages(ref: string, order: string[]) {
   await requireAdmin();
-  const res = await fetch(
+  const res = await catalogFetch(
     `${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}/images/order`,
     {
       method: "PATCH",
@@ -652,7 +653,7 @@ export async function reorderProductImages(ref: string, order: string[]) {
 /** Marca una URL como imagen principal (sin cambiar el resto del orden si no es necesario). */
 export async function setPrimaryProductImage(ref: string, url: string) {
   await requireAdmin();
-  const res = await fetch(
+  const res = await catalogFetch(
     `${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}/images/primary`,
     {
       method: "PATCH",

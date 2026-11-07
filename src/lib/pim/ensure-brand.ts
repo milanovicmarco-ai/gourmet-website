@@ -10,6 +10,7 @@
 //   - src/app/admin/products/bulk/actions.ts (flujo bulk, cuando se publica)
 
 import { AURELLANO_API } from "./api";
+import { catalogFetch } from "./catalog-backend";
 
 type ApiBrand = {
   id?: string;
@@ -37,7 +38,7 @@ function apiKey() {
  *  Pide limit=500 para evitar truncados por paginación. */
 async function listBrands(): Promise<ApiBrand[]> {
   try {
-    const res = await fetch(`${AURELLANO_API}/catalog/brands?limit=500`, {
+    const res = await catalogFetch(`${AURELLANO_API}/catalog/brands?limit=500`, {
       headers: { Authorization: `Bearer ${apiKey()}` },
       next: { revalidate: 120 },
     });
@@ -53,7 +54,7 @@ async function listBrands(): Promise<ApiBrand[]> {
  *  Usado como fallback cuando la lista paginada no lo encuentra. */
 async function fetchBrandBySlug(slug: string): Promise<ApiBrand | undefined> {
   try {
-    const res = await fetch(`${AURELLANO_API}/catalog/brands/${encodeURIComponent(slug)}`, {
+    const res = await catalogFetch(`${AURELLANO_API}/catalog/brands/${encodeURIComponent(slug)}`, {
       headers: { Authorization: `Bearer ${apiKey()}` },
       cache: "no-store",
     });
@@ -124,7 +125,7 @@ export async function ensureBrandExists(
   let lastReason = "";
   for (const bodyCreate of shapes) {
     try {
-      const createRes = await fetch(`${AURELLANO_API}/catalog/brands`, {
+      const createRes = await catalogFetch(`${AURELLANO_API}/catalog/brands`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -22,6 +22,7 @@ import {
   type ImportRow,
 } from "@/lib/pim/bulk-schema";
 import { listProducts, listFamilies, AURELLANO_API, type ApiProduct } from "@/lib/pim/api";
+import { catalogFetch } from "@/lib/pim/catalog-backend";
 import { mapToApi, type FormFields } from "@/lib/pim/api-mapper";
 import { saveProductMeta } from "../[id]/meta-actions";
 import { ensureFamilyExists } from "../actions";
@@ -260,7 +261,7 @@ async function putProduct(ref: string, body: Record<string, unknown>, brand?: st
   await ensureFamilyInPayload(body);
   const { outcome, fallbackSlug } = await ensureBrandForPublish(body, brand);
 
-  let res = await fetch(`${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}`, {
+  let res = await catalogFetch(`${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey()}` },
     body: JSON.stringify(body),
@@ -271,7 +272,7 @@ async function putProduct(ref: string, body: Record<string, unknown>, brand?: st
     if (isBrandFKError(text)) {
       console.log(`[bulk] PUT ${ref}: FK rechazó brand="${body.brand}", reintento con slug="${fallbackSlug}"`);
       body.brand = fallbackSlug;
-      res = await fetch(`${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}`, {
+      res = await catalogFetch(`${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey()}` },
         body: JSON.stringify(body),
@@ -291,7 +292,7 @@ async function postProduct(body: Record<string, unknown>, brand?: string | null)
   await ensureFamilyInPayload(body);
   const { outcome, fallbackSlug } = await ensureBrandForPublish(body, brand);
 
-  let res = await fetch(`${AURELLANO_API}/catalog/products`, {
+  let res = await catalogFetch(`${AURELLANO_API}/catalog/products`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey()}` },
     body: JSON.stringify(body),
@@ -302,7 +303,7 @@ async function postProduct(body: Record<string, unknown>, brand?: string | null)
     if (isBrandFKError(text)) {
       console.log(`[bulk] POST: FK rechazó brand="${body.brand}", reintento con slug="${fallbackSlug}"`);
       body.brand = fallbackSlug;
-      res = await fetch(`${AURELLANO_API}/catalog/products`, {
+      res = await catalogFetch(`${AURELLANO_API}/catalog/products`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey()}` },
         body: JSON.stringify(body),
@@ -319,7 +320,7 @@ async function postProduct(body: Record<string, unknown>, brand?: string | null)
 }
 
 async function deleteProductApi(ref: string) {
-  const res = await fetch(`${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}`, {
+  const res = await catalogFetch(`${AURELLANO_API}/catalog/products/${encodeURIComponent(ref)}`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${apiKey()}` },
   });
