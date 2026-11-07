@@ -48,7 +48,8 @@ export default async function AdminProductDetailPage({
   // revalidate=60 → cache 1min. Suficiente para que abrir varios productos
   // seguidos sea instantáneo sin perder frescura visible.
   const [productOrError, meta] = await Promise.all([
-    getProductByRef(ref, 60).catch((err: Error) => err),
+    // noSnapshot: el editor guarda lo que muestra; nunca partir de la foto de respaldo.
+    getProductByRef(ref, 60, { noSnapshot: true }).catch((err: Error) => err),
     withTimeout(getProductMeta(ref), 12000, "getProductMeta", EMPTY_META(ref)),
   ]);
   if (productOrError instanceof Error) {

@@ -12,6 +12,7 @@ import { unstable_cache } from "next/cache";
 import { createPublicClient } from "@/integrations/supabase/server";
 import { AURELLANO_API, isPublished, type ApiProduct } from "./api";
 import { EMPTY_META, type ProductMeta } from "./product-meta";
+import { snapshotAllProducts } from "./snapshot";
 
 export const CATALOG_INDEX_TAG = "catalog-index";
 const REVALIDATE_SECONDS = 86_400;
@@ -86,10 +87,19 @@ async function fetchAllRows<T>(
 }
 
 async function buildCatalogIndex(): Promise<CatalogIndex> {
-  const pages = await Promise.all(
-    Array.from({ length: MAX_PAGES }, (_, i) => fetchApiPage(i * PAGE_SIZE)),
-  );
-  if (pages[MAX_PAGES - 1].length === PAGE_SIZE) {
+  let pages: ApiProduct[][];
+  try {
+    pages = await Promise.all(
+      Array.from({ length: MAX_PAGES }, (_, i) => fetchApiPage(i * PAGE_SIZE)),
+    );
+  } catch (err) {
+    // API caída: índice COMPLETO desde la foto de respaldo (nunca a medias).
+    // Se cachea igual que el normal; la próxima revalidación (o una edición en
+    // el PIM) lo reconstruye desde la API cuando vuelva.
+    console.warn("[catalog-index] API falló, construyendo el índice desde la foto:", (err as Error).message);
+    pages = [await snapshotAllProducts()];
+  }
+  if (pages.length === MAX_PAGES && pages[MAX_PAGES - 1].length === PAGE_SIZE) {
     console.warn("[catalog-index] la última página vino llena: sube MAX_PAGES, faltan productos.");
   }
   const seen = new Map<string, ApiProduct>();

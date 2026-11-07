@@ -3,6 +3,14 @@
 // IMPORTANTE: las funciones que escriben usan ADMIN_API_KEY (server-only).
 // No las llames desde un componente "use client" — usa Server Actions.
 
+import {
+  snapshotAllProducts,
+  snapshotFamilies,
+  snapshotListProducts,
+  snapshotProductByRef,
+  snapshotProductBySlug,
+} from "./snapshot";
+
 export const AURELLANO_API =
   process.env.NEXT_PUBLIC_AURELLANO_API ?? "https://aurellano-api.srv1124642.hstgr.cloud";
 
@@ -109,6 +117,23 @@ export async function listProducts(params?: {
   q?: string;
   revalidate?: number;
 }): Promise<ProductsListResponse> {
+  try {
+    return await listProductsFromApi(params);
+  } catch (err) {
+    // revalidate 0 = lectura "fresca" (admin): nunca servir la foto.
+    if (params?.revalidate === 0) throw err;
+    console.warn("[listProducts] API falló, usando la foto:", (err as Error).message);
+    return snapshotListProducts(params);
+  }
+}
+
+async function listProductsFromApi(params?: {
+  limit?: number;
+  offset?: number;
+  family?: string;
+  q?: string;
+  revalidate?: number;
+}): Promise<ProductsListResponse> {
   const sp = new URLSearchParams();
   if (params?.limit) sp.set("limit", String(params.limit));
   if (params?.offset) sp.set("offset", String(params.offset));
@@ -128,7 +153,9 @@ export async function listProducts(params?: {
 export async function getProductByRef(
   ref: string,
   revalidate = 86400,
-  opts?: { retryTimeout?: boolean },
+  /** noSnapshot: no usar nunca la foto (p. ej. el editor del admin, que luego
+   *  guarda lo que muestra y no debe partir de datos viejos). */
+  opts?: { retryTimeout?: boolean; noSnapshot?: boolean },
 ): Promise<ApiProduct | null> {
   // 8s por intento. El backend arranca lento tras inactividad (cold start del
   // contenedor FastAPI) y la 1ª request desde Vercel a veces excede 6s, así que
@@ -178,10 +205,32 @@ export async function getProductByRef(
       break;
     }
   }
-  throw lastErr ?? new Error("getProductByRef agotó intentos sin error claro");
+  const finalErr = lastErr ?? new Error("getProductByRef agotó intentos sin error claro");
+  // Respaldo: la web pública sirve la foto del catálogo. El admin (revalidate 0)
+  // necesita datos frescos para editar, así que ahí se propaga el error.
+  if (revalidate !== 0 && !opts?.noSnapshot) {
+    const fromSnapshot = await snapshotProductByRef(ref).catch(() => null);
+    if (fromSnapshot) {
+      console.warn(`[getProductByRef] API falló para ${ref}, usando la foto:`, finalErr.message);
+      return fromSnapshot;
+    }
+  }
+  throw finalErr;
 }
 
 export async function getProductBySlug(slug: string, revalidate = 86400): Promise<ApiProduct | null> {
+  try {
+    return await getProductBySlugFromApi(slug, revalidate);
+  } catch (err) {
+    if (revalidate === 0) throw err;
+    const fromSnapshot = await snapshotProductBySlug(slug).catch(() => null);
+    if (!fromSnapshot) throw err;
+    console.warn(`[getProductBySlug] API falló para ${slug}, usando la foto:`, (err as Error).message);
+    return fromSnapshot;
+  }
+}
+
+async function getProductBySlugFromApi(slug: string, revalidate: number): Promise<ApiProduct | null> {
   const res = await timeoutFetch(
     `${AURELLANO_API}/catalog/products/by-slug/${encodeURIComponent(slug)}`,
     { next: { revalidate } },
@@ -222,13 +271,18 @@ export async function fetchAllProducts(opts?: {
 
   // Sin búsqueda: barrer offsets en paralelo. Cada Promise cachea de forma
   // independiente en el edge de Vercel (misma URL = misma entrada de cache).
-  const pages = await Promise.all(
-    PAGE_OFFSETS.map((offset) =>
-      listProducts({ limit: 200, offset, revalidate }).catch(
-        () => ({ results: [] as ApiProduct[] }),
-      ),
-    ),
-  );
+  // Si CUALQUIER página falla, se usa la foto ENTERA: mezclar páginas de la API
+  // con trozos de la foto (ordenadas distinto) podría perder o duplicar productos.
+  let pages: ProductsListResponse[];
+  try {
+    pages = await Promise.all(
+      PAGE_OFFSETS.map((offset) => listProductsFromApi({ limit: 200, offset, revalidate })),
+    );
+  } catch (err) {
+    if (revalidate === 0) throw err;
+    console.warn("[fetchAllProducts] API falló, usando la foto:", (err as Error).message);
+    return snapshotAllProducts();
+  }
 
   // Si la última página vuelve llena, el catálogo pasó del rango cubierto y
   // faltan productos. Añade más offsets a PAGE_OFFSETS.
@@ -249,9 +303,15 @@ export async function fetchAllProducts(opts?: {
 }
 
 export async function listFamilies(revalidate = 86400): Promise<FamilyCount[]> {
-  const res = await timeoutFetch(`${AURELLANO_API}/catalog/families`, {
-    next: { revalidate },
-  });
-  if (!res.ok) throw new Error(`listFamilies ${res.status}: ${await res.text()}`);
-  return res.json();
+  try {
+    const res = await timeoutFetch(`${AURELLANO_API}/catalog/families`, {
+      next: { revalidate },
+    });
+    if (!res.ok) throw new Error(`listFamilies ${res.status}: ${await res.text()}`);
+    return await res.json();
+  } catch (err) {
+    if (revalidate === 0) throw err;
+    console.warn("[listFamilies] API falló, usando la foto:", (err as Error).message);
+    return snapshotFamilies();
+  }
 }
